@@ -15,17 +15,13 @@
  */
 package org.jmxexporter;
 
-import fr.xebia.management.jmxexporter.output.OutputWriter;
+import org.jmxexporter.output.OutputWriter;
+import org.jmxexporter.util.DiscardingBlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.Attribute;
-import javax.management.ObjectName;
-import javax.management.openmbean.CompositeData;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import javax.management.*;
+import java.util.*;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
@@ -34,78 +30,55 @@ public class Query {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public static class QueryAttribute {
+    private ObjectName objectName;
 
-        private final String name;
+    private String resultAlias;
+    /**
+     * JMX attributes to collect. As an array for {@link javax.management.MBeanServer#getAttributes(javax.management.ObjectName, String[])}
+     */
+    private Map<String, QueryAttribute> attributesByName = new HashMap<String, QueryAttribute>();
+    private String[] attributeNames = new String[0];
 
-        private final String resultAlias;
+    private List<OutputWriter> outputWriters;
 
-        public QueryAttribute(String name) {
-            this(name, null);
-        }
+    private final Queue<QueryResult> queryResults = new DiscardingBlockingQueue<QueryResult>(20);
 
-        public QueryAttribute(String name, String resultAlias) {
-            this.name = name;
-            this.resultAlias = resultAlias;
-        }
+    // TODO private Set<String> typeNames;
 
-        public String getName() {
-            return name;
-        }
+    public Query() {
 
-        public String getResultAlias() {
-            return resultAlias;
-        }
+    }
 
-        public String getResultName() {
-            return resultAlias == null ? name : resultAlias;
-        }
-
-        public Iterable<Result> parseAttribute(Attribute attribute, long epoch) {
-            return Collections.singleton(new Result(resultAlias == null ? name : resultAlias, attribute.getValue(), epoch));
+    public Query(String objectName) {
+        this();
+        try {
+            this.objectName = new ObjectName(objectName);
+        } catch (MalformedObjectNameException e) {
+            throw new RuntimeException("Exception parsing '" + objectName + "'", e);
         }
     }
 
-    /**
-     * @see javax.management.openmbean.CompositeData
-     */
-    public static class QueryCompositeAttribute extends QueryAttribute {
-        private final Logger logger = LoggerFactory.getLogger(getClass());
 
-        /**
-         * @see javax.management.openmbean.CompositeType#keySet()
-         */
-        private final String[] keys;
-
-        /**
-         * @param name  name of the JMX attribute
-         * @param alias
-         * @param keys
-         */
-        public QueryCompositeAttribute(String name, String alias, String... keys) {
-            super(name, alias);
-            this.keys = keys;
-        }
-
-        public String[] getKey() {
-            return keys;
-        }
-
-
-        public Iterable<Result> parseAttribute(Attribute attribute, long epoch) {
-            Object value = attribute.getValue();
-            if (value instanceof CompositeData) {
-                CompositeData compositeData = (CompositeData) value;
-                Object[] objects = compositeData.getAll(keys);
-                List<Result> results = new ArrayList<Result>(keys.length);
-                for (int i = 0; i < keys.length; i++) {
-                    results.add(new Result(attribute.getName(), value, epoch));
+    public void performQuery(MBeanServer mbeanServer) {
+        Set<ObjectName> matchingObjectNames = mbeanServer.queryNames(getObjectName(), null);
+        for (ObjectName matchingObjectName : matchingObjectNames) {
+            long epoch = System.currentTimeMillis();
+            try {
+                AttributeList jmxAttributes = mbeanServer.getAttributes(matchingObjectName, getAttributeNames());
+                for (Attribute jmxAttribute : jmxAttributes.asList()) {
+                    QueryAttribute queryAttribute = getAttribute(jmxAttribute.getName());
+                    Collection<QueryResult> attributeResults = queryAttribute.parseAttribute(jmxAttribute, epoch);
+                    queryResults.addAll(attributeResults);
                 }
-                return results;
-            } else {
-                logger.warn("Ignore non CompositeData attribute value {}", attribute);
-                return Collections.emptyList();
+            } catch (Exception e) {
+                logger.warn("Exception processing query {}", this, e);
             }
+        }
+    }
+
+    public void writeResults() {
+        for (OutputWriter writer : outputWriters) {
+            // writer.
         }
     }
 
@@ -113,27 +86,42 @@ public class Query {
         return objectName;
     }
 
-    private ObjectName objectName;
+    public void addResult(QueryResult queryResult) {
+        queryResults.add(queryResult);
+    }
+
+    public Collection<QueryAttribute> getQueryAttributes() {
+        return attributesByName.values();
+    }
+
+    public Query addAttribute(QueryAttribute attribute) {
+        attributesByName.put(attribute.getName(), attribute);
+        attributeNames = attributesByName.keySet().toArray(new String[0]);
+
+        return this;
+    }
+
+    public Query addAttribute(String attributeName) {
+        return addAttribute(new QueryAttribute(this, attributeName));
+    }
 
     public String[] getAttributeNames() {
-        String[] attributeNames = new String[queryAttributes.size()];
-        for (int i = 0; i < attributeNames.length; i++) {
-            attributeNames[i] = queryAttributes.get(i).name;
-        }
         return attributeNames;
     }
 
+    public QueryAttribute getAttribute(String name) {
+        return attributesByName.get(name);
+    }
 
-    private String resultAlias;
-    /**
-     * JMX attributes to collect. As an array for {@link javax.management.MBeanServer#getAttributes(javax.management.ObjectName, String[])}
-     */
-    private List<QueryAttribute> queryAttributes;
-    private List<OutputWriter> outputWriters;
-    private List<Result> results;
-    private Set<String> typeNames;
+    public Queue<QueryResult> getResults() {
+        return queryResults;
+    }
 
-    public void addResult(Result result) {
-        results.add(result);
+    public String escapeObjectName(ObjectName on) {
+        return on.getCanonicalKeyPropertyListString();
+    }
+
+    public String getResultName() {
+        return resultAlias == null ? escapeObjectName(objectName) : resultAlias;
     }
 }

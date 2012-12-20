@@ -39,14 +39,14 @@ public class MetricCollectorTest {
     public void basic_jmx_attribute_return_simple_result() throws Exception {
         Attribute attribute = getMbeanAttribute("java.lang:type=MemoryPool,name=PS Eden Space", "CollectionUsageThreshold");
         assertTrue("Not a number " + attribute, attribute.getValue() instanceof Number);
-        Result result = metricCollector.getResult(0L, attribute);
+        QueryResult queryResult = metricCollector.getResult(0L, attribute);
     }
 
     @Test
     public void array_jmx_attribute_return_simple_result() throws Exception {
         Attribute attribute = getMbeanAttribute("java.lang:type=Threading", "AllThreadIds");
         assertTrue("Not a array " + attribute, attribute.getValue().getClass().isArray());
-        Result result = metricCollector.getResult(0L, attribute);
+        QueryResult queryResult = metricCollector.getResult(0L, attribute);
         System.out.println(attribute);
     }
 

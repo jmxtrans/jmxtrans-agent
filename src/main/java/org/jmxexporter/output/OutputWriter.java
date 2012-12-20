@@ -15,7 +15,7 @@
  */
 package org.jmxexporter.output;
 
-import fr.xebia.management.jmxexporter.Query;
+import org.jmxexporter.Query;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
@@ -24,3 +24,4 @@ public interface OutputWriter {
 
     public void write(Query query);
 }
+

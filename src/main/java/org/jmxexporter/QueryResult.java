@@ -18,17 +18,35 @@ package org.jmxexporter;
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class Result {
-    private String attributeName;
+public class QueryResult {
+
+    private final String queryName;
+
+    private final String attributeName;
     //    private String className;
 //    private String typeName;
 //    private Map<String, Object> values;
-    private long epoch;
-    private Object value;
+    private final long epoch;
 
-    public Result(String attributeName, Object value, long epoch) {
+    private final Object value;
+
+    public QueryResult(String queryName, String attributeName, Object value, long epoch) {
+        this.queryName = queryName;
         this.attributeName = attributeName;
         this.epoch = epoch;
         this.value = value;
     }
+
+    public String getAttributeName() {
+        return attributeName;
+    }
+
+    public long getEpoch() {
+        return epoch;
+    }
+
+    public Object getValue() {
+        return value;
+    }
+
 }

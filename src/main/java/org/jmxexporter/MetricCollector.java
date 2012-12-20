@@ -27,7 +27,7 @@ import javax.management.openmbean.TabularDataSupport;
 public class MetricCollector {
 
 
-    protected Result getResult(long epoch, Attribute attribute) {
+    protected QueryResult getResult(long epoch, Attribute attribute) {
         Object value = attribute.getValue();
         if (value instanceof CompositeDataSupport) {
             // getResult(resList, info, oi, attribute.getName(), (CompositeData) value, query);
@@ -36,18 +36,17 @@ public class MetricCollector {
                 // getResult(resList, info, oi, attribute.getName(), cd, query);
             }
         } else if (value instanceof ObjectName[]) {
-            /* Result r = getNewResultObject(info, oi, attribute.getName(), query);
+            /* QueryResult r = getNewResultObject(info, oi, attribute.getName(), query);
             for (ObjectName obj : (ObjectName[]) value) {
                 r.addValue(obj.getCanonicalName(), obj.getKeyPropertyListString());
             }
             resList.add(r);
             */
         } else if (value.getClass().isArray()) {
-            return new Result(attribute.getName(), value, epoch);
             /*
             // OMFG: this is nutty. some of the items in the array can be
             // primitive! great interview question!
-            Result r = getNewResultObject(info, oi, attribute.getName(), query);
+            QueryResult r = getNewResultObject(info, oi, attribute.getName(), query);
             for (int i = 0; i < Array.getLength(value); i++) {
                 Object val = Array.get(value, i);
                 r.addValue(attribute.getName() + "." + i, val);
@@ -58,17 +57,17 @@ public class MetricCollector {
             TabularDataSupport tabularValue = (TabularDataSupport) value;
             return getResultForTabularDataSupport(tabularValue);
         } else {
-            return new Result(attribute.getName(), value, epoch);
+            return null;
         }
         return null;
     }
 
-    private Result getResultForTabularDataSupport(TabularDataSupport tabularValue) {
+    private QueryResult getResultForTabularDataSupport(TabularDataSupport tabularValue) {
         System.out.println(tabularValue);
         return null;
         /*
     TabularDataSupport tds = (TabularDataSupport) value;
-    Result r = getNewResultObject(info, oi, attribute.getName(), query);
+    QueryResult r = getNewResultObject(info, oi, attribute.getName(), query);
     processTabularDataSupport(resList, info, oi, r, attribute.getName(), tds, query);
     resList.add(r);
     */
