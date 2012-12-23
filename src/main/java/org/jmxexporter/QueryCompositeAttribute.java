@@ -20,10 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.management.Attribute;
 import javax.management.openmbean.CompositeData;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @see javax.management.openmbean.CompositeData
@@ -41,9 +38,9 @@ public class QueryCompositeAttribute extends QueryAttribute {
      * @param alias
      * @param keys
      */
-    public QueryCompositeAttribute(Query query, String name, String alias, String... keys) {
-        super(query, name, alias);
-        this.keys = keys;
+    public QueryCompositeAttribute(String name, String alias, List<String> keys) {
+        super(name, alias);
+        this.keys = keys.toArray(new String[0]);
     }
 
     public String[] getKey() {
@@ -60,7 +57,6 @@ public class QueryCompositeAttribute extends QueryAttribute {
             for (int i = 0; i < keys.length; i++) {
                 String key = keys[i];
                 QueryResult queryResult = new QueryResult(
-                        getQuery().getResultName(),
                         getResultName() + "." + key,
                         compositeData.get(key),
                         epoch);
@@ -71,5 +67,14 @@ public class QueryCompositeAttribute extends QueryAttribute {
             logger.warn("Ignore non CompositeData attribute value {}", attribute);
             return Collections.emptyList();
         }
+    }
+
+    @Override
+    public String toString() {
+        return "QueryCompositeAttribute{" +
+                "name='" + getName() + '\'' +
+                ", resultAlias='" + getResultAlias() + '\'' +
+                "keys=" + (keys == null ? null : Arrays.asList(keys)) +
+                '}';
     }
 }

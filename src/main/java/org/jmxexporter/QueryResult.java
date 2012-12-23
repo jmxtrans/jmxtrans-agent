@@ -15,25 +15,25 @@
  */
 package org.jmxexporter;
 
+import java.sql.Timestamp;
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public class QueryResult {
 
-    private final String queryName;
+    private Query query;
 
     private final String attributeName;
-    //    private String className;
-//    private String typeName;
-//    private Map<String, Object> values;
-    private final long epoch;
+
+    private final long epochInMillis;
 
     private final Object value;
 
-    public QueryResult(String queryName, String attributeName, Object value, long epoch) {
-        this.queryName = queryName;
+    public QueryResult(String attributeName, Object value, long epochInMillis) {
         this.attributeName = attributeName;
-        this.epoch = epoch;
+        this.epochInMillis = epochInMillis;
         this.value = value;
     }
 
@@ -41,12 +41,33 @@ public class QueryResult {
         return attributeName;
     }
 
-    public long getEpoch() {
-        return epoch;
+    public long getEpochInMillis() {
+        return epochInMillis;
+    }
+
+    public long getEpoch(TimeUnit timeUnit) {
+        return timeUnit.convert(epochInMillis, TimeUnit.MILLISECONDS);
     }
 
     public Object getValue() {
         return value;
     }
 
+    public void setQuery(Query query) {
+        this.query = query;
+    }
+
+    public Query getQuery() {
+        return query;
+    }
+
+    @Override
+    public String toString() {
+        return "QueryResult{" +
+                "query=" + query == null ? null : query.getResultName() +
+                ", attributeName='" + attributeName + '\'' +
+                ", epoch=" + new Timestamp(epochInMillis) +
+                ", value=" + value +
+                '}';
+    }
 }

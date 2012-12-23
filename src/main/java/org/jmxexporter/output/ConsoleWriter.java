@@ -17,25 +17,15 @@ package org.jmxexporter.output;
 
 import org.jmxexporter.QueryResult;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.util.Map;
-
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public interface OutputWriter {
+public class ConsoleWriter extends AbstractOutputWriter implements OutputWriter {
 
-    Map<String, Object> getSettings();
-
-    void setSettings(Map<String, Object> settings);
-
-    void write(Iterable<QueryResult> results);
-
-    @PostConstruct
-    void start() throws Exception;
-
-    @PreDestroy
-    void stop() throws Exception;
+    @Override
+    public void write(Iterable<QueryResult> results) {
+        for (QueryResult result : results) {
+            System.out.println(result);
+        }
+    }
 }
-

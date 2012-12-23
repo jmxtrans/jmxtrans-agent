@@ -15,6 +15,7 @@
  */
 package org.jmxexporter.util;
 
+import org.jmxexporter.util.concurrent.DiscardingBlockingQueue;
 import org.junit.Before;
 import org.junit.Test;
 

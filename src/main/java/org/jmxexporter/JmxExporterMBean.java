@@ -13,29 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jmxexporter.output;
-
-import org.jmxexporter.QueryResult;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.util.Map;
+package org.jmxexporter;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public interface OutputWriter {
+public interface JmxExporterMBean {
 
-    Map<String, Object> getSettings();
+    int getQueryIntervalInSeconds();
 
-    void setSettings(Map<String, Object> settings);
+    int getExportIntervalInSeconds();
 
-    void write(Iterable<QueryResult> results);
+    int getNumExportThreads();
 
-    @PostConstruct
-    void start() throws Exception;
+    void performQuery();
 
-    @PreDestroy
-    void stop() throws Exception;
+    void performExport();
 }
-

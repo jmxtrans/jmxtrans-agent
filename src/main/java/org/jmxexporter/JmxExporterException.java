@@ -13,29 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jmxexporter.output;
-
-import org.jmxexporter.QueryResult;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.util.Map;
+package org.jmxexporter;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public interface OutputWriter {
+public class JmxExporterException extends RuntimeException {
+    public JmxExporterException() {
+        super();
+    }
 
-    Map<String, Object> getSettings();
+    public JmxExporterException(String message) {
+        super(message);
+    }
 
-    void setSettings(Map<String, Object> settings);
+    public JmxExporterException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    void write(Iterable<QueryResult> results);
-
-    @PostConstruct
-    void start() throws Exception;
-
-    @PreDestroy
-    void stop() throws Exception;
+    public JmxExporterException(Throwable cause) {
+        super(cause);
+    }
 }
-

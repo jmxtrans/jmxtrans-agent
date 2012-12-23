@@ -13,23 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jmxexporter;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import java.util.List;
+package org.jmxexporter.util.pool;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class JmxExporterCommand implements Runnable {
+interface ManagedGenericKeyedObjectPoolMBean {
 
-    private MBeanServer mbeanServer;
+    int getNumTestsPerEvictionRun();
 
-    private List<ObjectName> queries;
+    int getNumActive();
 
-    @Override
-    public void run() {
-        // TODO
-    }
+    int getNumIdle();
+
+    int getMinIdle();
+
+    boolean getTestOnBorrow();
+
+    long getTimeBetweenEvictionRunsMillis();
+
+    long getMinEvictableIdleTimeMillis();
+
+    boolean getTestWhileIdle();
+
+    boolean getLifo();
+
+    void clear();
+
+    void clearOldest();
+
+    long getMaxWait();
+
+    int getMaxTotal();
+
+    int getMaxActive();
+
+    int getMaxIdle();
 }

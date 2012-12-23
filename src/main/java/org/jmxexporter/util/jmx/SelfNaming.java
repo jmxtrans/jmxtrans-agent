@@ -13,29 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jmxexporter.output;
+package org.jmxexporter.util.jmx;
 
-import org.jmxexporter.QueryResult;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.util.Map;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 /**
+ * Inspired by <code>org.springframework.jmx.export.naming.SelfNaming</code>
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public interface OutputWriter {
+public interface SelfNaming {
+    /**
+     * Return the <code>ObjectName</code> for the implementing object.
+     */
+    ObjectName getObjectName();
 
-    Map<String, Object> getSettings();
+    /**
+     * Set the <code>ObjectName</code> for the implementing object.
+     */
+    void setObjectName(String objectName) throws MalformedObjectNameException;
 
-    void setSettings(Map<String, Object> settings);
+    /**
+     * Set the <code>ObjectName</code> for the implementing object.
+     */
+    void setObjectName(ObjectName objectName);
 
-    void write(Iterable<QueryResult> results);
-
-    @PostConstruct
-    void start() throws Exception;
-
-    @PreDestroy
-    void stop() throws Exception;
 }
-

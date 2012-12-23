@@ -15,19 +15,24 @@
  */
 package org.jmxexporter;
 
-import org.junit.BeforeClass;
+import org.jmxexporter.output.AbstractOutputWriter;
+import org.jmxexporter.output.OutputWriter;
 import org.junit.Test;
 
-import javax.management.*;
+import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public class QueryTest {
+
     static MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
     @Test
@@ -44,7 +49,7 @@ public class QueryTest {
     @Test
     public void test_composite_jmx_attribute() throws Exception {
         Query query = new Query("java.lang:type=MemoryPool,name=PS Perm Gen");
-        query.addAttribute(new QueryCompositeAttribute(query, "Usage", null, "committed", "init", "max", "used"));
+        query.addAttribute(new QueryCompositeAttribute("Usage", null, Arrays.asList("committed", "init", "max", "used")));
         query.performQuery(mbeanServer);
         assertThat(query.getResults().size(), is(4));
 
@@ -53,6 +58,53 @@ public class QueryTest {
 
         QueryResult result2 = query.getResults().poll();
         assertThat(result2.getValue(), instanceOf(Number.class));
+    }
+
+    @Test
+    public void testExportResults() {
+
+        // CONFIGURE
+        Query query = new Query("java.lang:type=GarbageCollector,name=PS Scavenge");
+        query.addAttribute("CollectionCount").addAttribute("CollectionTime");
+        JmxExporter jmxExporter = new JmxExporter();
+        jmxExporter.addQuery(query);
+
+        final AtomicInteger exportCount = new AtomicInteger();
+        final AtomicInteger exportResultCount = new AtomicInteger();
+
+        OutputWriter outputWriter = new AbstractOutputWriter() {
+            @Override
+            public void write(Iterable<QueryResult> results) {
+                exportCount.incrementAndGet();
+                for (QueryResult result : results) {
+                    exportResultCount.incrementAndGet();
+                }
+            }
+        };
+
+        jmxExporter.getOutputWriters().add(outputWriter);
+        assertThat(query.getOutputWriters().size(), is(0));
+        assertThat(query.getEffectiveOutputWriters().size(), is(1));
+
+        // PREPARE DATA
+        long time = System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
+        for (int i = 0; i < 100; i++) {
+            QueryResult result = new QueryResult("CollectionTime", 5 * i, time);
+            query.addResult(result);
+
+            assertThat(query.getResults().size(), is(i + 1));
+
+
+            time += TimeUnit.MILLISECONDS.convert(10, TimeUnit.SECONDS);
+        }
+
+        // TEST
+        int actualExportResultCount = query.performExport();
+        assertThat(exportCount.get(), is(2));
+        assertThat(exportResultCount.get(), is(100));
+        assertThat(actualExportResultCount, is(100));
+
+
     }
 
 }
