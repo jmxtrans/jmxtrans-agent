@@ -53,6 +53,16 @@
                 "name": "PeakUsage",
                 "keys": ["committed", "init", "max", "used"]
             }
+        },
+        {
+            "objectName": "java.lang:type=MemoryPool,name=PS Eden Space",
+            "resultAlias": "test-with-outputwriter",
+            "attribute": "CollectionUsageThresholdCount",
+            "outputWriters": [
+                {
+                    "@class": "org.jmxexporter.output.NoOpWriter"
+                }
+            ]
         }
     ],
     "outputWriters": [
@@ -63,8 +73,13 @@
             "@class": "org.jmxexporter.output.GraphiteWriter",
             "settings": {
                 "port": 2003,
-                "host": "192.168.192.133"
+                "host": "127.0.0.1"
             }
         }
-    ]
+    ],
+    "queryIntervalInSeconds": 5,
+    "numQueryThreads": 3,
+    "exportIntervalInSeconds": 10,
+    "numExportThreads": 2,
+    "exportBatchSize": 30
 }

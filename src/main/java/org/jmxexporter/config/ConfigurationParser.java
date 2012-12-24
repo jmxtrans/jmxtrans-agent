@@ -28,6 +28,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
@@ -38,26 +39,45 @@ public class ConfigurationParser {
 
     private ObjectMapper mapper = new ObjectMapper();
 
-    public JmxExporter parseConfiguration(InputStream jsonFile) throws IOException {
+    /**
+     * @param configurationUrl JSON configuration file URL ("http://...", "classpath:com/mycompany...", ...)
+     * @return
+     */
+    public JmxExporter newJmxExporter(String configurationUrl) {
+        try {
+            if (configurationUrl.startsWith("classpath:")) {
+                String path = configurationUrl.substring("classpath:".length());
+                InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
+                return new ConfigurationParser().newJmxExporter(in);
+            } else {
+                return newJmxExporter(new URL(configurationUrl));
+            }
+        } catch (Exception e) {
+            throw new JmxExporterException("Exception loading configuration'" + configurationUrl + "'", e);
+        }
+
+    }
+
+    public JmxExporter newJmxExporter(InputStream configuration) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode rootNode = mapper.readValue(jsonFile, JsonNode.class);
-        return parseConfiguration(rootNode);
+        JsonNode rootNode = mapper.readValue(configuration, JsonNode.class);
+        return newJmxExporter(rootNode);
     }
 
-    public JmxExporter parseConfiguration(URL jsonFile) throws IOException {
-        JsonNode rootNode = mapper.readValue(jsonFile, JsonNode.class);
-        return parseConfiguration(rootNode);
+    public JmxExporter newJmxExporter(URL configurationUrl) throws IOException {
+        JsonNode rootNode = mapper.readValue(configurationUrl, JsonNode.class);
+        return newJmxExporter(rootNode);
     }
 
-    public JmxExporter parseConfiguration(JsonNode rootNode) {
+    public JmxExporter newJmxExporter(JsonNode configurationRootNode) {
 
-        JmxExporter configuration = new JmxExporter();
+        JmxExporter jmxExporter = new JmxExporter();
 
-        for (JsonNode queryNode : rootNode.path("queries")) {
+        for (JsonNode queryNode : configurationRootNode.path("queries")) {
 
             String objectName = queryNode.path("objectName").asText();
             Query query = new Query(objectName);
-            configuration.addQuery(query);
+            jmxExporter.addQuery(query);
             JsonNode resultAliasNode = queryNode.path("resultAlias");
             if (resultAliasNode.isMissingNode()) {
             } else if (resultAliasNode.isValueNode()) {
@@ -80,24 +100,71 @@ public class ConfigurationParser {
 
             JsonNode attributeNode = queryNode.path("attribute");
             parseQueryAttributeNode(query, attributeNode);
+            List<OutputWriter> outputWriters = parseOutputWritersNode(queryNode);
+            query.getOutputWriters().addAll(outputWriters);
         }
 
 
-        JsonNode outputWritersNode = rootNode.path("outputWriters");
-        try {
-            if (!outputWritersNode.isMissingNode()) {
-                for (JsonNode outputWriterNode : outputWritersNode) {
-                    System.out.println(outputWriterNode);
+        List<OutputWriter> outputWriters = parseOutputWritersNode(configurationRootNode);
+        jmxExporter.getOutputWriters().addAll(outputWriters);
+
+        JsonNode queryIntervalInSecondsNode = configurationRootNode.path("queryIntervalInSeconds");
+        if (!queryIntervalInSecondsNode.isMissingNode()) {
+            jmxExporter.setQueryIntervalInSeconds(queryIntervalInSecondsNode.asInt());
+        }
+
+        JsonNode exportBatchSizeNode = configurationRootNode.path("exportBatchSize");
+        if (!exportBatchSizeNode.isMissingNode()) {
+            jmxExporter.setExportBatchSize(exportBatchSizeNode.asInt());
+        }
+
+        JsonNode numQueryThreadsNode = configurationRootNode.path("numQueryThreads");
+        if (!numQueryThreadsNode.isMissingNode()) {
+            jmxExporter.setNumQueryThreads(numQueryThreadsNode.asInt());
+        }
+
+        JsonNode exportIntervalInSecondsNode = configurationRootNode.path("exportIntervalInSeconds");
+        if (!exportIntervalInSecondsNode.isMissingNode()) {
+            jmxExporter.setExportIntervalInSeconds(exportIntervalInSecondsNode.asInt());
+        }
+
+
+        JsonNode numExportThreadsNode = configurationRootNode.path("numExportThreads");
+        if (!numExportThreadsNode.isMissingNode()) {
+            jmxExporter.setNumExportThreads(numExportThreadsNode.asInt());
+        }
+
+        logger.info("Loaded {}", jmxExporter);
+        return jmxExporter;
+    }
+
+    private List<OutputWriter> parseOutputWritersNode(JsonNode outputWritersParentNode) {
+        JsonNode outputWritersNode = outputWritersParentNode.path("outputWriters");
+        List<OutputWriter> outputWriters = new ArrayList<OutputWriter>();
+        if (outputWritersNode.isMissingNode()) {
+        } else if (outputWritersNode.isArray()) {
+            for (JsonNode outputWriterNode : outputWritersNode) {
+                try {
+                    String className = outputWriterNode.path("@class").asText();
+                    OutputWriter outputWriter = (OutputWriter) Class.forName(className).newInstance();
+                    JsonNode settingsNode = outputWriterNode.path("settings");
+                    if (settingsNode.isMissingNode()) {
+                    } else if (settingsNode.isObject()) {
+                        ObjectMapper mapper = new ObjectMapper();
+                        Map<String, Object> settings = mapper.treeToValue(settingsNode, Map.class);
+                        outputWriter.setSettings(settings);
+                    } else {
+                        logger.warn("Ignore invalid node {}", outputWriterNode);
+                    }
+                    outputWriters.add(outputWriter);
+                } catch (Exception e) {
+                    throw new JmxExporterException("Exception converting settings " + outputWritersNode, e);
                 }
-
             }
-        } catch (Exception e) {
-            throw new JmxExporterException("Exception converting settings " + outputWritersNode, e);
+        } else {
+            logger.warn("Ignore invalid node {}", outputWritersNode);
         }
-
-
-        logger.info("Loaded configuration {}", configuration);
-        return configuration;
+        return outputWriters;
     }
 
     protected void parseQueryAttributeNode(Query query, JsonNode attributeNode) {
@@ -132,7 +199,8 @@ public class ConfigurationParser {
             }
 
             String name = attributeNode.path("name").asText();
-            String resultAlias = attributeNode.path("resultAlias").asText();
+            JsonNode resultAliasNode = attributeNode.path("resultAlias");
+            String resultAlias = resultAliasNode.isMissingNode() ? null : resultAliasNode.asText();
             if (keys.isEmpty()) {
                 query.addAttribute(new QueryAttribute(name, resultAlias));
             } else {

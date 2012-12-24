@@ -19,6 +19,8 @@ package org.jmxexporter.config;
 import org.jmxexporter.JmxExporter;
 import org.jmxexporter.Query;
 import org.jmxexporter.QueryAttribute;
+import org.jmxexporter.output.NoOpWriter;
+import org.jmxexporter.output.OutputWriter;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -41,13 +43,15 @@ public class ConfigurationTest {
 
     static Map<String, Query> queriesByResultName;
 
+    static JmxExporter jmxExporter;
+
     @BeforeClass
     public static void beforeClass() throws Exception {
         ConfigurationParser configurationParser = new ConfigurationParser();
-        InputStream jsonFile = Thread.currentThread().getContextClassLoader().getResourceAsStream("org/jmxexporter/sample1.json");
-        JmxExporter configuration = configurationParser.parseConfiguration(jsonFile);
+        InputStream jsonFile = Thread.currentThread().getContextClassLoader().getResourceAsStream("org/jmxexporter/jmxexporter-config-test.json");
+        jmxExporter = configurationParser.newJmxExporter(jsonFile);
         queriesByResultName = new HashMap<String, Query>();
-        for (Query query : configuration.getQueries()) {
+        for (Query query : jmxExporter.getQueries()) {
             queriesByResultName.put(query.getResultName(), query);
         }
     }
@@ -143,5 +147,28 @@ public class ConfigurationTest {
             assertThat(queryAttribute.getResultName(), is("collection-usage-threshold-supported"));
         }
 
+    }
+
+    @Test
+    public void validateQueryWithOutputWriter() throws MalformedObjectNameException {
+        ObjectName objectName = new ObjectName("java.lang:type=MemoryPool,name=PS Eden Space");
+        Query query = queriesByResultName.get("test-with-outputwriter");
+        assertThat(query.getObjectName(), is(objectName));
+        assertThat(query.getResultName(), is("test-with-outputwriter"));
+        assertThat(query.getQueryAttributes().size(), is(1));
+        QueryAttribute queryAttribute = query.getQueryAttributes().iterator().next();
+        assertThat(queryAttribute.getName(), is("CollectionUsageThresholdCount"));
+        assertThat(queryAttribute.getResultName(), is("CollectionUsageThresholdCount"));
+        assertThat(query.getOutputWriters().size(), is(1));
+        OutputWriter outputWriter = query.getOutputWriters().get(0);
+        assertThat(outputWriter, instanceOf(NoOpWriter.class));
+    }
+
+    @Test
+    public void validateTuningParameters(){
+        assertThat(jmxExporter.getNumQueryThreads(), is(3));
+        assertThat(jmxExporter.getQueryIntervalInSeconds(), is(5));
+        assertThat(jmxExporter.getExportIntervalInSeconds(), is(10));
+        assertThat(jmxExporter.getNumExportThreads(), is(2));
     }
 }

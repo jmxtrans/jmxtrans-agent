@@ -17,10 +17,6 @@ package org.jmxexporter.util.pool;
 
 import org.apache.commons.pool.KeyedPoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
-import org.jmxexporter.util.jmx.SelfNaming;
-
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
@@ -73,5 +69,75 @@ public class ManagedGenericKeyedObjectPool<K, V> extends GenericKeyedObjectPool<
 
     public ManagedGenericKeyedObjectPool(KeyedPoolableObjectFactory<K, V> factory, int maxActive, byte whenExhaustedAction, long maxWait, int maxIdle, int maxTotal, int minIdle, boolean testOnBorrow, boolean testOnReturn, long timeBetweenEvictionRunsMillis, int numTestsPerEvictionRun, long minEvictableIdleTimeMillis, boolean testWhileIdle, boolean lifo) {
         super(factory, maxActive, whenExhaustedAction, maxWait, maxIdle, maxTotal, minIdle, testOnBorrow, testOnReturn, timeBetweenEvictionRunsMillis, numTestsPerEvictionRun, minEvictableIdleTimeMillis, testWhileIdle, lifo);
+    }
+
+    @Override
+    public int getNumIdle() {
+        return super.getNumIdle();
+    }
+
+    @Override
+    public int getNumActive() {
+        return super.getNumActive();
+    }
+
+    @Override
+    public boolean getLifo() {
+        return super.getLifo();
+    }
+
+    @Override
+    public boolean getTestWhileIdle() {
+        return super.getTestWhileIdle();
+    }
+
+    @Override
+    public long getMinEvictableIdleTimeMillis() {
+        return super.getMinEvictableIdleTimeMillis();
+    }
+
+    @Override
+    public int getNumTestsPerEvictionRun() {
+        return super.getNumTestsPerEvictionRun();
+    }
+
+    @Override
+    public long getTimeBetweenEvictionRunsMillis() {
+        return super.getTimeBetweenEvictionRunsMillis();
+    }
+
+    @Override
+    public boolean getTestOnReturn() {
+        return super.getTestOnReturn();
+    }
+
+    @Override
+    public boolean getTestOnBorrow() {
+        return super.getTestOnBorrow();
+    }
+
+    @Override
+    public int getMinIdle() {
+        return super.getMinIdle();
+    }
+
+    @Override
+    public int getMaxIdle() {
+        return super.getMaxIdle();
+    }
+
+    @Override
+    public long getMaxWait() {
+        return super.getMaxWait();
+    }
+
+    @Override
+    public int getMaxTotal() {
+        return super.getMaxTotal();
+    }
+
+    @Override
+    public int getMaxActive() {
+        return super.getMaxActive();
     }
 }

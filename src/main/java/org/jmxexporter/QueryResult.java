@@ -64,8 +64,8 @@ public class QueryResult {
     @Override
     public String toString() {
         return "QueryResult{" +
-                "query=" + query == null ? null : query.getResultName() +
-                ", attributeName='" + attributeName + '\'' +
+                "query='" + (query == null ? null : query.getResultName()) + "'" +
+                ", attribute='" + attributeName + '\'' +
                 ", epoch=" + new Timestamp(epochInMillis) +
                 ", value=" + value +
                 '}';

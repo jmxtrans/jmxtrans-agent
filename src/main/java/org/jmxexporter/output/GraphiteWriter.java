@@ -73,7 +73,7 @@ public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter
         socketPool.setMinEvictableIdleTimeMillis(TimeUnit.MINUTES.toMillis(5));
 
         try {
-            socketPoolObjectName = new ObjectName("org.jmxexporter:Type=SocketPool,Host=" + host + ",port" + port + ",Name=GraphiteSocketPool@" + System.identityHashCode(this));
+            socketPoolObjectName = new ObjectName("org.jmxexporter:Type=SocketPool,Host=" + host + ",Port=" + port + ",Name=GraphiteSocketPool@" + System.identityHashCode(this));
             ObjectInstance objectInstance = ManagementFactory.getPlatformMBeanServer().registerMBean(socketPool, socketPoolObjectName);
             socketPoolObjectName = objectInstance.getObjectName();
         } catch (Exception e) {
@@ -96,8 +96,8 @@ public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter
             socket = socketPool.borrowObject(graphiteServerSocketAddress);
             OutputStreamWriter out = new OutputStreamWriter(socket.getOutputStream(), UTF_8);
             for (QueryResult result : results) {
-                String msg = metricPathPrefix + result.getQuery().getResultName() + "." + result.getAttributeName() + " " + result.getEpoch(TimeUnit.SECONDS) + "\n";
-                logger.debug("Export '{}'");
+                String msg = metricPathPrefix + result.getQuery().getResultName() + "." + result.getAttributeName() + " " + result.getValue() + " " + result.getEpoch(TimeUnit.SECONDS) + "\n";
+                logger.debug("Export '{}'", msg);
                 out.write(msg);
             }
             out.flush();

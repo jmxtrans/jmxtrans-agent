@@ -58,10 +58,16 @@ public class JmxExporter implements JmxExporterMBean {
     private int exportBatchSize = 50;
 
     @PostConstruct
-    public void start() {
+    public void start() throws Exception {
 
         if (mbeanServer == null) {
             mbeanServer = ManagementFactory.getPlatformMBeanServer();
+        }
+        for (Query query : queries) {
+            query.start();
+        }
+        for (OutputWriter outputWriter : outputWriters) {
+            outputWriter.start();
         }
 
         queryScheduledExecutor = Executors.newScheduledThreadPool(getNumQueryThreads(), new NamedThreadFactory("jmxexporter-query-"));
@@ -112,11 +118,13 @@ public class JmxExporter implements JmxExporterMBean {
     @Override
     public String toString() {
         return "JmxExporter{" +
-                "queries=" + queries +
+                " queries=" + queries +
+                ", outputWriters=" + outputWriters +
                 ", numQueryThreads=" + numQueryThreads +
                 ", queryIntervalInSeconds=" + queryIntervalInSeconds +
                 ", numExportThreads=" + numExportThreads +
                 ", exportIntervalInSeconds=" + exportIntervalInSeconds +
+                ", exportBatchSize=" + exportBatchSize +
                 '}';
     }
 
@@ -174,6 +182,9 @@ public class JmxExporter implements JmxExporterMBean {
         this.exportBatchSize = exportBatchSize;
     }
 
+    /**
+     * Exposed for manual / JMX invocation
+     */
     @Override
     public void performQuery() {
         for (Query query : getQueries()) {
@@ -181,6 +192,9 @@ public class JmxExporter implements JmxExporterMBean {
         }
     }
 
+    /**
+     * Exposed for manual / JMX invocation
+     */
     @Override
     public void performExport() {
         for (Query query : getQueries()) {

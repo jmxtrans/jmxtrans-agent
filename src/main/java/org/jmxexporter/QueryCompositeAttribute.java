@@ -74,7 +74,7 @@ public class QueryCompositeAttribute extends QueryAttribute {
         return "QueryCompositeAttribute{" +
                 "name='" + getName() + '\'' +
                 ", resultAlias='" + getResultAlias() + '\'' +
-                "keys=" + (keys == null ? null : Arrays.asList(keys)) +
+                ", keys=" + (keys == null ? null : Arrays.asList(keys)) +
                 '}';
     }
 }

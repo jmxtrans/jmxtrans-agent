@@ -16,50 +16,31 @@
 package org.jmxexporter;
 
 import org.jmxexporter.config.ConfigurationParser;
-import org.jmxexporter.util.concurrent.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.management.MBeanServer;
 import java.io.InputStream;
-import java.lang.management.ManagementFactory;
 import java.net.URL;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class JmxExporterServer {
+public class JmxExporterFactory {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-
-
-    private JmxExporter configuration;
+    private JmxExporter jmxExporter;
 
     private String configurationUrl;
 
-    public JmxExporterServer() {
-    }
-
     @PostConstruct
-    public void start() {
-        try {
-            InputStream in;
-            if (configurationUrl.startsWith("classpath:")) {
-                String path = this.configurationUrl.substring("classpath:".length());
-                in = Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
-            } else {
-                in = new URL(configurationUrl).openStream();
-            }
-            configuration = new ConfigurationParser().parseConfiguration(in);
-        } catch (Exception e) {
-            throw new JmxExporterException("Exception loading configuration'" + configurationUrl + "'", e);
-        }
+    public JmxExporter getObject() throws Exception {
+        logger.info("Load JmxExporter('{}')", configurationUrl);
+        jmxExporter = new ConfigurationParser().newJmxExporter(configurationUrl);
+        logger.info("Start JmxExporter('{}')", configurationUrl);
+        jmxExporter.start();
+        return jmxExporter;
     }
 
     public String getConfigurationUrl() {
