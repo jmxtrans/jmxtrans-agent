@@ -16,7 +16,6 @@
 package org.jmxexporter;
 
 import org.jmxexporter.config.ConfigurationParser;
-import org.junit.Test;
 
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -25,9 +24,12 @@ import java.util.concurrent.TimeUnit;
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public class JmxExporterIntegrationTest {
+    public static void main(String[] args) throws Exception {
+        JmxExporterIntegrationTest integrationTest = new JmxExporterIntegrationTest();
+        integrationTest.integrationTest();
+    }
 
-    @Test
-    public void test() throws Exception {
+    public void integrationTest() throws Exception {
         JmxExporter jmxExporter = new ConfigurationParser().newJmxExporter("classpath:org/jmxexporter/jmxexporter-integ-test.json");
         jmxExporter.start();
 

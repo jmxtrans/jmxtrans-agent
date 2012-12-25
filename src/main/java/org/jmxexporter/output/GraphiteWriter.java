@@ -15,29 +15,30 @@
  */
 package org.jmxexporter.output;
 
+import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.jmxexporter.QueryResult;
-import org.jmxexporter.util.pool.SocketFactory;
+import org.jmxexporter.util.net.SocketWriter;
 import org.jmxexporter.util.pool.ManagedGenericKeyedObjectPool;
+import org.jmxexporter.util.pool.SocketWriterPoolFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
-import java.io.OutputStreamWriter;
 import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
 /**
- * See <a hrev="http://graphite.readthedocs.org/en/0.9.10/feeding-carbon.html#the-plaintext-protocol">Graphite / Feeding Carbon / The Plain Text Protocol</a>.
+ * <a hrev="http://graphite.readthedocs.org/">Graphite</a> implementation of the {@linkplain OutputWriter}.
+ * <p/>
+ * <p/>
+ * This implementation uses <a hrev="http://graphite.readthedocs.org/en/0.9.10/feeding-carbon.html#the-plaintext-protocol">Carbon Plan Text protocol</a>.
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter {
-
-    public static final Charset UTF_8 = Charset.forName("UTF-8");
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -48,8 +49,7 @@ public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter
 
     private InetSocketAddress graphiteServerSocketAddress;
 
-    private ManagedGenericKeyedObjectPool<InetSocketAddress, Socket> socketPool = new ManagedGenericKeyedObjectPool<InetSocketAddress, Socket>(new SocketFactory());
-
+    private ManagedGenericKeyedObjectPool<InetSocketAddress, SocketWriter> socketWriterPool;
     private ObjectName socketPoolObjectName;
 
     @Override
@@ -65,24 +65,27 @@ public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter
             metricPathPrefix = metricPathPrefix + ".";
         }
 
-        socketPool = new ManagedGenericKeyedObjectPool<InetSocketAddress, Socket>(new SocketFactory());
-        socketPool.setTestOnBorrow(true);
-        socketPool.setMaxActive(-1); // no limit
-        socketPool.setMaxIdle(-1); // no limit
-        socketPool.setTimeBetweenEvictionRunsMillis(TimeUnit.MINUTES.toMillis(5));
-        socketPool.setMinEvictableIdleTimeMillis(TimeUnit.MINUTES.toMillis(5));
+        GenericKeyedObjectPool.Config config = new GenericKeyedObjectPool.Config();
+        config.testOnBorrow = getBooleanSetting("pool.testOnBorrow", true);
+        config.testWhileIdle = getBooleanSetting("pool.testWhileIdle", true);
+        config.maxActive = getIntSetting("pool.maxActive", -1);
+        config.maxIdle = getIntSetting("pool.maxIdle", -1);
+        config.minEvictableIdleTimeMillis = getLongSetting("pool.minEvictableIdleTimeMillis", TimeUnit.MINUTES.toMillis(5));
+        config.timeBetweenEvictionRunsMillis = getLongSetting("pool.timeBetweenEvictionRunsMillis", TimeUnit.MINUTES.toMillis(5));
+
+        socketWriterPool = new ManagedGenericKeyedObjectPool<InetSocketAddress, SocketWriter>(new SocketWriterPoolFactory("UTF-8"), config);
 
         try {
             socketPoolObjectName = new ObjectName("org.jmxexporter:Type=SocketPool,Host=" + host + ",Port=" + port + ",Name=GraphiteSocketPool@" + System.identityHashCode(this));
-            ObjectInstance objectInstance = ManagementFactory.getPlatformMBeanServer().registerMBean(socketPool, socketPoolObjectName);
+            ObjectInstance objectInstance = ManagementFactory.getPlatformMBeanServer().registerMBean(socketWriterPool, socketPoolObjectName);
             socketPoolObjectName = objectInstance.getObjectName();
         } catch (Exception e) {
             logger.warn("Silently ignore exception registering mbean {}", socketPoolObjectName, e);
         }
 
         try {
-            Socket socket = socketPool.borrowObject(graphiteServerSocketAddress);
-            socketPool.returnObject(graphiteServerSocketAddress, socket);
+            SocketWriter socketWriter = socketWriterPool.borrowObject(graphiteServerSocketAddress);
+            socketWriterPool.returnObject(graphiteServerSocketAddress, socketWriter);
         } catch (Exception e) {
             logger.warn("Graphite server '{}' connection test failure", e);
         }
@@ -91,24 +94,23 @@ public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter
     @Override
     public void write(Iterable<QueryResult> results) {
         logger.debug("Export to '{}' results {}", graphiteServerSocketAddress, results);
-        Socket socket = null;
+        SocketWriter socketWriter = null;
         try {
-            socket = socketPool.borrowObject(graphiteServerSocketAddress);
-            OutputStreamWriter out = new OutputStreamWriter(socket.getOutputStream(), UTF_8);
+            socketWriter = socketWriterPool.borrowObject(graphiteServerSocketAddress);
             for (QueryResult result : results) {
                 String msg = metricPathPrefix + result.getQuery().getResultName() + "." + result.getAttributeName() + " " + result.getValue() + " " + result.getEpoch(TimeUnit.SECONDS) + "\n";
                 logger.debug("Export '{}'", msg);
-                out.write(msg);
+                socketWriter.write(msg);
             }
-            out.flush();
-            socketPool.returnObject(graphiteServerSocketAddress, socket);
+            socketWriter.flush();
+            socketWriterPool.returnObject(graphiteServerSocketAddress, socketWriter);
         } catch (Exception e) {
-            logger.warn("Failure to send result to graphite server '{}'", graphiteServerSocketAddress, e);
-            if (socket != null) {
+            logger.warn("Failure to send result to graphite server '{}' with {}", graphiteServerSocketAddress, socketWriter, e);
+            if (socketWriter != null) {
                 try {
-                    socketPool.invalidateObject(graphiteServerSocketAddress, socket);
+                    socketWriterPool.invalidateObject(graphiteServerSocketAddress, socketWriter);
                 } catch (Exception e2) {
-                    logger.warn("Exception invalidating socket connected to graphite server '{}'", graphiteServerSocketAddress, e2);
+                    logger.warn("Exception invalidating socketWriter connected to graphite server '{}': {}", graphiteServerSocketAddress, socketWriter, e2);
                 }
             }
         }
@@ -118,7 +120,7 @@ public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter
     public void stop() throws Exception {
         logger.info("Stop GraphiteWriter connected to '{}' ...", graphiteServerSocketAddress);
         super.stop();
-        socketPool.close();
+        socketWriterPool.close();
         try {
             ManagementFactory.getPlatformMBeanServer().unregisterMBean(socketPoolObjectName);
         } catch (Exception e) {

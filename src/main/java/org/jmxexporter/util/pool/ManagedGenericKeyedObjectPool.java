@@ -19,9 +19,11 @@ import org.apache.commons.pool.KeyedPoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 
 /**
+ * JMX Enabled {@linkplain GenericKeyedObjectPool}.
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class ManagedGenericKeyedObjectPool<K, V> extends GenericKeyedObjectPool<K, V> implements ManagedGenericKeyedObjectPoolMBean {
+public class ManagedGenericKeyedObjectPool<K, V> extends GenericKeyedObjectPool<K, V> implements ManagedGenericKeyedObjectPoolMBean<K,V> {
 
     public ManagedGenericKeyedObjectPool() {
         super();

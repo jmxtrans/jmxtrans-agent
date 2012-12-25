@@ -15,6 +15,7 @@
  */
 package org.jmxexporter;
 
+import javax.management.ObjectName;
 import java.sql.Timestamp;
 import java.util.concurrent.TimeUnit;
 
@@ -25,13 +26,16 @@ public class QueryResult {
 
     private Query query;
 
+    private ObjectName objectName;
+
     private final String attributeName;
 
     private final long epochInMillis;
 
     private final Object value;
 
-    public QueryResult(String attributeName, Object value, long epochInMillis) {
+    public QueryResult(ObjectName objectName, String attributeName, Object value, long epochInMillis) {
+        this.objectName = objectName;
         this.attributeName = attributeName;
         this.epochInMillis = epochInMillis;
         this.value = value;

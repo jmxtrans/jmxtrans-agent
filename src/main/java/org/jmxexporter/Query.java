@@ -48,7 +48,7 @@ public class Query {
 
     private List<OutputWriter> outputWriters = new ArrayList<OutputWriter>();
 
-    private final BlockingQueue<QueryResult> queryResults = new DiscardingBlockingQueue<QueryResult>(200);
+    private BlockingQueue<QueryResult> queryResults = new DiscardingBlockingQueue<QueryResult>(200);
 
     public Query() {
     }
@@ -62,6 +62,11 @@ public class Query {
         }
     }
 
+    public Query(ObjectName objectName) {
+        this();
+        this.objectName = objectName;
+    }
+
 
     public void performQuery(MBeanServer mbeanServer) {
         Set<ObjectName> matchingObjectNames = mbeanServer.queryNames(getObjectName(), null);
@@ -71,7 +76,7 @@ public class Query {
                 AttributeList jmxAttributes = mbeanServer.getAttributes(matchingObjectName, getAttributeNames());
                 for (Attribute jmxAttribute : jmxAttributes.asList()) {
                     QueryAttribute queryAttribute = getAttribute(jmxAttribute.getName());
-                    Collection<QueryResult> attributeResults = queryAttribute.parseAttribute(jmxAttribute, epoch);
+                    Collection<QueryResult> attributeResults = queryAttribute.parseAttribute(matchingObjectName, jmxAttribute, epoch);
                     addResults(attributeResults);
                 }
             } catch (Exception e) {
@@ -154,16 +159,25 @@ public class Query {
         return attributesByName.get(name);
     }
 
-    public Queue<QueryResult> getResults() {
+    public BlockingQueue<QueryResult> getResults() {
         return queryResults;
     }
 
-    public String escapeObjectName(ObjectName on) {
-        return on.getCanonicalKeyPropertyListString();
+    /**
+     * WARNING: {@linkplain #queryResults} queue should not be changed at runtime as the operation is not thread safe.
+     *
+     * @param queryResultQueue
+     */
+    protected void setResultsQueue(BlockingQueue<QueryResult> queryResultQueue) {
+        this.queryResults = queryResultQueue;
+    }
+
+    public String escapeObjectName() {
+        return getObjectName().getCanonicalKeyPropertyListString();
     }
 
     public String getResultName() {
-        return resultAlias == null ? escapeObjectName(objectName) : resultAlias;
+        return resultAlias == null ? escapeObjectName() : resultAlias;
     }
 
     public void setResultAlias(String resultAlias) {

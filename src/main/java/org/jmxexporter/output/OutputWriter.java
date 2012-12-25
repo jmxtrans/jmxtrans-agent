@@ -22,19 +22,48 @@ import javax.annotation.PreDestroy;
 import java.util.Map;
 
 /**
+ * Interface of define a writer that will convert the collected JMX metrics to a given format (e.g. file, Graphite, ...)
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public interface OutputWriter {
 
+    /**
+     * Configuration settings of the {@linkplain OutputWriter}.
+     *
+     * @return
+     */
     Map<String, Object> getSettings();
 
+    /**
+     * Sets the configuration setting of the {@linkplain OutputWriter}.
+     */
     void setSettings(Map<String, Object> settings);
 
+    /**
+     * Write all the given {@linkplain QueryResult} to the target system.
+     *
+     * @param results
+     */
     void write(Iterable<QueryResult> results);
 
+    /**
+     * Initialize the {@linkplain OutputWriter}. Called at the startup of the {@linkplain org.jmxexporter.JmxExporter}.
+     * <p/>
+     * This is the place to load the configuration (from the injected settings) and to initialize writer's resource like object pools.
+     *
+     * @throws Exception
+     */
     @PostConstruct
     void start() throws Exception;
 
+    /**
+     * Stops the underlying resources of the {@linkplain OutputWriter}. Called at the shutdown of the {@linkplain org.jmxexporter.JmxExporter}.
+     * <p/>
+     * This is the place to stop the writer's resources like object pools, threads and sockets.
+     *
+     * @throws Exception
+     */
     @PreDestroy
     void stop() throws Exception;
 }

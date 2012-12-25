@@ -18,7 +18,7 @@ package org.jmxexporter.util.pool;
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-interface ManagedGenericKeyedObjectPoolMBean {
+public interface ManagedGenericKeyedObjectPoolMBean<K, V> {
 
     int getNumTestsPerEvictionRun();
 

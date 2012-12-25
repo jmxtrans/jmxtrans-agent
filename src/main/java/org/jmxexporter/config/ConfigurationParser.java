@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jmxexporter.*;
 import org.jmxexporter.output.OutputWriter;
+import org.jmxexporter.util.json.PlaceholderEnabledJsonNodeFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +38,12 @@ public class ConfigurationParser {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private ObjectMapper mapper;
+
+    {
+        mapper = new ObjectMapper();
+        mapper.setNodeFactory(new PlaceholderEnabledJsonNodeFactory());
+    }
 
     /**
      * @param configurationUrl JSON configuration file URL ("http://...", "classpath:com/mycompany...", ...)
@@ -59,7 +65,6 @@ public class ConfigurationParser {
     }
 
     public JmxExporter newJmxExporter(InputStream configuration) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readValue(configuration, JsonNode.class);
         return newJmxExporter(rootNode);
     }

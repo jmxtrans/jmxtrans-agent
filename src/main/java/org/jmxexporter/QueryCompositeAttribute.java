@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.Attribute;
+import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
 import java.util.*;
 
@@ -48,7 +49,7 @@ public class QueryCompositeAttribute extends QueryAttribute {
     }
 
 
-    public Collection<QueryResult> parseAttribute(Attribute attribute, long epoch) {
+    public Collection<QueryResult> parseAttribute(ObjectName objectName, Attribute attribute, long epoch) {
         Object value = attribute.getValue();
         if (value instanceof CompositeData) {
             CompositeData compositeData = (CompositeData) value;
@@ -57,6 +58,7 @@ public class QueryCompositeAttribute extends QueryAttribute {
             for (int i = 0; i < keys.length; i++) {
                 String key = keys[i];
                 QueryResult queryResult = new QueryResult(
+                        objectName,
                         getResultName() + "." + key,
                         compositeData.get(key),
                         epoch);

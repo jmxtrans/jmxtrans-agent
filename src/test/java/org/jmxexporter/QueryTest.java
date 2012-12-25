@@ -89,7 +89,7 @@ public class QueryTest {
         // PREPARE DATA
         long time = System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
         for (int i = 0; i < 100; i++) {
-            QueryResult result = new QueryResult("CollectionTime", 5 * i, time);
+            QueryResult result = new QueryResult(query.getObjectName(), "CollectionTime", 5 * i, time);
             query.addResult(result);
 
             assertThat(query.getResults().size(), is(i + 1));
@@ -105,6 +105,15 @@ public class QueryTest {
         assertThat(actualExportResultCount, is(100));
 
 
+    }
+
+    @Test
+    public void testEscapeObjectName() {
+        Query query = new Query("java.lang:type=GarbageCollector,name=PS Scavenge");
+
+        String actual = query.escapeObjectName();
+        System.out.println(actual);
+        assertTrue("TODO implement escapeObjectName()", false);
     }
 
 }

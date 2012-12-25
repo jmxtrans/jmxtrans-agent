@@ -21,6 +21,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.management.ObjectName;
 import java.util.*;
 
 /**
@@ -46,12 +47,13 @@ public class GraphiteWriterTest {
         graphiteWriter.stop();
     }
 
-
     @Test
-    public void testWithOneResult() {
-        QueryResult queryResult = new QueryResult("singleresult", 10, System.currentTimeMillis());
+    public void testWithOneResult() throws Exception {
+        ObjectName objectName = new ObjectName("java.lang:type=GarbageCollector,name=PS Scavenge");
 
-        Query query = new Query();
+        QueryResult queryResult = new QueryResult(objectName, "singleresult", 10, System.currentTimeMillis());
+
+        Query query = new Query(objectName);
         query.setResultAlias("testwithoneresult");
         query.addResult(queryResult);
 
@@ -59,9 +61,11 @@ public class GraphiteWriterTest {
     }
 
     @Test
-    public void testWithTwoResult() {
-        QueryResult queryResult1 = new QueryResult("first", 10, System.currentTimeMillis());
-        QueryResult queryResult2 = new QueryResult("second", 20, System.currentTimeMillis());
+    public void testWithTwoResult() throws Exception {
+        ObjectName objectName = new ObjectName("java.lang:type=GarbageCollector,name=PS Scavenge");
+
+        QueryResult queryResult1 = new QueryResult(objectName, "first", 10, System.currentTimeMillis());
+        QueryResult queryResult2 = new QueryResult(objectName, "second", 20, System.currentTimeMillis());
         List<QueryResult> results = Arrays.asList(queryResult1, queryResult2);
 
         Query query = new Query();

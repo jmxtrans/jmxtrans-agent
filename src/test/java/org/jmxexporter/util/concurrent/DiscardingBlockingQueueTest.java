@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jmxexporter.util;
+package org.jmxexporter.util.concurrent;
 
-import org.jmxexporter.util.concurrent.DiscardingBlockingQueue;
 import org.junit.Before;
 import org.junit.Test;
-
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>

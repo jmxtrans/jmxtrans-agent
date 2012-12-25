@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.Attribute;
+import javax.management.ObjectName;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -57,13 +58,19 @@ public class QueryAttribute implements Comparable<QueryAttribute> {
         return getResultAlias() == null ? getName() : getResultAlias();
     }
 
-    public Collection<QueryResult> parseAttribute(Attribute attribute, long epoch) {
+    /**
+     * @param objectName <code>objectName</code> on which the <code>attribute</code> was obtained.
+     * @param attribute
+     * @param epoch
+     * @return
+     */
+    public Collection<QueryResult> parseAttribute(ObjectName objectName, Attribute attribute, long epoch) {
         Object value = attribute.getValue();
         if (value == null) {
             logger.debug("Ignore null attribute {}", attribute);
             return Collections.emptyList();
         } else if (value instanceof Number || value instanceof String || value instanceof Date) {
-            return Collections.singleton(new QueryResult(getResultName(), value, epoch));
+            return Collections.singleton(new QueryResult(objectName, getResultName(), value, epoch));
         } else {
             logger.warn("Ignore non String/Number/Date attribute {}", attribute);
             return Collections.emptyList();

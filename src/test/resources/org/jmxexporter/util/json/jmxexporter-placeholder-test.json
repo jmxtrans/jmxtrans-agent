@@ -47,7 +47,7 @@
         {
             "@class": "org.jmxexporter.output.GraphiteWriter",
             "settings": {
-                "host": "${graphite.host:localhost}",
+                "host": "${graphite.host}",
                 "port": "${graphite.port:2003}",
                 "namePrefix": "servers.${server.name:localhost}."
             }

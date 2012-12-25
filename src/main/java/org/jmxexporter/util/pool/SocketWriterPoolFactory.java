@@ -17,48 +17,49 @@ package org.jmxexporter.util.pool;
 
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
 import org.apache.commons.pool.KeyedPoolableObjectFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jmxexporter.util.net.SocketWriter;
 
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.charset.Charset;
 
 /**
+ * Factory for {@linkplain SocketWriter} instances created from {@linkplain InetSocketAddress}.
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class SocketFactory extends BaseKeyedPoolableObjectFactory<InetSocketAddress, Socket> implements KeyedPoolableObjectFactory<InetSocketAddress, Socket> {
+public class SocketWriterPoolFactory extends BaseKeyedPoolableObjectFactory<InetSocketAddress, SocketWriter> implements KeyedPoolableObjectFactory<InetSocketAddress, SocketWriter> {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Charset charset;
+
+    public SocketWriterPoolFactory(String charset) {
+        this(Charset.forName(charset));
+    }
+    public SocketWriterPoolFactory(Charset charset) {
+        this.charset = charset;
+    }
 
     @Override
-    public Socket makeObject(InetSocketAddress inetSocketAddress) throws Exception {
+    public SocketWriter makeObject(InetSocketAddress inetSocketAddress) throws Exception {
         Socket socket = new Socket(inetSocketAddress.getAddress(), inetSocketAddress.getPort());
         socket.setKeepAlive(true);
-        return socket;
+
+        return new SocketWriter(socket, charset);
     }
 
     @Override
-    public void destroyObject(InetSocketAddress inetSocketAddress, Socket socket) throws Exception {
-        super.destroyObject(inetSocketAddress, socket);
-        socket.close();
+    public void destroyObject(InetSocketAddress inetSocketAddress, SocketWriter socketWriter) throws Exception {
+        super.destroyObject(inetSocketAddress, socketWriter);
+        socketWriter.close();
     }
 
     @Override
-    public boolean validateObject(InetSocketAddress inetSocketAddress, Socket socket) {
+    public boolean validateObject(InetSocketAddress inetSocketAddress, SocketWriter socketWriter) {
+        Socket socket = socketWriter.getSocket();
         return socket.isConnected()
                 && socket.isBound()
                 && !socket.isClosed()
                 && !socket.isInputShutdown()
                 && !socket.isOutputShutdown();
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().getSimpleName().hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj.getClass().equals(SocketFactory.class);
     }
 }
