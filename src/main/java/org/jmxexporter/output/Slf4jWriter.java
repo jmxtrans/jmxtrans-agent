@@ -15,8 +15,38 @@
  */
 package org.jmxexporter.output;
 
+import org.jmxexporter.QueryResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
+ * <a href="http://www.slf4j.org/">SLF4J</a> based {@linkplain OutputWriter} implementation.
+ * <p/>
+ * Supported attributes:
+ * <table>
+ *     <tr>
+ *         <th>Attribute</th>
+ *         <th>Description</th>
+ *         <th></th>
+ *     </tr>
+ * </table>
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public class Slf4jWriter extends AbstractOutputWriter {
+
+    private Logger logger = LoggerFactory.getLogger(getClass());
+
+    @Override
+    public void start() {
+        super.start();
+        logger = LoggerFactory.getLogger(getStringSetting("logger", getClass().getName()));
+    }
+
+    @Override
+    public void write(Iterable<QueryResult> results) {
+        for (QueryResult result : results) {
+            logger.info(result.getName() + "\t" + result.getEpochInMillis() + "\t" + result.getValue());
+        }
+    }
 }
