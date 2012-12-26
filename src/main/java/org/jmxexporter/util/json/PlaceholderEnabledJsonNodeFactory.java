@@ -20,8 +20,6 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Objects;
-
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
@@ -43,7 +41,7 @@ public class PlaceholderEnabledJsonNodeFactory extends JsonNodeFactory {
     public TextNode textNode(String text) {
         String resolvedText = resolver.resolveString(text);
         if (logger.isInfoEnabled()) {
-            if (Objects.equals(text, resolvedText)) {
+            if (text == null ? resolvedText == null : text.equals(resolvedText)) {
                 logger.debug("Resolve '{}' into '{}'", text, resolvedText);
             } else {
                 logger.info("Resolve '{}' into '{}'", text, resolvedText);
