@@ -1,3 +1,5 @@
+[![Build Status](https://buildhive.cloudbees.com/job/cyrille-leclerc/job/jmxexporter/badge/icon)](https://buildhive.cloudbees.com/job/cyrille-leclerc/job/jmxexporter/)
+
 jmxexporter
 ===========
 
