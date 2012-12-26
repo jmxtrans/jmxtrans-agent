@@ -121,7 +121,7 @@ public class ResultNameStrategy {
         char[] chars = str.toCharArray();
         for (int i = 0; i < chars.length; i++) {
             char ch = chars[i];
-            if (Character.isAlphabetic(ch) || Character.isDigit(ch)) {
+            if (Character.isLetter(ch) || Character.isDigit(ch)) {
                 result.append(ch);
             } else if (ch == '"' && ((i == 0) || (i == chars.length - 1))) {
                 // ignore starting and ending '"' that are used to quote() objectname's values (see ObjectName.value())
