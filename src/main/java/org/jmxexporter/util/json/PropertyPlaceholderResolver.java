@@ -17,6 +17,8 @@ package org.jmxexporter.util.json;
 
 import org.jmxexporter.JmxExporterException;
 
+import java.io.Serializable;
+
 /**
  * Inspired by Spring Property placeholder mechanism.
  * <p/>
@@ -36,7 +38,9 @@ import org.jmxexporter.JmxExporterException;
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class PropertyPlaceholderResolver {
+public class PropertyPlaceholderResolver implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     public String resolveString(String string) {
 

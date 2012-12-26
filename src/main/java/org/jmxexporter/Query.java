@@ -69,11 +69,11 @@ public class Query {
 
 
     public void performQuery(MBeanServer mbeanServer) {
-        Set<ObjectName> matchingObjectNames = mbeanServer.queryNames(getObjectName(), null);
+        Set<ObjectName> matchingObjectNames = mbeanServer.queryNames(this.objectName, null);
         for (ObjectName matchingObjectName : matchingObjectNames) {
             long epochInMillis = System.currentTimeMillis();
             try {
-                AttributeList jmxAttributes = mbeanServer.getAttributes(matchingObjectName, getAttributeNames());
+                AttributeList jmxAttributes = mbeanServer.getAttributes(matchingObjectName, this.attributeNames);
                 for (Attribute jmxAttribute : jmxAttributes.asList()) {
                     QueryAttribute queryAttribute = getAttribute(jmxAttribute.getName());
                     Object value = jmxAttribute.getValue();
@@ -138,10 +138,6 @@ public class Query {
 
     public Query addSimpleAttribute(String attributeName) {
         return addAttribute(new QuerySimpleAttribute(attributeName));
-    }
-
-    public String[] getAttributeNames() {
-        return attributeNames;
     }
 
     public QueryAttribute getAttribute(String name) {

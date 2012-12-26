@@ -1,0 +1,18 @@
+This product includes/uses software, Apache Commons : Pool  (http://commons.apache.org/),
+developed by The Apache Software Foundation  (http://www.apache.org)
+License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+
+
+This product includes/uses software, Logback  (http://logback.qos.ch/),
+developed by QOS.ch (http://www.qos.ch/)
+License: Eclipse Public License v1.0 (http://www.eclipse.org/legal/epl-v10.html)
+         or (per the licensee's choosing)
+         GNU Lesser General Public License, version 2.1 (http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)
+
+This product includes/uses software, SLF4J  (http://www.slf4j.org/),
+developed by QOS.ch (http://www.qos.ch/)
+License: MIT License (http://www.slf4j.org/license.html)
+
+JUnit (http://junit.org)
+developped by Harmcrest (www.hamcrest.org)
+License: Common Public License - v 1.0 (http://junit.sourceforge.net/cpl-v10.html)

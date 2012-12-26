@@ -60,6 +60,18 @@
                     <excludes>
                         <exclude>.git/**/*</exclude>
                         <exclude>.idea/**/*</exclude>
+                        <exclude>.gitignore</exclude>
+                        <exclude>**/*.json</exclude>
+                        <exclude>**/*.md</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.12.4</version>
+                <configuration>
+                    <excludes>
+                        <exclude>**/*IntegrationTest.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -67,24 +79,6 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>2.5.2</version>
-                <executions>
-                    <execution>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>2.9.1</version>
-                <configuration>
-                    <configLocation>src/main/config/checkstyle.xml</configLocation>
-                    <suppressionsLocation>file://${basedir}/src/main/config/checkstyle-suppressions.xml
-                    </suppressionsLocation>
-                </configuration>
                 <executions>
                     <execution>
                         <phase>verify</phase>
@@ -134,11 +128,6 @@
             <groupId>javax.annotation</groupId>
             <artifactId>jsr250-api</artifactId>
             <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>14.0-rc1</version>
         </dependency>
         <dependency>
             <groupId>commons-pool</groupId>

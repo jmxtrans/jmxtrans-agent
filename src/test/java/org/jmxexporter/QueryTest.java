@@ -17,6 +17,7 @@ package org.jmxexporter;
 
 import org.jmxexporter.output.AbstractOutputWriter;
 import org.jmxexporter.output.OutputWriter;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.management.MBeanServer;
@@ -34,6 +35,12 @@ import static org.junit.Assert.*;
 public class QueryTest {
 
     static MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+
+    @BeforeClass
+    public static void beforeClass() {
+        TestUtils.ensureMbeanIsAvailable("java.lang:type=MemoryPool,name=PS Eden Space");
+        TestUtils.ensureMbeanIsAvailable("java.lang:type=MemoryPool,name=PS Perm Gen");
+    }
 
     @Test
     public void basic_jmx_attribute_return_simple_result() throws Exception {

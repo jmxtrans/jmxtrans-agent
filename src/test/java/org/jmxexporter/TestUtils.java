@@ -15,8 +15,12 @@
  */
 package org.jmxexporter;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
@@ -25,11 +29,28 @@ public class TestUtils {
 
     public static Map<String, QueryAttribute> indexByAliasOrName(Iterable<QueryAttribute> queryAttributes) {
         Map<String, QueryAttribute> results = new HashMap<String, QueryAttribute>();
-        for(QueryAttribute queryAttribute : queryAttributes) {
+        for (QueryAttribute queryAttribute : queryAttributes) {
             String key = queryAttribute.getResultAlias() == null ? queryAttribute.getName() : queryAttribute.getResultAlias();
             results.put(key, queryAttribute);
         }
 
         return results;
+    }
+
+    public static void ensureMbeanIsAvailable(String objectName) {
+        try {
+            MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+
+            int counter = 0;
+
+            ObjectName on = new ObjectName(objectName);
+            while (mbeanServer.queryMBeans(on, null).isEmpty() && counter < 100) {
+                TimeUnit.MILLISECONDS.sleep(10);
+                counter++;
+            }
+            mbeanServer.getObjectInstance(on);
+        } catch (Exception e) {
+            throw new RuntimeException("Exception waiting for '" + objectName + "'", e);
+        }
     }
 }
