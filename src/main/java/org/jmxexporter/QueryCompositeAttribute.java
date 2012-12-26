@@ -24,50 +24,58 @@ import javax.management.openmbean.CompositeData;
 import java.util.*;
 
 /**
- * @see javax.management.openmbean.CompositeData
+ * Query attribute descriptor for JMX {@linkplain javax.management.openmbean.CompositeData}.
  */
-public class QueryCompositeAttribute extends QueryAttribute {
+public class QueryCompositeAttribute extends AbstractQueryAttribute implements QueryAttribute {
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    protected ResultNameStrategy resultNameStrategy = new ResultNameStrategy();
 
     /**
      * @see javax.management.openmbean.CompositeType#keySet()
      */
-    private final String[] keys;
+    private String[] keys = new String[0];
 
     /**
      * @param name  name of the JMX attribute
      * @param alias
      * @param keys
      */
-    public QueryCompositeAttribute(String name, String alias, List<String> keys) {
+    public QueryCompositeAttribute(String name, String alias, Collection<String> keys) {
         super(name, alias);
-        this.keys = keys.toArray(new String[0]);
+        addKeys(keys);
     }
 
-    public String[] getKey() {
-        return keys;
+    public void addKeys(Collection<String> keys) {
+        Set<String> newKeys = new HashSet<String>(keys);
+        Collections.addAll(newKeys, this.keys);
+        this.keys = newKeys.toArray(new String[0]);
     }
 
-
-    public Collection<QueryResult> parseAttribute(ObjectName objectName, Attribute attribute, long epoch) {
-        Object value = attribute.getValue();
+    @Override
+    public void performQuery(ObjectName objectName, Object value, long epochInMillis, Queue<QueryResult> results) {
         if (value instanceof CompositeData) {
             CompositeData compositeData = (CompositeData) value;
-            Object[] objects = compositeData.getAll(keys);
-            List<QueryResult> queryResults = new ArrayList<QueryResult>(keys.length);
-            for (int i = 0; i < keys.length; i++) {
-                String key = keys[i];
-                QueryResult queryResult = new QueryResult(
-                        objectName,
-                        getResultName() + "." + key,
-                        compositeData.get(key),
-                        epoch);
-                queryResults.add(queryResult);
+            for (String key : keys) {
+                String resultName = resultNameStrategy.getResultName(getQuery(), objectName, this, key);
+                Object compositeValue = compositeData.get(key);
+                if (compositeValue instanceof Number || compositeValue instanceof String || compositeValue instanceof Date) {
+                    QueryResult result = new QueryResult(resultName, compositeValue, epochInMillis);
+                    logger.debug("Collect {}", result);
+                    results.add(result);
+                } else {
+                    logger.trace("Skip non supported value {}:{}:{}:{}={}", getQuery(), objectName, this, key, compositeValue);
+                }
             }
-            return queryResults;
+        } else if (value instanceof Number || value instanceof String || value instanceof Date) {
+            logger.info("Unexpected 'simple' value for {}:{}:{}", getQuery(), objectName, this);
+            String resultName = resultNameStrategy.getResultName(getQuery(), objectName, this);
+            QueryResult result = new QueryResult(resultName, value, epochInMillis);
+            logger.debug("Collect {}", result);
+            results.add(result);
         } else {
-            logger.warn("Ignore non CompositeData attribute value {}", attribute);
-            return Collections.emptyList();
+            logger.info("Ignore non CompositeData attribute value {}:{}:{}={}", getQuery(), objectName, this, value);
         }
     }
 

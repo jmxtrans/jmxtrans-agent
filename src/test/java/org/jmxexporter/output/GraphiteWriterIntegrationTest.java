@@ -15,19 +15,17 @@
  */
 package org.jmxexporter.output;
 
-import org.jmxexporter.Query;
 import org.jmxexporter.QueryResult;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.management.ObjectName;
 import java.util.*;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class GraphiteWriterTest {
+public class GraphiteWriterIntegrationTest {
 
     GraphiteWriter graphiteWriter;
 
@@ -49,28 +47,16 @@ public class GraphiteWriterTest {
 
     @Test
     public void testWithOneResult() throws Exception {
-        ObjectName objectName = new ObjectName("java.lang:type=GarbageCollector,name=PS Scavenge");
-
-        QueryResult queryResult = new QueryResult(objectName, "singleresult", 10, System.currentTimeMillis());
-
-        Query query = new Query(objectName);
-        query.setResultAlias("testwithoneresult");
-        query.addResult(queryResult);
-
+        QueryResult queryResult = new QueryResult("testwithoneresult.singleresult", 10, System.currentTimeMillis());
         graphiteWriter.write(Collections.singleton(queryResult));
     }
 
     @Test
     public void testWithTwoResult() throws Exception {
-        ObjectName objectName = new ObjectName("java.lang:type=GarbageCollector,name=PS Scavenge");
 
-        QueryResult queryResult1 = new QueryResult(objectName, "first", 10, System.currentTimeMillis());
-        QueryResult queryResult2 = new QueryResult(objectName, "second", 20, System.currentTimeMillis());
+        QueryResult queryResult1 = new QueryResult("testwithtworesult.first", 10, System.currentTimeMillis());
+        QueryResult queryResult2 = new QueryResult("testwithtworesult.second", 20, System.currentTimeMillis());
         List<QueryResult> results = Arrays.asList(queryResult1, queryResult2);
-
-        Query query = new Query();
-        query.setResultAlias("testwithtworesult");
-        query.addResults(results);
 
         graphiteWriter.write(results);
     }

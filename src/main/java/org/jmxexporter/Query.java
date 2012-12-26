@@ -71,13 +71,13 @@ public class Query {
     public void performQuery(MBeanServer mbeanServer) {
         Set<ObjectName> matchingObjectNames = mbeanServer.queryNames(getObjectName(), null);
         for (ObjectName matchingObjectName : matchingObjectNames) {
-            long epoch = System.currentTimeMillis();
+            long epochInMillis = System.currentTimeMillis();
             try {
                 AttributeList jmxAttributes = mbeanServer.getAttributes(matchingObjectName, getAttributeNames());
                 for (Attribute jmxAttribute : jmxAttributes.asList()) {
                     QueryAttribute queryAttribute = getAttribute(jmxAttribute.getName());
-                    Collection<QueryResult> attributeResults = queryAttribute.parseAttribute(matchingObjectName, jmxAttribute, epoch);
-                    addResults(attributeResults);
+                    Object value = jmxAttribute.getValue();
+                    queryAttribute.performQuery(matchingObjectName, value, epochInMillis, this.queryResults);
                 }
             } catch (Exception e) {
                 logger.warn("Exception processing query {}", this, e);
@@ -124,17 +124,6 @@ public class Query {
         return objectName;
     }
 
-    public void addResults(Iterable<QueryResult> results) {
-        for (QueryResult result : results) {
-            addResult(result);
-        }
-    }
-
-    public void addResult(QueryResult queryResult) {
-        queryResult.setQuery(this);
-        queryResults.add(queryResult);
-    }
-
     public Collection<QueryAttribute> getQueryAttributes() {
         return attributesByName.values();
     }
@@ -147,8 +136,8 @@ public class Query {
         return this;
     }
 
-    public Query addAttribute(String attributeName) {
-        return addAttribute(new QueryAttribute(attributeName));
+    public Query addSimpleAttribute(String attributeName) {
+        return addAttribute(new QuerySimpleAttribute(attributeName));
     }
 
     public String[] getAttributeNames() {
@@ -170,14 +159,6 @@ public class Query {
      */
     protected void setResultsQueue(BlockingQueue<QueryResult> queryResultQueue) {
         this.queryResults = queryResultQueue;
-    }
-
-    public String escapeObjectName() {
-        return getObjectName().getCanonicalKeyPropertyListString();
-    }
-
-    public String getResultName() {
-        return resultAlias == null ? escapeObjectName() : resultAlias;
     }
 
     public void setResultAlias(String resultAlias) {
@@ -207,6 +188,10 @@ public class Query {
 
     public List<OutputWriter> getOutputWriters() {
         return outputWriters;
+    }
+
+    public String getResultAlias() {
+        return resultAlias;
     }
 
     @Override

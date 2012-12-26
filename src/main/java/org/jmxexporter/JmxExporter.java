@@ -25,7 +25,9 @@ import javax.annotation.PreDestroy;
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -45,7 +47,10 @@ public class JmxExporter implements JmxExporterMBean {
 
     private List<Query> queries = new ArrayList<Query>();
 
-    private List<OutputWriter> outputWriters = new ArrayList<OutputWriter>();
+    /**
+     * Use to {@linkplain Set} to deduplicate during configuration merger
+     */
+    private Set<OutputWriter> outputWriters = new HashSet<OutputWriter>();
 
     private int numQueryThreads = 1;
 
@@ -163,11 +168,11 @@ public class JmxExporter implements JmxExporterMBean {
         this.numExportThreads = numExportThreads;
     }
 
-    public List<OutputWriter> getOutputWriters() {
+    public Set<OutputWriter> getOutputWriters() {
         return outputWriters;
     }
 
-    public void setOutputWriters(List<OutputWriter> outputWriters) {
+    public void setOutputWriters(Set<OutputWriter> outputWriters) {
         this.outputWriters = outputWriters;
     }
 

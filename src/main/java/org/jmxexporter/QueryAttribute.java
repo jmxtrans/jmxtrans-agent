@@ -15,106 +15,30 @@
  */
 package org.jmxexporter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.management.Attribute;
 import javax.management.ObjectName;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
+import java.util.Queue;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class QueryAttribute implements Comparable<QueryAttribute> {
+public interface QueryAttribute {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    public String getName();
 
-    private Query query;
-
-    private final String name;
-
-    private final String resultAlias;
-
-    public QueryAttribute(String name) {
-        this(name, null);
-    }
-
-    public QueryAttribute(String name, String resultAlias) {
-        this.name = name;
-        this.resultAlias = resultAlias;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getResultAlias() {
-        return resultAlias;
-    }
-
-    public String getResultName() {
-        return getResultAlias() == null ? getName() : getResultAlias();
-    }
+    public String getResultAlias();
 
     /**
      * @param objectName <code>objectName</code> on which the <code>attribute</code> was obtained.
-     * @param attribute
-     * @param epoch
-     * @return
+     * @param value      value of the given attribute. A 'simple' value (String, Number, Date) for a
+     *                   {@linkplain QuerySimpleAttribute} or a {@link javax.management.openmbean.CompositeData} for a
+     *                   {@linkplain QueryCompositeAttribute}.
+     * @param epochInMillis      time at which the metric was collected
+     * @param results    queue to which the the computed result(s) must be added
+     * @return collected results
      */
-    public Collection<QueryResult> parseAttribute(ObjectName objectName, Attribute attribute, long epoch) {
-        Object value = attribute.getValue();
-        if (value == null) {
-            logger.debug("Ignore null attribute {}", attribute);
-            return Collections.emptyList();
-        } else if (value instanceof Number || value instanceof String || value instanceof Date) {
-            return Collections.singleton(new QueryResult(objectName, getResultName(), value, epoch));
-        } else {
-            logger.warn("Ignore non String/Number/Date attribute {}", attribute);
-            return Collections.emptyList();
-        }
-    }
+    public void performQuery(ObjectName objectName, Object value, long epochInMillis, Queue<QueryResult> results);
 
-    public Query getQuery() {
-        return query;
-    }
+    public Query getQuery();
 
-    public void setQuery(Query query) {
-        this.query = query;
-    }
-
-    @Override
-    public int compareTo(QueryAttribute attribute) {
-        return getResultName().compareTo(attribute.getResultName());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof QueryAttribute)) return false;
-
-        QueryAttribute that = (QueryAttribute) o;
-
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (resultAlias != null ? !resultAlias.equals(that.resultAlias) : that.resultAlias != null) return false;
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + (resultAlias != null ? resultAlias.hashCode() : 0);
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "QueryAttribute{" +
-                "name='" + name + '\'' +
-                ", resultAlias='" + resultAlias + '\'' +
-                '}';
-    }
+    public void setQuery(Query query);
 }

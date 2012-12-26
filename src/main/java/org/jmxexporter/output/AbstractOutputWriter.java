@@ -183,5 +183,20 @@ public abstract class AbstractOutputWriter implements OutputWriter {
         this.settings = settings;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        AbstractOutputWriter that = (AbstractOutputWriter) o;
+
+        if (!settings.equals(that.settings)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
 }

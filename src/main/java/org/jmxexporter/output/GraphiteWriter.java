@@ -27,7 +27,6 @@ import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -98,7 +97,7 @@ public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter
         try {
             socketWriter = socketWriterPool.borrowObject(graphiteServerSocketAddress);
             for (QueryResult result : results) {
-                String msg = metricPathPrefix + result.getQuery().getResultName() + "." + result.getAttributeName() + " " + result.getValue() + " " + result.getEpoch(TimeUnit.SECONDS) + "\n";
+                String msg = metricPathPrefix + result.getName() + " " + result.getValue() + " " + result.getEpoch(TimeUnit.SECONDS) + "\n";
                 logger.debug("Export '{}'", msg);
                 socketWriter.write(msg);
             }

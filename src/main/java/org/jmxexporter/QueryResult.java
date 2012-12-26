@@ -15,7 +15,6 @@
  */
 package org.jmxexporter;
 
-import javax.management.ObjectName;
 import java.sql.Timestamp;
 import java.util.concurrent.TimeUnit;
 
@@ -24,25 +23,20 @@ import java.util.concurrent.TimeUnit;
  */
 public class QueryResult {
 
-    private Query query;
-
-    private ObjectName objectName;
-
-    private final String attributeName;
+    private final String name;
 
     private final long epochInMillis;
 
     private final Object value;
 
-    public QueryResult(ObjectName objectName, String attributeName, Object value, long epochInMillis) {
-        this.objectName = objectName;
-        this.attributeName = attributeName;
-        this.epochInMillis = epochInMillis;
+    public QueryResult(String name, Object value, long epochInMillis) {
+        this.name = name;
         this.value = value;
+        this.epochInMillis = epochInMillis;
     }
 
-    public String getAttributeName() {
-        return attributeName;
+    public String getName() {
+        return name;
     }
 
     public long getEpochInMillis() {
@@ -57,20 +51,11 @@ public class QueryResult {
         return value;
     }
 
-    public void setQuery(Query query) {
-        this.query = query;
-    }
-
-    public Query getQuery() {
-        return query;
-    }
-
     @Override
     public String toString() {
         return "QueryResult{" +
-                "query='" + (query == null ? null : query.getResultName()) + "'" +
-                ", attribute='" + attributeName + '\'' +
                 ", epoch=" + new Timestamp(epochInMillis) +
+                ", name='" + name + '\'' +
                 ", value=" + value +
                 '}';
     }

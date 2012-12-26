@@ -19,6 +19,7 @@ package org.jmxexporter.config;
 import org.jmxexporter.JmxExporter;
 import org.jmxexporter.Query;
 import org.jmxexporter.QueryAttribute;
+import org.jmxexporter.TestUtils;
 import org.jmxexporter.output.NoOpWriter;
 import org.jmxexporter.output.OutputWriter;
 import org.junit.BeforeClass;
@@ -52,16 +53,17 @@ public class ConfigurationTest {
         jmxExporter = configurationParser.newJmxExporter(jsonFile);
         queriesByResultName = new HashMap<String, Query>();
         for (Query query : jmxExporter.getQueries()) {
-            queriesByResultName.put(query.getResultName(), query);
+            String key = query.getResultAlias() == null ? query.getObjectName().toString() : query.getResultAlias();
+            queriesByResultName.put(key, query);
         }
     }
 
     @Test
     public void validateBasicQuery() throws MalformedObjectNameException {
         ObjectName objectName = new ObjectName("java.lang:type=MemoryPool,name=PS Eden Space");
-        Query query = queriesByResultName.get(objectName.getCanonicalKeyPropertyListString());
+        Query query = queriesByResultName.get(objectName.toString());
         assertThat(query.getObjectName(), is(objectName));
-        assertThat(query.getResultName(), is("name=PS Eden Space,type=MemoryPool"));
+        assertThat(query.getResultAlias(), nullValue());
         assertThat(query.getQueryAttributes().size(), is(1));
         QueryAttribute queryAttribute = query.getQueryAttributes().iterator().next();
         assertThat(queryAttribute.getName(), is("CollectionUsageThreshold"));
@@ -72,11 +74,10 @@ public class ConfigurationTest {
         ObjectName objectName = new ObjectName("java.lang:type=MemoryPool,name=PS Eden Space");
         Query query = queriesByResultName.get("test-aliased-query");
         assertThat(query.getObjectName(), is(objectName));
-        assertThat(query.getResultName(), is("test-aliased-query"));
+        assertThat(query.getResultAlias(), is("test-aliased-query"));
         assertThat(query.getQueryAttributes().size(), is(1));
         QueryAttribute queryAttribute = query.getQueryAttributes().iterator().next();
         assertThat(queryAttribute.getName(), is("CollectionUsageThresholdCount"));
-        assertThat(queryAttribute.getResultName(), is("CollectionUsageThresholdCount"));
     }
 
     @Test
@@ -84,12 +85,11 @@ public class ConfigurationTest {
         ObjectName objectName = new ObjectName("java.lang:type=MemoryPool,name=PS Eden Space");
         Query query = queriesByResultName.get("test-attribute-with-alias");
         assertThat(query.getObjectName(), is(objectName));
-        assertThat(query.getResultName(), is("test-attribute-with-alias"));
+        assertThat(query.getResultAlias(), is("test-attribute-with-alias"));
         assertThat(query.getQueryAttributes().size(), is(1));
         QueryAttribute queryAttribute = query.getQueryAttributes().iterator().next();
         assertThat(queryAttribute.getName(), is("CollectionUsageThresholdCount"));
         assertThat(queryAttribute.getResultAlias(), is("test-alias"));
-        assertThat(queryAttribute.getResultName(), is("test-alias"));
     }
 
     @Test
@@ -97,23 +97,21 @@ public class ConfigurationTest {
         ObjectName objectName = new ObjectName("java.lang:type=MemoryPool,name=PS Eden Space");
         Query query = queriesByResultName.get("test-attributes");
         assertThat(query.getObjectName(), is(objectName));
-        assertThat(query.getResultName(), is("test-attributes"));
+        assertThat(query.getResultAlias(), is("test-attributes"));
 
         assertThat(query.getQueryAttributes().size(), is(2));
 
-        List<QueryAttribute> sortedAttributes = new ArrayList<QueryAttribute>();
-        sortedAttributes.addAll(query.getQueryAttributes());
-        Collections.sort(sortedAttributes);
-        Iterator<QueryAttribute> sortedAttributesIterator = sortedAttributes.iterator();
+        Map<String, QueryAttribute> queryAttributes = TestUtils.indexByAliasOrName(query.getQueryAttributes());
+
         {
-            QueryAttribute queryAttribute = sortedAttributesIterator.next();
+            QueryAttribute queryAttribute = queryAttributes.get("CollectionUsageThresholdExceeded");
             assertThat(queryAttribute.getName(), is("CollectionUsageThresholdExceeded"));
-            assertThat(queryAttribute.getResultName(), is("CollectionUsageThresholdExceeded"));
+            assertThat(queryAttribute.getResultAlias(), nullValue());
         }
         {
-            QueryAttribute queryAttribute = sortedAttributesIterator.next();
+            QueryAttribute queryAttribute = queryAttributes.get("CollectionUsageThresholdSupported");
             assertThat(queryAttribute.getName(), is("CollectionUsageThresholdSupported"));
-            assertThat(queryAttribute.getResultName(), is("CollectionUsageThresholdSupported"));
+            assertThat(queryAttribute.getResultAlias(), nullValue());
         }
 
     }
@@ -123,29 +121,29 @@ public class ConfigurationTest {
         ObjectName objectName = new ObjectName("java.lang:type=MemoryPool,name=PS Eden Space");
         Query query = queriesByResultName.get("test-attributes-with-alias");
         assertThat(query.getObjectName(), is(objectName));
-        assertThat(query.getResultName(), is("test-attributes-with-alias"));
+        assertThat(query.getResultAlias(), is("test-attributes-with-alias"));
 
         assertThat(query.getQueryAttributes().size(), is(3));
 
-        List<QueryAttribute> sortedAttributes = new ArrayList<QueryAttribute>();
-        sortedAttributes.addAll(query.getQueryAttributes());
-        Collections.sort(sortedAttributes);
-        Iterator<QueryAttribute> sortedAttributesIterator = sortedAttributes.iterator();
+        Map<String, QueryAttribute> queryAttributes = TestUtils.indexByAliasOrName(query.getQueryAttributes());
+
+
         {
-            QueryAttribute queryAttribute = sortedAttributesIterator.next();
-            assertThat(queryAttribute.getName(), is("CollectionUsageThresholdCount"));
-            assertThat(queryAttribute.getResultName(), is("CollectionUsageThresholdCount"));
-        }
-        {
-            QueryAttribute queryAttribute = sortedAttributesIterator.next();
-            assertThat(queryAttribute.getName(), is("CollectionUsageThresholdExceeded"));
-            assertThat(queryAttribute.getResultName(), is("collection-usage-threshold-exceeded"));
-        }
-        {
-            QueryAttribute queryAttribute = sortedAttributesIterator.next();
+            QueryAttribute queryAttribute = queryAttributes.get("collection-usage-threshold-supported");
             assertThat(queryAttribute.getName(), is("CollectionUsageThresholdSupported"));
-            assertThat(queryAttribute.getResultName(), is("collection-usage-threshold-supported"));
+            assertThat(queryAttribute.getResultAlias(), is("collection-usage-threshold-supported"));
         }
+        {
+            QueryAttribute queryAttribute = queryAttributes.get("CollectionUsageThresholdCount");
+            assertThat(queryAttribute.getName(), is("CollectionUsageThresholdCount"));
+            assertThat(queryAttribute.getResultAlias(), nullValue());
+        }
+        {
+            QueryAttribute queryAttribute = queryAttributes.get("collection-usage-threshold-exceeded");
+            assertThat(queryAttribute.getName(), is("CollectionUsageThresholdExceeded"));
+            assertThat(queryAttribute.getResultAlias(), is("collection-usage-threshold-exceeded"));
+        }
+
 
     }
 
@@ -154,18 +152,17 @@ public class ConfigurationTest {
         ObjectName objectName = new ObjectName("java.lang:type=MemoryPool,name=PS Eden Space");
         Query query = queriesByResultName.get("test-with-outputwriter");
         assertThat(query.getObjectName(), is(objectName));
-        assertThat(query.getResultName(), is("test-with-outputwriter"));
+        assertThat(query.getResultAlias(), is("test-with-outputwriter"));
         assertThat(query.getQueryAttributes().size(), is(1));
         QueryAttribute queryAttribute = query.getQueryAttributes().iterator().next();
         assertThat(queryAttribute.getName(), is("CollectionUsageThresholdCount"));
-        assertThat(queryAttribute.getResultName(), is("CollectionUsageThresholdCount"));
         assertThat(query.getOutputWriters().size(), is(1));
         OutputWriter outputWriter = query.getOutputWriters().get(0);
         assertThat(outputWriter, instanceOf(NoOpWriter.class));
     }
 
     @Test
-    public void validateTuningParameters(){
+    public void validateTuningParameters() {
         assertThat(jmxExporter.getNumQueryThreads(), is(3));
         assertThat(jmxExporter.getQueryIntervalInSeconds(), is(5));
         assertThat(jmxExporter.getExportIntervalInSeconds(), is(10));

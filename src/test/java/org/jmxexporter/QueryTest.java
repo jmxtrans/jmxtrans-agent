@@ -38,7 +38,7 @@ public class QueryTest {
     @Test
     public void basic_jmx_attribute_return_simple_result() throws Exception {
 
-        Query query = new Query("java.lang:type=MemoryPool,name=PS Eden Space").addAttribute("CollectionUsageThreshold");
+        Query query = new Query("java.lang:type=MemoryPool,name=PS Eden Space").addSimpleAttribute("CollectionUsageThreshold");
         query.performQuery(mbeanServer);
         assertThat(query.getResults().size(), is(1));
 
@@ -65,7 +65,7 @@ public class QueryTest {
 
         // CONFIGURE
         Query query = new Query("java.lang:type=GarbageCollector,name=PS Scavenge");
-        query.addAttribute("CollectionCount").addAttribute("CollectionTime");
+        query.addSimpleAttribute("CollectionCount").addSimpleAttribute("CollectionTime");
         JmxExporter jmxExporter = new JmxExporter();
         jmxExporter.addQuery(query);
 
@@ -89,8 +89,8 @@ public class QueryTest {
         // PREPARE DATA
         long time = System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
         for (int i = 0; i < 100; i++) {
-            QueryResult result = new QueryResult(query.getObjectName(), "CollectionTime", 5 * i, time);
-            query.addResult(result);
+            QueryResult result = new QueryResult("PS_Scavenge.GarbageCollector.CollectionTime", 5 * i, time);
+            query.getResults().add(result);
 
             assertThat(query.getResults().size(), is(i + 1));
 
@@ -106,14 +106,4 @@ public class QueryTest {
 
 
     }
-
-    @Test
-    public void testEscapeObjectName() {
-        Query query = new Query("java.lang:type=GarbageCollector,name=PS Scavenge");
-
-        String actual = query.escapeObjectName();
-        System.out.println(actual);
-        assertTrue("TODO implement escapeObjectName()", false);
-    }
-
 }

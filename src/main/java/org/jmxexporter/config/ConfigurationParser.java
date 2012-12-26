@@ -45,39 +45,68 @@ public class ConfigurationParser {
         mapper.setNodeFactory(new PlaceholderEnabledJsonNodeFactory());
     }
 
+    public JmxExporter newJmxExporter(String... configurationUrls) {
+        JmxExporter jmxExporter = new JmxExporter();
+
+        for (String configurationUrl : configurationUrls) {
+            mergeJmxExporterConfiguration(configurationUrl, jmxExporter);
+        }
+        return jmxExporter;
+    }
+
     /**
      * @param configurationUrl JSON configuration file URL ("http://...", "classpath:com/mycompany...", ...)
      * @return
      */
     public JmxExporter newJmxExporter(String configurationUrl) {
+        JmxExporter jmxExporter = new JmxExporter();
+        mergeJmxExporterConfiguration(configurationUrl, jmxExporter);
+        return jmxExporter;
+    }
+
+    protected void mergeJmxExporterConfiguration(String configurationUrl, JmxExporter jmxExporter) {
         try {
             if (configurationUrl.startsWith("classpath:")) {
                 String path = configurationUrl.substring("classpath:".length());
                 InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
-                return new ConfigurationParser().newJmxExporter(in);
+                mergeJmxExporterConfiguration(in, jmxExporter);
             } else {
-                return newJmxExporter(new URL(configurationUrl));
+                mergeJmxExporterConfiguration(new URL(configurationUrl), jmxExporter);
             }
         } catch (Exception e) {
             throw new JmxExporterException("Exception loading configuration'" + configurationUrl + "'", e);
         }
-
     }
 
     public JmxExporter newJmxExporter(InputStream configuration) throws IOException {
-        JsonNode rootNode = mapper.readValue(configuration, JsonNode.class);
-        return newJmxExporter(rootNode);
+        JmxExporter jmxExporter = new JmxExporter();
+        mergeJmxExporterConfiguration(configuration, jmxExporter);
+        return jmxExporter;
+    }
+
+    public void mergeJmxExporterConfiguration(InputStream configuration, JmxExporter jmxExporter) throws IOException {
+        JsonNode configurationRootNode = mapper.readValue(configuration, JsonNode.class);
+        mergeJmxExporterConfiguration(configurationRootNode, jmxExporter);
     }
 
     public JmxExporter newJmxExporter(URL configurationUrl) throws IOException {
-        JsonNode rootNode = mapper.readValue(configurationUrl, JsonNode.class);
-        return newJmxExporter(rootNode);
+        JmxExporter jmxExporter = new JmxExporter();
+        mergeJmxExporterConfiguration(configurationUrl, jmxExporter);
+        return jmxExporter;
     }
 
     public JmxExporter newJmxExporter(JsonNode configurationRootNode) {
-
         JmxExporter jmxExporter = new JmxExporter();
+        mergeJmxExporterConfiguration(configurationRootNode, jmxExporter);
+        return jmxExporter;
+    }
 
+    protected void mergeJmxExporterConfiguration(URL configurationUrl, JmxExporter jmxExporter) throws IOException {
+        JsonNode configurationRootNode = mapper.readValue(configurationUrl, JsonNode.class);
+        mergeJmxExporterConfiguration(configurationRootNode, jmxExporter);
+    }
+
+    private void mergeJmxExporterConfiguration(JsonNode configurationRootNode, JmxExporter jmxExporter) {
         for (JsonNode queryNode : configurationRootNode.path("queries")) {
 
             String objectName = queryNode.path("objectName").asText();
@@ -109,7 +138,6 @@ public class ConfigurationParser {
             query.getOutputWriters().addAll(outputWriters);
         }
 
-
         List<OutputWriter> outputWriters = parseOutputWritersNode(configurationRootNode);
         jmxExporter.getOutputWriters().addAll(outputWriters);
 
@@ -133,14 +161,12 @@ public class ConfigurationParser {
             jmxExporter.setExportIntervalInSeconds(exportIntervalInSecondsNode.asInt());
         }
 
-
         JsonNode numExportThreadsNode = configurationRootNode.path("numExportThreads");
         if (!numExportThreadsNode.isMissingNode()) {
             jmxExporter.setNumExportThreads(numExportThreadsNode.asInt());
         }
 
         logger.info("Loaded {}", jmxExporter);
-        return jmxExporter;
     }
 
     private List<OutputWriter> parseOutputWritersNode(JsonNode outputWritersParentNode) {
@@ -175,7 +201,7 @@ public class ConfigurationParser {
     protected void parseQueryAttributeNode(Query query, JsonNode attributeNode) {
         if (attributeNode.isMissingNode()) {
         } else if (attributeNode.isValueNode()) {
-            query.addAttribute(attributeNode.asText());
+            query.addSimpleAttribute(attributeNode.asText());
         } else if (attributeNode.isObject()) {
             List<String> keys = new ArrayList<String>();
 
@@ -207,7 +233,7 @@ public class ConfigurationParser {
             JsonNode resultAliasNode = attributeNode.path("resultAlias");
             String resultAlias = resultAliasNode.isMissingNode() ? null : resultAliasNode.asText();
             if (keys.isEmpty()) {
-                query.addAttribute(new QueryAttribute(name, resultAlias));
+                query.addAttribute(new QuerySimpleAttribute(name, resultAlias));
             } else {
                 query.addAttribute(new QueryCompositeAttribute(name, resultAlias, keys));
             }
