@@ -27,13 +27,22 @@ import java.util.concurrent.TimeUnit;
  */
 public class TestUtils {
 
-    public static Map<String, QueryAttribute> indexByAliasOrName(Iterable<QueryAttribute> queryAttributes) {
+    public static Map<String, QueryAttribute> indexQueryAttributesByAliasOrName(Iterable<QueryAttribute> queryAttributes) {
         Map<String, QueryAttribute> results = new HashMap<String, QueryAttribute>();
         for (QueryAttribute queryAttribute : queryAttributes) {
             String key = queryAttribute.getResultAlias() == null ? queryAttribute.getName() : queryAttribute.getResultAlias();
             results.put(key, queryAttribute);
         }
 
+        return results;
+    }
+
+    public static Map<String, Query> indexQueriesByAliasOrName(Iterable<Query> queries) {
+        Map<String, Query> results = new HashMap<String, Query>();
+        for (Query query : queries) {
+            String key = query.getResultAlias() == null ? query.getObjectName().toString() : query.getResultAlias();
+            results.put(key, query);
+        }
         return results;
     }
 

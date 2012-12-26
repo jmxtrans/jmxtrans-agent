@@ -30,7 +30,8 @@ import org.slf4j.LoggerFactory;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.io.InputStream;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
@@ -40,8 +41,6 @@ import static org.junit.Assert.*;
  */
 public class ConfigurationMergeTest {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
     static Map<String, Query> queriesByResultName;
 
     static JmxExporter jmxExporter;
@@ -49,13 +48,11 @@ public class ConfigurationMergeTest {
     @BeforeClass
     public static void beforeClass() throws Exception {
         ConfigurationParser configurationParser = new ConfigurationParser();
-        InputStream jsonFile = Thread.currentThread().getContextClassLoader().getResourceAsStream("org/jmxexporter/jmxexporter-config-test.json");
-        jmxExporter = configurationParser.newJmxExporter(jsonFile);
-        queriesByResultName = new HashMap<String, Query>();
-        for (Query query : jmxExporter.getQueries()) {
-            String key = query.getResultAlias() == null ? query.getObjectName().toString() : query.getResultAlias();
-            queriesByResultName.put(key, query);
-        }
+        jmxExporter = configurationParser.newJmxExporter(
+                "classpath:org/jmxexporter/jmxexporter-config-merge-1-test.json",
+                "classpath:org/jmxexporter/jmxexporter-config-merge-2-test.json"
+        );
+        queriesByResultName = TestUtils.indexQueriesByAliasOrName(jmxExporter.getQueries());
     }
 
     @Test
@@ -101,7 +98,7 @@ public class ConfigurationMergeTest {
 
         assertThat(query.getQueryAttributes().size(), is(2));
 
-        Map<String, QueryAttribute> queryAttributes = TestUtils.indexByAliasOrName(query.getQueryAttributes());
+        Map<String, QueryAttribute> queryAttributes = TestUtils.indexQueryAttributesByAliasOrName(query.getQueryAttributes());
 
         {
             QueryAttribute queryAttribute = queryAttributes.get("CollectionUsageThresholdExceeded");
@@ -125,7 +122,7 @@ public class ConfigurationMergeTest {
 
         assertThat(query.getQueryAttributes().size(), is(3));
 
-        Map<String, QueryAttribute> queryAttributes = TestUtils.indexByAliasOrName(query.getQueryAttributes());
+        Map<String, QueryAttribute> queryAttributes = TestUtils.indexQueryAttributesByAliasOrName(query.getQueryAttributes());
 
 
         {
