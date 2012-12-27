@@ -130,6 +130,7 @@
                         <link>http://commons.apache.org/pool/api-1.6</link>
                         <link>http://fasterxml.github.com/jackson-core/javadoc/2.0.4</link>
                         <link>http://fasterxml.github.com/jackson-databind/javadoc/2.0.4</link>
+                        <link>http://docs.guava-libraries.googlecode.com/git/javadoc</link>
                     </links>
                 </configuration>
             </plugin>
