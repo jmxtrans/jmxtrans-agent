@@ -59,7 +59,8 @@ public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter
 
         logger.info("Start Graphite writer connected to '{}'...", graphiteServerSocketAddress);
 
-        metricPathPrefix = getStringSetting(SETTING_NAME_PREFIX, "servers");
+        metricPathPrefix = getStringSetting(SETTING_NAME_PREFIX, "servers.#hostname#.");
+        metricPathPrefix = getStrategy().resolveExpression(metricPathPrefix);
         if (!metricPathPrefix.isEmpty() && !metricPathPrefix.endsWith(".")) {
             metricPathPrefix = metricPathPrefix + ".";
         }

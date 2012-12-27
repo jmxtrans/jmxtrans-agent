@@ -28,7 +28,7 @@ public interface JmxExporterMBean {
 
     int getNumExportThreads();
 
-    void performQuery();
+    void collectMetrics();
 
-    void performExport();
+    void exportCollectedMetrics();
 }

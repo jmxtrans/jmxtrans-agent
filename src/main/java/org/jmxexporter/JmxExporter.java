@@ -33,6 +33,32 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * <p/>
+ * <strong>JMX Queries</strong>
+ * <p/>
+ * If the JMX query returns several mbeans (thanks to '*' or '?' wildcards),
+ * then the configured attributes are collected on all the returned mbeans.
+ * <p/>
+ * <p/>
+ * <strong>Output Writers</strong>
+ * <p/>
+ * {@linkplain OutputWriter}s can be defined at the query level or globally at the {@link JmxExporter} level.
+ * The {@linkplain OutputWriter}s that are effective for a {@linkplain Query} are accessible
+ * via {@link Query#getEffectiveOutputWriters()}
+ * <p/>
+ * <p/>
+ * <strong>Collected Metrics / Query Results</strong>
+ * <p/>
+ * Default behavior is to store the query results at the query level (see {@linkplain Query#queryResults}) to resolve the
+ * effective {@linkplain OutputWriter}s at result export time ({@linkplain org.jmxexporter.Query#getEffectiveOutputWriters()}).
+ * <br/>
+ * The drawback is to limit the benefits of batching result
+ * to a backend (see {@link org.jmxexporter.Query#exportCollectedMetrics()}) and the size limit of the results list to prevent
+ * {@linkplain OutOfMemoryError} in case of export slowness.
+ * <p/>
+ * An optimization would be, if only one {@linkplain OutputWriter} is defined in the whole {@linkplain JmxExporter}, to
+ * replace all the query-local result queues by one global result-queue.
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public class JmxExporter implements JmxExporterMBean {
@@ -82,13 +108,13 @@ public class JmxExporter implements JmxExporterMBean {
             queryScheduledExecutor.scheduleWithFixedDelay(new Runnable() {
                 @Override
                 public void run() {
-                    query.performQuery(mbeanServer);
+                    query.collectMetrics(mbeanServer);
                 }
             }, 0, getQueryIntervalInSeconds(), TimeUnit.SECONDS);
             exportScheduledExecutor.scheduleWithFixedDelay(new Runnable() {
                 @Override
                 public void run() {
-                    query.performExport();
+                    query.exportCollectedMetrics();
                 }
             }, 0, getQueryIntervalInSeconds(), TimeUnit.SECONDS);
         }
@@ -191,9 +217,9 @@ public class JmxExporter implements JmxExporterMBean {
      * Exposed for manual / JMX invocation
      */
     @Override
-    public void performQuery() {
+    public void collectMetrics() {
         for (Query query : getQueries()) {
-            query.performQuery(mbeanServer);
+            query.collectMetrics(mbeanServer);
         }
     }
 
@@ -201,9 +227,9 @@ public class JmxExporter implements JmxExporterMBean {
      * Exposed for manual / JMX invocation
      */
     @Override
-    public void performExport() {
+    public void exportCollectedMetrics() {
         for (Query query : getQueries()) {
-            query.performExport();
+            query.exportCollectedMetrics();
         }
     }
 }

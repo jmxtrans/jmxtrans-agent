@@ -15,6 +15,10 @@
  */
 package org.jmxexporter;
 
+import org.jmxexporter.util.Preconditions;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.sql.Timestamp;
 import java.util.concurrent.TimeUnit;
 
@@ -25,10 +29,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class QueryResult {
 
+    @Nonnull
     private final String name;
 
     private final long epochInMillis;
 
+    @Nullable
     private final Object value;
 
     /**
@@ -36,12 +42,13 @@ public class QueryResult {
      * @param value         value of the collected metric
      * @param epochInMillis collect time in millis (see {@link System#currentTimeMillis()})
      */
-    public QueryResult(String name, Object value, long epochInMillis) {
-        this.name = name;
+    public QueryResult(@Nonnull String name, @Nullable Object value, long epochInMillis) {
+        this.name = Preconditions.checkNotEmpty(name);
         this.value = value;
         this.epochInMillis = epochInMillis;
     }
 
+    @Nonnull
     public String getName() {
         return name;
     }
@@ -54,6 +61,7 @@ public class QueryResult {
         return timeUnit.convert(epochInMillis, TimeUnit.MILLISECONDS);
     }
 
+    @Nullable
     public Object getValue() {
         return value;
     }

@@ -16,6 +16,7 @@
 package org.jmxexporter.output;
 
 import org.jmxexporter.QueryResult;
+import org.jmxexporter.ResultNameStrategy;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +29,8 @@ public abstract class AbstractOutputWriter implements OutputWriter {
     public final static String SETTING_PORT = "port";
     public final static String SETTING_HOST = "host";
     public final static String SETTING_NAME_PREFIX = "namePrefix";
+
+    private ResultNameStrategy strategy = new ResultNameStrategy();
 
     private Map<String, Object> settings = new HashMap<String, Object>();
 
@@ -183,6 +186,14 @@ public abstract class AbstractOutputWriter implements OutputWriter {
         this.settings = settings;
     }
 
+    public ResultNameStrategy getStrategy() {
+        return strategy;
+    }
+
+    public void setStrategy(ResultNameStrategy strategy) {
+        this.strategy = strategy;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -199,4 +210,6 @@ public abstract class AbstractOutputWriter implements OutputWriter {
     public int hashCode() {
         return 0;
     }
+
+
 }

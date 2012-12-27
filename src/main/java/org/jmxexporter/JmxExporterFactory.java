@@ -18,36 +18,82 @@ package org.jmxexporter;
 import org.jmxexporter.config.ConfigurationParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.FactoryBean;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class JmxExporterFactory {
+public class JmxExporterFactory implements FactoryBean<JmxExporter>, DisposableBean {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    private List<String> configurationUrls = Collections.singletonList("classpath:jmxexporter.json");
+
     private JmxExporter jmxExporter;
 
-    private String configurationUrl;
-
     @PostConstruct
+    @Override
     public JmxExporter getObject() throws Exception {
-        logger.info("Load JmxExporter('{}')", configurationUrl);
-        jmxExporter = new ConfigurationParser().newJmxExporter(configurationUrl);
-        logger.info("Start JmxExporter('{}')", configurationUrl);
-        jmxExporter.start();
+        logger.info("Load JmxExporter with configuration '{}'", configurationUrls);
+        if (jmxExporter == null) {
+            jmxExporter = new ConfigurationParser().newJmxExporter(configurationUrls);
+            logger.info("Start JmxExporter('{}')", configurationUrls);
+            jmxExporter.start();
+        }
         return jmxExporter;
     }
 
-    public String getConfigurationUrl() {
-        return configurationUrl;
+    @Override
+    public Class<?> getObjectType() {
+        return JmxExporter.class;
     }
 
+    @Override
+    public boolean isSingleton() {
+        return true;
+    }
+
+
+    /**
+     * @param configurationUrl delimited list of configuration urls (',', ';', '\n')
+     */
     public void setConfigurationUrl(String configurationUrl) {
-        this.configurationUrl = configurationUrl;
+        this.configurationUrls = delimitedStringToList(configurationUrl);
+    }
+
+    public void setConfigurationUrls(List<String> configurationUrls) {
+        this.configurationUrls = configurationUrls;
+    }
+
+    protected List<String> delimitedStringToList(String configurationUrl) {
+        configurationUrl = configurationUrl.replaceAll(";", ",");
+        configurationUrl = configurationUrl.replaceAll("\n", ",");
+        String[] arr = configurationUrl.split(",");
+        List<String> result = new ArrayList<String>();
+        for (int i = 0; i < arr.length; i++) {
+            String str = arr[i].trim();
+            if (!str.isEmpty()) {
+                result.add(str);
+            }
+        }
+        return result;
+    }
+
+    @PreDestroy
+    @Override
+    public void destroy() throws Exception {
+        if (jmxExporter != null) {
+            jmxExporter.stop();
+        }
     }
 }

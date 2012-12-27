@@ -15,10 +15,14 @@
  */
 package org.jmxexporter;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.management.ObjectName;
 
+
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
@@ -28,19 +32,33 @@ import static org.junit.Assert.*;
  */
 public class ResultNameStrategyTest {
 
-    ResultNameStrategy strategy = new ResultNameStrategy();
+    static ResultNameStrategy strategy = new ResultNameStrategy();
 
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        strategy.registerExpressionEvaluator("hostname","tomcat1");
+        strategy.registerExpressionEvaluator("canonical_hostname","tomcat1.www.private.mycompany.com");
+        strategy.registerExpressionEvaluator("escaped_canonical_hostname","tomcat1_www_private_mycompany_com");
+        strategy.registerExpressionEvaluator("hostaddress","10.0.0.81");
+        strategy.registerExpressionEvaluator("escaped_hostaddress","10_0_0_81");
+    }
+
+
+    /**
+     * Test an expression with '#' based keywords (#hostname#) and with '%' based variables mapped to objectname properties.
+     * @throws Exception
+     */
     @Test
     public void testResolveExpression() throws Exception {
         // prepare
-        String expression = "tomcat.datasource.%host%.%path%.%name%";
+        String expression = "#hostname#.tomcat.datasource.%host%.%path%.%name%";
         String objectName = "Catalina:type=Resource,resourcetype=Context,path=/,host=localhost,class=javax.sql.DataSource,name=\"jdbc/my-datasource\"";
 
         // test
         String actual = strategy.resolveExpression(expression, new ObjectName(objectName));
 
         // verify
-        assertThat(actual, is("tomcat.datasource.localhost._.jdbc_my_datasource"));
+        assertThat(actual, is("tomcat1.tomcat.datasource.localhost._.jdbc_my_datasource"));
     }
 
     @Test

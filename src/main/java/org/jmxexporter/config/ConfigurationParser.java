@@ -54,6 +54,15 @@ public class ConfigurationParser {
         return jmxExporter;
     }
 
+    public JmxExporter newJmxExporter(List<String> configurationUrls) {
+        JmxExporter jmxExporter = new JmxExporter();
+
+        for (String configurationUrl : configurationUrls) {
+            mergeJmxExporterConfiguration(configurationUrl, jmxExporter);
+        }
+        return jmxExporter;
+    }
+
     /**
      * @param configurationUrl JSON configuration file URL ("http://...", "classpath:com/mycompany...", ...)
      * @return
@@ -201,13 +210,16 @@ public class ConfigurationParser {
     protected void parseQueryAttributeNode(Query query, JsonNode attributeNode) {
         if (attributeNode.isMissingNode()) {
         } else if (attributeNode.isValueNode()) {
-            query.addSimpleAttribute(attributeNode.asText());
+            query.addAttribute(attributeNode.asText());
         } else if (attributeNode.isObject()) {
-            List<String> keys = new ArrayList<String>();
+            List<String> keys = null;
 
             JsonNode keysNode = attributeNode.path("keys");
             if (keysNode.isMissingNode()) {
             } else if (keysNode.isArray()) {
+                if (keys == null) {
+                    keys = new ArrayList<String>();
+                }
                 Iterator<JsonNode> itAttributeNode = keysNode.elements();
                 while (itAttributeNode.hasNext()) {
                     JsonNode keyNode = itAttributeNode.next();
@@ -224,6 +236,9 @@ public class ConfigurationParser {
             JsonNode keyNode = attributeNode.path("key");
             if (keyNode.isMissingNode()) {
             } else if (keyNode.isValueNode()) {
+                if (keys == null) {
+                    keys = new ArrayList<String>();
+                }
                 keys.add(keyNode.asText());
             } else {
                 logger.warn("Ignore invalid node {}", keyNode);
@@ -232,10 +247,10 @@ public class ConfigurationParser {
             String name = attributeNode.path("name").asText();
             JsonNode resultAliasNode = attributeNode.path("resultAlias");
             String resultAlias = resultAliasNode.isMissingNode() ? null : resultAliasNode.asText();
-            if (keys.isEmpty()) {
-                query.addAttribute(new QuerySimpleAttribute(name, resultAlias));
+            if (keys == null) {
+                query.addAttribute(new QueryAttribute(name, resultAlias));
             } else {
-                query.addAttribute(new QueryCompositeAttribute(name, resultAlias, keys));
+                query.addAttribute(new QueryAttribute(name, resultAlias, keys));
             }
         } else {
             logger.warn("Ignore invalid node {}", attributeNode);
