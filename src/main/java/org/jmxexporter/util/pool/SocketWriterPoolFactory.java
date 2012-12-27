@@ -35,6 +35,7 @@ public class SocketWriterPoolFactory extends BaseKeyedPoolableObjectFactory<Inet
     public SocketWriterPoolFactory(String charset) {
         this(Charset.forName(charset));
     }
+
     public SocketWriterPoolFactory(Charset charset) {
         this.charset = charset;
     }
@@ -53,6 +54,9 @@ public class SocketWriterPoolFactory extends BaseKeyedPoolableObjectFactory<Inet
         socketWriter.close();
     }
 
+    /**
+     * Defensive approach: we test all the "<code>Socket.isXXX()</code>" flags.
+     */
     @Override
     public boolean validateObject(InetSocketAddress inetSocketAddress, SocketWriter socketWriter) {
         Socket socket = socketWriter.getSocket();

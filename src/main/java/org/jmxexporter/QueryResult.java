@@ -31,6 +31,11 @@ public class QueryResult {
 
     private final Object value;
 
+    /**
+     * @param name          plain name of the metric (variables (e.g. <code>%my-jmx-attr%</code> must have been resolved).
+     * @param value         value of the collected metric
+     * @param epochInMillis collect time in millis (see {@link System#currentTimeMillis()})
+     */
     public QueryResult(String name, Object value, long epochInMillis) {
         this.name = name;
         this.value = value;
