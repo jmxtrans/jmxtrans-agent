@@ -16,6 +16,8 @@
 package org.jmxexporter.util.pool;
 
 /**
+ * JMX Mbean interface of the {@linkplain ManagedGenericKeyedObjectPool}.
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public interface ManagedGenericKeyedObjectPoolMBean<K, V> {

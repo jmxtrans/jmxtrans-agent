@@ -19,6 +19,8 @@ import java.sql.Timestamp;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Value of a collected metric.
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public class QueryResult {

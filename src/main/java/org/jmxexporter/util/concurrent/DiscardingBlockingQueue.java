@@ -37,35 +37,76 @@ public class DiscardingBlockingQueue<E> extends ArrayBlockingQueue<E> {
         super(capacity, fair, c);
     }
 
+    /**
+     * Offer the given element to the {@linkplain java.util.concurrent.BlockingQueue}
+     * removing elements if necessary (ie if the queue is full).
+     *
+     * @param e the element to add to the queue
+     * @return <code>true</code>
+     */
     protected boolean discardingOffer(E e) {
-        boolean added;
-        while (added = super.offer(e) != true) {
+        while (super.offer(e) != true) {
             poll();
         }
-        return added;
+        return true;
     }
 
+    /**
+     * Add the given element to the {@linkplain java.util.concurrent.BlockingQueue}
+     * removing elements if necessary (ie if the queue is full).
+     *
+     * @param e the element to add to the queue
+     * @return <code>true</code>
+     */
     @Override
     public boolean add(E e) {
         return discardingOffer(e);
     }
 
+    /**
+     * Offer the given element to the {@linkplain java.util.concurrent.BlockingQueue}
+     * removing elements if necessary (ie if the queue is full).
+     *
+     * @param e the element to add to the queue
+     * @return <code>true</code>
+     */
     @Override
     public boolean offer(E e) {
         return discardingOffer(e);
     }
 
+    /**
+     * Add the given element to the {@linkplain java.util.concurrent.BlockingQueue}
+     * removing elements if necessary (ie if the queue is full).
+     *
+     * @param e the element to add to the queue
+     * @return <code>true</code>
+     */
     @Override
     public void put(E e) throws InterruptedException {
         discardingOffer(e);
     }
 
+    /**
+     * Offer the given element to the {@linkplain java.util.concurrent.BlockingQueue}
+     * removing elements if necessary (ie if the queue is full).
+     *
+     * @param e the element to add to the queue
+     * @return <code>true</code>
+     */
     @Override
     public boolean offer(E e, long timeout, TimeUnit unit) throws InterruptedException {
         return discardingOffer(e);
 
     }
 
+    /**
+     * Add the given elements to the {@linkplain java.util.concurrent.BlockingQueue}
+     * removing elements if necessary (ie if the queue is full).
+     *
+     * @param e the element to add to the queue
+     * @return <code>true</code>
+     */
     @Override
     public boolean addAll(Collection<? extends E> c) {
         for (E e : c) {

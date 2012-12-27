@@ -24,7 +24,7 @@ import java.net.Socket;
 import java.nio.charset.Charset;
 
 /**
- * Convenience class for writing character to a {@linkplain Socket}.
+ * Convenience class for writing characters to a {@linkplain Socket}.
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */

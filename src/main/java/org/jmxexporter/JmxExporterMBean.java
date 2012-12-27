@@ -16,6 +16,8 @@
 package org.jmxexporter;
 
 /**
+ * JMX MBean interface of the {@link JmxExporter}.
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public interface JmxExporterMBean {

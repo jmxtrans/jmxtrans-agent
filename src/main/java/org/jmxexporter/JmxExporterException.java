@@ -16,6 +16,8 @@
 package org.jmxexporter;
 
 /**
+ * Generic exception of the JMX Exporter component.
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public class JmxExporterException extends RuntimeException {

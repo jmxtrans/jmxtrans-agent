@@ -22,6 +22,11 @@ import javax.management.ObjectName;
 import java.util.*;
 
 /**
+ * Build a {@linkplain QueryResult#name} from a collected metric ({@linkplain QueryAttribute}, {@linkplain Query}).
+ * <p/>
+ * Build name must be escaped to be compatible with all {@linkplain org.jmxexporter.output.OutputWriter}.
+ * The approach is to escape non alpha-numeric chars.
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public class ResultNameStrategy {

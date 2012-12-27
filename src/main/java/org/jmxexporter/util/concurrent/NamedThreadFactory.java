@@ -20,6 +20,10 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
+ * Basic {@linkplain ThreadFactory} to redifine the name of the created thread.
+ * <p/>
+ * Inspired by Google Guava's {@link com.google.common.util.concurrent.ThreadFactoryBuilder}
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public class NamedThreadFactory implements ThreadFactory {
