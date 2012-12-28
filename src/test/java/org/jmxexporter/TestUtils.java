@@ -55,7 +55,7 @@ public class TestUtils {
 
             ObjectName on = new ObjectName(objectName);
             while (mbeanServer.queryMBeans(on, null).isEmpty() && counter < 100) {
-                TimeUnit.MILLISECONDS.sleep(10);
+                TimeUnit.MILLISECONDS.sleep(30);
                 counter++;
             }
             mbeanServer.getObjectInstance(on);
