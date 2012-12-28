@@ -44,9 +44,11 @@ public class QueryTest {
 
     @Test
     public void basic_jmx_attribute_return_simple_result() throws Exception {
+        JmxExporter jmxExporter = new JmxExporter();
 
         Query query = new Query("java.lang:type=MemoryPool,name=PS Eden Space").addAttribute("CollectionUsageThreshold");
-        query.collectMetrics(mbeanServer);
+        jmxExporter.addQuery(query);
+        query.collectMetrics();
         assertThat(query.getResults().size(), is(1));
 
         QueryResult result = query.getResults().poll();
@@ -55,9 +57,12 @@ public class QueryTest {
 
     @Test
     public void test_composite_jmx_attribute() throws Exception {
+        JmxExporter jmxExporter = new JmxExporter();
+
         Query query = new Query("java.lang:type=MemoryPool,name=PS Perm Gen");
+        jmxExporter.addQuery(query);
         query.addAttribute(new QueryAttribute("Usage", null, Arrays.asList("committed", "init", "max", "used")));
-        query.collectMetrics(mbeanServer);
+        query.collectMetrics();
         assertThat(query.getResults().size(), is(4));
 
         QueryResult result1 = query.getResults().poll();
@@ -69,11 +74,12 @@ public class QueryTest {
 
     @Test
     public void testExportResults() {
+        JmxExporter jmxExporter = new JmxExporter();
 
         // CONFIGURE
         Query query = new Query("java.lang:type=GarbageCollector,name=PS Scavenge");
+        jmxExporter.addQuery(query);
         query.addAttribute("CollectionCount").addAttribute("CollectionTime");
-        JmxExporter jmxExporter = new JmxExporter();
         jmxExporter.addQuery(query);
 
         final AtomicInteger exportCount = new AtomicInteger();
@@ -110,7 +116,5 @@ public class QueryTest {
         assertThat(exportCount.get(), is(2));
         assertThat(exportResultCount.get(), is(100));
         assertThat(actualExportResultCount, is(100));
-
-
     }
 }

@@ -17,6 +17,7 @@ package org.jmxexporter;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import javax.management.openmbean.*;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,8 +59,20 @@ public class TestUtils {
                 counter++;
             }
             mbeanServer.getObjectInstance(on);
+
         } catch (Exception e) {
             throw new RuntimeException("Exception waiting for '" + objectName + "'", e);
         }
+    }
+
+    public void create() throws Exception {
+        CompositeType type = new CompositeType(
+                "My Type", "My Type Desc",
+                new String[]{"item1", "item2"},
+                new String[]{"item1", "item2"},
+                new OpenType[]{SimpleType.STRING, SimpleType.STRING});
+        CompositeData data = new CompositeDataSupport(type, new String[]{"item1", "item2"}, new String[]{"item value 1", "item value 2"});
+
+
     }
 }

@@ -16,10 +16,12 @@
 package org.jmxexporter;
 
 import org.jmxexporter.output.OutputWriter;
+import org.jmxexporter.util.Preconditions;
 import org.jmxexporter.util.concurrent.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.management.MBeanServer;
@@ -69,8 +71,10 @@ public class JmxExporter implements JmxExporterMBean {
 
     private ScheduledExecutorService exportScheduledExecutor;
 
-    private MBeanServer mbeanServer;
+    @Nonnull
+    private MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
+    @Nonnull
     private List<Query> queries = new ArrayList<Query>();
 
     /**
@@ -91,9 +95,6 @@ public class JmxExporter implements JmxExporterMBean {
     @PostConstruct
     public void start() throws Exception {
 
-        if (mbeanServer == null) {
-            mbeanServer = ManagementFactory.getPlatformMBeanServer();
-        }
         for (Query query : queries) {
             query.start();
         }
@@ -108,7 +109,7 @@ public class JmxExporter implements JmxExporterMBean {
             queryScheduledExecutor.scheduleWithFixedDelay(new Runnable() {
                 @Override
                 public void run() {
-                    query.collectMetrics(mbeanServer);
+                    query.collectMetrics();
                 }
             }, 0, getQueryIntervalInSeconds(), TimeUnit.SECONDS);
             exportScheduledExecutor.scheduleWithFixedDelay(new Runnable() {
@@ -137,11 +138,33 @@ public class JmxExporter implements JmxExporterMBean {
         }
     }
 
+
+    /**
+     * Exposed for manual / JMX invocation
+     */
+    @Override
+    public void collectMetrics() {
+        for (Query query : getQueries()) {
+            query.collectMetrics();
+        }
+    }
+
+    /**
+     * Exposed for manual / JMX invocation
+     */
+    @Override
+    public void exportCollectedMetrics() {
+        for (Query query : getQueries()) {
+            query.exportCollectedMetrics();
+        }
+    }
+
+    @Nonnull
     public List<Query> getQueries() {
         return queries;
     }
 
-    public void addQuery(Query query) {
+    public void addQuery(@Nonnull Query query) {
         query.setJmxExporter(this);
         this.queries.add(query);
     }
@@ -194,12 +217,9 @@ public class JmxExporter implements JmxExporterMBean {
         this.numExportThreads = numExportThreads;
     }
 
+    @Nonnull
     public Set<OutputWriter> getOutputWriters() {
         return outputWriters;
-    }
-
-    public void setOutputWriters(Set<OutputWriter> outputWriters) {
-        this.outputWriters = outputWriters;
     }
 
     /**
@@ -213,23 +233,9 @@ public class JmxExporter implements JmxExporterMBean {
         this.exportBatchSize = exportBatchSize;
     }
 
-    /**
-     * Exposed for manual / JMX invocation
-     */
-    @Override
-    public void collectMetrics() {
-        for (Query query : getQueries()) {
-            query.collectMetrics(mbeanServer);
-        }
+    @Nonnull
+    public MBeanServer getMbeanServer() {
+        return mbeanServer;
     }
 
-    /**
-     * Exposed for manual / JMX invocation
-     */
-    @Override
-    public void exportCollectedMetrics() {
-        for (Query query : getQueries()) {
-            query.exportCollectedMetrics();
-        }
-    }
 }

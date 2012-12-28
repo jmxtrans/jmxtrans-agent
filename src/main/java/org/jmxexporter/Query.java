@@ -31,7 +31,7 @@ import java.util.concurrent.BlockingQueue;
 
 /**
  * Describe a JMX query on which metrics are collected and hold the query and export business logic
- * ({@link #collectMetrics(javax.management.MBeanServer)} and {@link #exportCollectedMetrics()}).
+ * ({@link #collectMetrics()} and {@link #exportCollectedMetrics()}).
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
@@ -95,18 +95,21 @@ public class Query {
     }
 
 
-    public void collectMetrics(MBeanServer mbeanServer) {
+    /**
+     * Collect the values for this query and store them as {@link QueryResult} in the {@linkplain Query#queryResults} queue
+     */
+    public void collectMetrics() {
         /*
          * Optimisation tip: no need to skip 'mbeanServer.queryNames()' if the ObjectName is not a pattern
          * (i.e. not '*' or '?' wildcard) because the mbeanserver internally performs the check.
          * Seen on com.sun.jmx.interceptor.DefaultMBeanServerInterceptor
          */
-        Set<ObjectName> matchingObjectNames = mbeanServer.queryNames(this.objectName, null);
+        Set<ObjectName> matchingObjectNames = jmxExporter.getMbeanServer().queryNames(this.objectName, null);
 
         for (ObjectName matchingObjectName : matchingObjectNames) {
             long epochInMillis = System.currentTimeMillis();
             try {
-                AttributeList jmxAttributes = mbeanServer.getAttributes(matchingObjectName, this.attributeNames);
+                AttributeList jmxAttributes = jmxExporter.getMbeanServer().getAttributes(matchingObjectName, this.attributeNames);
                 for (Attribute jmxAttribute : jmxAttributes.asList()) {
                     QueryAttribute queryAttribute = this.attributesByName.get(jmxAttribute.getName());
                     Object value = jmxAttribute.getValue();
