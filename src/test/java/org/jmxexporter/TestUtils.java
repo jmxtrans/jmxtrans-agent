@@ -47,32 +47,19 @@ public class TestUtils {
         return results;
     }
 
-    public static void ensureMbeanIsAvailable(String objectName) {
+    public static void registerMbean(Object Object, String objectName) {
         try {
             MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
-            int counter = 0;
-
             ObjectName on = new ObjectName(objectName);
-            while (mbeanServer.queryMBeans(on, null).isEmpty() && counter < 100) {
-                TimeUnit.MILLISECONDS.sleep(30);
-                counter++;
+            if(!mbeanServer.queryMBeans(on, null).isEmpty()) {
+                mbeanServer.unregisterMBean(on);
             }
-            mbeanServer.getObjectInstance(on);
+
+            mbeanServer.unregisterMBean(on);
 
         } catch (Exception e) {
             throw new RuntimeException("Exception waiting for '" + objectName + "'", e);
         }
-    }
-
-    public void create() throws Exception {
-        CompositeType type = new CompositeType(
-                "My Type", "My Type Desc",
-                new String[]{"item1", "item2"},
-                new String[]{"item1", "item2"},
-                new OpenType[]{SimpleType.STRING, SimpleType.STRING});
-        CompositeData data = new CompositeDataSupport(type, new String[]{"item1", "item2"}, new String[]{"item value 1", "item value 2"});
-
-
     }
 }

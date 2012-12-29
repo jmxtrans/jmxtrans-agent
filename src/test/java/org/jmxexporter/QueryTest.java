@@ -17,10 +17,12 @@ package org.jmxexporter;
 
 import org.jmxexporter.output.AbstractOutputWriter;
 import org.jmxexporter.output.OutputWriter;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -35,18 +37,29 @@ import static org.junit.Assert.*;
 public class QueryTest {
 
     static MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+    static ObjectName mockEdenSpacePool;
+    static ObjectName mockPermGenPool;
+
 
     @BeforeClass
-    public static void beforeClass() {
-        TestUtils.ensureMbeanIsAvailable("java.lang:type=MemoryPool,name=PS Eden Space");
-        TestUtils.ensureMbeanIsAvailable("java.lang:type=MemoryPool,name=PS Perm Gen");
+    public static void beforeClass() throws Exception {
+        mockEdenSpacePool = new ObjectName("test:type=MemoryPool,name=PS Eden Space");
+        mbeanServer.registerMBean(new MockMemoryPool("PS Eden Space", 87359488L), mockEdenSpacePool);
+        mockPermGenPool = new ObjectName("test:type=MemoryPool,name=PS Perm Gen");
+        mbeanServer.registerMBean(new MockMemoryPool("PS Perm Gen", 87752704L), mockPermGenPool);
+    }
+
+    @AfterClass
+    public static void afterClass() throws Exception {
+        mbeanServer.unregisterMBean(mockEdenSpacePool);
+        mbeanServer.unregisterMBean(mockPermGenPool);
     }
 
     @Test
     public void basic_jmx_attribute_return_simple_result() throws Exception {
         JmxExporter jmxExporter = new JmxExporter();
 
-        Query query = new Query("java.lang:type=MemoryPool,name=PS Eden Space").addAttribute("CollectionUsageThreshold");
+        Query query = new Query("test:type=MemoryPool,name=PS Eden Space").addAttribute("CollectionUsageThreshold");
         jmxExporter.addQuery(query);
         query.collectMetrics();
         assertThat(query.getResults().size(), is(1));
@@ -59,7 +72,7 @@ public class QueryTest {
     public void test_composite_jmx_attribute() throws Exception {
         JmxExporter jmxExporter = new JmxExporter();
 
-        Query query = new Query("java.lang:type=MemoryPool,name=PS Perm Gen");
+        Query query = new Query("test:type=MemoryPool,name=PS Perm Gen");
         jmxExporter.addQuery(query);
         query.addAttribute(new QueryAttribute("Usage", null, Arrays.asList("committed", "init", "max", "used")));
         query.collectMetrics();
@@ -77,7 +90,7 @@ public class QueryTest {
         JmxExporter jmxExporter = new JmxExporter();
 
         // CONFIGURE
-        Query query = new Query("java.lang:type=GarbageCollector,name=PS Scavenge");
+        Query query = new Query("test:type=GarbageCollector,name=PS Scavenge");
         jmxExporter.addQuery(query);
         query.addAttribute("CollectionCount").addAttribute("CollectionTime");
         jmxExporter.addQuery(query);
