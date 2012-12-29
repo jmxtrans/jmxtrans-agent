@@ -47,19 +47,4 @@ public class TestUtils {
         return results;
     }
 
-    public static void registerMbean(Object Object, String objectName) {
-        try {
-            MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
-
-            ObjectName on = new ObjectName(objectName);
-            if(!mbeanServer.queryMBeans(on, null).isEmpty()) {
-                mbeanServer.unregisterMBean(on);
-            }
-
-            mbeanServer.unregisterMBean(on);
-
-        } catch (Exception e) {
-            throw new RuntimeException("Exception waiting for '" + objectName + "'", e);
-        }
-    }
 }
