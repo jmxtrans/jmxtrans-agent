@@ -15,14 +15,17 @@
  */
 package org.jmxexporter.config;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jmxexporter.*;
 import org.jmxexporter.output.OutputWriter;
+import org.jmxexporter.util.Preconditions;
 import org.jmxexporter.util.json.PlaceholderEnabledJsonNodeFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -56,7 +59,7 @@ public class ConfigurationParser {
         return jmxExporter;
     }
 
-    public JmxExporter newJmxExporter(List<String> configurationUrls) {
+    public JmxExporter newJmxExporter(@Nonnull List<String> configurationUrls) {
         JmxExporter jmxExporter = new JmxExporter();
 
         for (String configurationUrl : configurationUrls) {
@@ -69,55 +72,58 @@ public class ConfigurationParser {
      * @param configurationUrl JSON configuration file URL ("http://...", "classpath:com/mycompany...", ...)
      * @return
      */
-    public JmxExporter newJmxExporter(String configurationUrl) {
+    public JmxExporter newJmxExporter(@Nonnull String configurationUrl) {
         JmxExporter jmxExporter = new JmxExporter();
         mergeJmxExporterConfiguration(configurationUrl, jmxExporter);
         return jmxExporter;
     }
 
-    protected void mergeJmxExporterConfiguration(String configurationUrl, JmxExporter jmxExporter) {
+    protected void mergeJmxExporterConfiguration(@Nonnull String configurationUrl, @Nonnull JmxExporter jmxExporter) {
         try {
             if (configurationUrl.startsWith("classpath:")) {
                 String path = configurationUrl.substring("classpath:".length());
                 InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
+                Preconditions.checkNotNull(in, "No file found for '" + configurationUrl + "'");
                 mergeJmxExporterConfiguration(in, jmxExporter);
             } else {
                 mergeJmxExporterConfiguration(new URL(configurationUrl), jmxExporter);
             }
+        } catch (JsonProcessingException e) {
+            throw new JmxExporterException("Exception loading configuration'" + configurationUrl + "': " + e.getMessage(), e);
         } catch (Exception e) {
             throw new JmxExporterException("Exception loading configuration'" + configurationUrl + "'", e);
         }
     }
 
-    public JmxExporter newJmxExporter(InputStream configuration) throws IOException {
+    public JmxExporter newJmxExporter(@Nonnull InputStream configuration) throws IOException {
         JmxExporter jmxExporter = new JmxExporter();
         mergeJmxExporterConfiguration(configuration, jmxExporter);
         return jmxExporter;
     }
 
-    public void mergeJmxExporterConfiguration(InputStream configuration, JmxExporter jmxExporter) throws IOException {
+    public void mergeJmxExporterConfiguration(@Nonnull InputStream configuration, JmxExporter jmxExporter) throws IOException {
         JsonNode configurationRootNode = mapper.readValue(configuration, JsonNode.class);
         mergeJmxExporterConfiguration(configurationRootNode, jmxExporter);
     }
 
-    public JmxExporter newJmxExporter(URL configurationUrl) throws IOException {
+    public JmxExporter newJmxExporter(@Nonnull URL configurationUrl) throws IOException {
         JmxExporter jmxExporter = new JmxExporter();
         mergeJmxExporterConfiguration(configurationUrl, jmxExporter);
         return jmxExporter;
     }
 
-    public JmxExporter newJmxExporter(JsonNode configurationRootNode) {
+    public JmxExporter newJmxExporter(@Nonnull JsonNode configurationRootNode) {
         JmxExporter jmxExporter = new JmxExporter();
         mergeJmxExporterConfiguration(configurationRootNode, jmxExporter);
         return jmxExporter;
     }
 
-    protected void mergeJmxExporterConfiguration(URL configurationUrl, JmxExporter jmxExporter) throws IOException {
+    protected void mergeJmxExporterConfiguration(@Nonnull URL configurationUrl, JmxExporter jmxExporter) throws IOException {
         JsonNode configurationRootNode = mapper.readValue(configurationUrl, JsonNode.class);
         mergeJmxExporterConfiguration(configurationRootNode, jmxExporter);
     }
 
-    private void mergeJmxExporterConfiguration(JsonNode configurationRootNode, JmxExporter jmxExporter) {
+    private void mergeJmxExporterConfiguration(@Nonnull JsonNode configurationRootNode, @Nonnull JmxExporter jmxExporter) {
         for (JsonNode queryNode : configurationRootNode.path("queries")) {
 
             String objectName = queryNode.path("objectName").asText();
@@ -180,7 +186,7 @@ public class ConfigurationParser {
         logger.info("Loaded {}", jmxExporter);
     }
 
-    private List<OutputWriter> parseOutputWritersNode(JsonNode outputWritersParentNode) {
+    private List<OutputWriter> parseOutputWritersNode(@Nonnull JsonNode outputWritersParentNode) {
         JsonNode outputWritersNode = outputWritersParentNode.path("outputWriters");
         List<OutputWriter> outputWriters = new ArrayList<OutputWriter>();
         if (outputWritersNode.isMissingNode()) {
@@ -209,7 +215,7 @@ public class ConfigurationParser {
         return outputWriters;
     }
 
-    protected void parseQueryAttributeNode(Query query, JsonNode attributeNode) {
+    protected void parseQueryAttributeNode(@Nonnull Query query, @Nonnull JsonNode attributeNode) {
         if (attributeNode.isMissingNode()) {
         } else if (attributeNode.isValueNode()) {
             query.addAttribute(attributeNode.asText());

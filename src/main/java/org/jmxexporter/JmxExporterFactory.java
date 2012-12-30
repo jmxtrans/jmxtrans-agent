@@ -35,10 +35,12 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Jmx Exporter factory for Spring Framework integration.
+ * <p/>
  * Default {@linkplain #configurationUrls} :
  * <ul>
  * <li><code>classpath:jmxexporter.json</code>: expected to be provided by the application</li>
- * <li><code>classpath:org/jmxexporter/jmxexporter-internals.json</code>: provided by jmxexporter jar for its internal monitoring</li>
+ * <li><code>classpath:org/jmxexporter/config/jmxexporter-internals.json</code>: provided by jmxexporter jar for its internal monitoring</li>
  * </ul>
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
@@ -48,7 +50,7 @@ public class JmxExporterFactory implements FactoryBean<JmxExporter>, DisposableB
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private List<String> configurationUrls =
-            Arrays.asList("classpath:jmxexporter.json", "classpath:org/jmxexporter/jmxexporter-internals.json");
+            Arrays.asList("classpath:jmxexporter.json", "classpath:org/jmxexporter/config/jmxexporter-internals.json");
 
     private String name;
 
