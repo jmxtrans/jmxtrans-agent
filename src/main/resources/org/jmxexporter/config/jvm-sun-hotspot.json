@@ -25,7 +25,7 @@
         },
         {
             "objectName": "java.lang:type=GarbageCollector,name=%name%",
-            "resultAlias": "jvm.garbage-collector.%name%",
+            "resultAlias": "jvm.gc.%name%",
             "attributes": [
                 "CollectionCount",
                 "CollectionTime"
@@ -42,7 +42,7 @@
         },
         {
             "objectName": "java.lang:type=OperatingSystem",
-            "resultAlias": "jvm.thread",
+            "resultAlias": "jvm.os",
             "attributes": [
                 "CommittedVirtualMemorySize",
                 "FreePhysicalMemorySize",
