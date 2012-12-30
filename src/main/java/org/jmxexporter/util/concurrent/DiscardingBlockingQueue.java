@@ -44,11 +44,11 @@ public class DiscardingBlockingQueue<E> extends ArrayBlockingQueue<E> {
      * @param e the element to add to the queue
      * @return <code>true</code>
      */
-    protected boolean discardingOffer(E e) {
-        while (super.offer(e) != true) {
+    protected void discardingOffer(E e) {
+        while (!super.offer(e)) {
+            // remove elements as long as offer() fails.
             poll();
         }
-        return true;
     }
 
     /**
@@ -60,7 +60,8 @@ public class DiscardingBlockingQueue<E> extends ArrayBlockingQueue<E> {
      */
     @Override
     public boolean add(E e) {
-        return discardingOffer(e);
+        discardingOffer(e);
+        return true;
     }
 
     /**
@@ -72,7 +73,8 @@ public class DiscardingBlockingQueue<E> extends ArrayBlockingQueue<E> {
      */
     @Override
     public boolean offer(E e) {
-        return discardingOffer(e);
+        discardingOffer(e);
+        return true;
     }
 
     /**
@@ -96,8 +98,8 @@ public class DiscardingBlockingQueue<E> extends ArrayBlockingQueue<E> {
      */
     @Override
     public boolean offer(E e, long timeout, TimeUnit unit) throws InterruptedException {
-        return discardingOffer(e);
-
+        discardingOffer(e);
+        return true;
     }
 
     /**

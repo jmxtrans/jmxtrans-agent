@@ -38,7 +38,7 @@ public class ConfigurationParser {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private ObjectMapper mapper;
+    private final ObjectMapper mapper;
 
     {
         mapper = new ObjectMapper();

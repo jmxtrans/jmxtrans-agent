@@ -15,6 +15,7 @@
  */
 package org.jmxexporter.util.concurrent;
 
+import javax.annotation.Nonnull;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
@@ -28,7 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class NamedThreadFactory implements ThreadFactory {
 
-    private ThreadFactory backingThreadFactory = Executors.defaultThreadFactory();
+    private final ThreadFactory backingThreadFactory = Executors.defaultThreadFactory();
 
     public NamedThreadFactory(String threadNamePrefix) {
         this.threadNamePrefix = threadNamePrefix;
@@ -39,6 +40,7 @@ public class NamedThreadFactory implements ThreadFactory {
     private AtomicLong increment = new AtomicLong();
 
     @Override
+    @Nonnull
     public Thread newThread(Runnable r) {
         Thread thread = backingThreadFactory.newThread(r);
         thread.setName(threadNamePrefix + increment.incrementAndGet());
