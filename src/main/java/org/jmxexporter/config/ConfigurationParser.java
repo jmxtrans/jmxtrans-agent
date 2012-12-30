@@ -50,7 +50,7 @@ public class ConfigurationParser {
         mapper.setNodeFactory(new PlaceholderEnabledJsonNodeFactory());
     }
 
-    public JmxExporter newJmxExporter(String... configurationUrls) {
+    public JmxExporter newJmxExporter(String... configurationUrls) throws JmxExporterException {
         JmxExporter jmxExporter = new JmxExporter();
 
         for (String configurationUrl : configurationUrls) {
@@ -59,7 +59,7 @@ public class ConfigurationParser {
         return jmxExporter;
     }
 
-    public JmxExporter newJmxExporter(@Nonnull List<String> configurationUrls) {
+    public JmxExporter newJmxExporter(@Nonnull List<String> configurationUrls) throws JmxExporterException {
         JmxExporter jmxExporter = new JmxExporter();
 
         for (String configurationUrl : configurationUrls) {
@@ -70,15 +70,15 @@ public class ConfigurationParser {
 
     /**
      * @param configurationUrl JSON configuration file URL ("http://...", "classpath:com/mycompany...", ...)
-     * @return
      */
-    public JmxExporter newJmxExporter(@Nonnull String configurationUrl) {
+    @Nonnull
+    public JmxExporter newJmxExporter(@Nonnull String configurationUrl)throws JmxExporterException  {
         JmxExporter jmxExporter = new JmxExporter();
         mergeJmxExporterConfiguration(configurationUrl, jmxExporter);
         return jmxExporter;
     }
 
-    protected void mergeJmxExporterConfiguration(@Nonnull String configurationUrl, @Nonnull JmxExporter jmxExporter) {
+    protected void mergeJmxExporterConfiguration(@Nonnull String configurationUrl, @Nonnull JmxExporter jmxExporter) throws JmxExporterException {
         try {
             if (configurationUrl.startsWith("classpath:")) {
                 String path = configurationUrl.substring("classpath:".length());
@@ -199,6 +199,7 @@ public class ConfigurationParser {
                     if (settingsNode.isMissingNode()) {
                     } else if (settingsNode.isObject()) {
                         ObjectMapper mapper = new ObjectMapper();
+                        @SuppressWarnings("unchecked")
                         Map<String, Object> settings = mapper.treeToValue(settingsNode, Map.class);
                         outputWriter.setSettings(settings);
                     } else {

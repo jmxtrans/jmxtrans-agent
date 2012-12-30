@@ -35,14 +35,14 @@ public class JmxUtils2 {
     }
 
     /**
-     * Try to register given {@param object} with {@param objectName}.
+     * Try to register given <code>object</code> with <code>objectName</code>.
      * <p/>
      * If registration fails, a {@link Logger#warn(String)} message is emitted and <code>null</code> is returned.
      *
      * @param object
      * @param objectName
      * @param mbeanServer
-     * @return the {@link ObjectName} of the registered object or <code>null</code> if registration failed.
+     * @return the ObjectName of the registered object or <code>null</code> if registration failed.
      */
     @Nullable
     public static ObjectName registerObject(Object object, String objectName, MBeanServer mbeanServer) {
@@ -55,13 +55,13 @@ public class JmxUtils2 {
     }
 
     /**
-     * Try to unregister given {@param objectName}.
+     * Try to unregister given <code>objectName</code>.
      * <p/>
-     * If given {@param objectName} <code>null</code>, nothing is done.
+     * If given <code>objectName</code> is <code>null</code>, nothing is done.
      * If registration fails, a {@link Logger#warn(String)} message is emitted and <code>null</code> is returned.
      *
-     * @param objectName
-     * @param mbeanServer
+     * @param objectName  objectName to unregister
+     * @param mbeanServer MBeanServer to which the objectName is unregistered
      */
     public static void unregisterObject(ObjectName objectName, MBeanServer mbeanServer) {
         if (objectName == null) {

@@ -107,6 +107,9 @@ public class JmxExporter implements JmxExporterMBean {
 
     private JmxExporterShutdownHook shutdownHook = new JmxExporterShutdownHook();
 
+    /**
+     * Start the JMX Exporter: initialize underlying queries, start scheduled executors, register shutdown hook
+     */
     @PostConstruct
     public void start() throws Exception {
 
@@ -140,10 +143,10 @@ public class JmxExporter implements JmxExporterMBean {
 
 
     /**
-     * Stop executors and collect-and-export metrics one last time.
+     * Stop scheduled executors and collect-and-export metrics one last time.
      */
     @PreDestroy
-    public void stop() {
+    public void stop() throws Exception {
         collectScheduledExecutor.shutdown();
         try {
             collectScheduledExecutor.awaitTermination(getQueryIntervalInSeconds(), TimeUnit.SECONDS);
@@ -156,8 +159,15 @@ public class JmxExporter implements JmxExporterMBean {
         } catch (InterruptedException e) {
             logger.warn("Ignore InterruptedException stopping", e);
         }
+
         collectMetrics();
         exportCollectedMetrics();
+        for (Query query : queries) {
+            query.stop();
+        }
+        for (OutputWriter outputWriter : outputWriters) {
+            outputWriter.stop();
+        }
         logger.info("JMX Exporter stopped. Metrics have been collected and exported one last time.");
         boolean shutdownHookRemoved = Runtime.getRuntime().removeShutdownHook(shutdownHook);
         if (shutdownHookRemoved) {

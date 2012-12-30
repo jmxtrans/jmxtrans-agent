@@ -84,7 +84,7 @@ public class Query implements QueryMBean {
     private List<OutputWriter> outputWriters = new ArrayList<OutputWriter>();
 
     /**
-     * Store the metrics collected on this {@linkplain Query} (see {@link #collectMetrics(javax.management.MBeanServer)})
+     * Store the metrics collected on this {@linkplain Query} (see {@link #collectMetrics()})
      * until they are exported to the target {@linkplain OutputWriter}s (see {@link #exportCollectedMetrics()}.
      */
     @Nonnull
@@ -115,7 +115,7 @@ public class Query implements QueryMBean {
     private ObjectName queryMbeanObjectName;
 
     /**
-     * Creates a {@linkplain Query} on the given {@param objectName}.
+     * Creates a {@linkplain Query} on the given <code>objectName</code>.
      *
      * @param objectName {@link ObjectName} to query, can contain wildcards ('*' or '?')
      */
@@ -128,7 +128,7 @@ public class Query implements QueryMBean {
     }
 
     /**
-     * Creates a {@linkplain Query} on the given {@param objectName}.
+     * Creates a {@linkplain Query} on the given <code>objectName</code>.
      *
      * @param objectName {@link ObjectName} to query, can contain wildcards ('*' or '?')
      */
@@ -272,8 +272,6 @@ public class Query implements QueryMBean {
 
     /**
      * WARNING: {@linkplain #queryResults} queue should not be changed at runtime as the operation is not thread safe.
-     *
-     * @param queryResultQueue
      */
     public void setResultsQueue(@Nonnull BlockingQueue<QueryResult> queryResultQueue) {
         this.queryResults = Preconditions.checkNotNull(queryResultQueue);

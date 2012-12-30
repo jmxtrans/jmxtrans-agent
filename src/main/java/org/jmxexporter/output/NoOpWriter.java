@@ -44,6 +44,9 @@ public class NoOpWriter extends AbstractOutputWriter {
 
     private Writer out = new NullWriter();
 
+    /**
+     * Write metrics to <code>/dev/null</code>
+     */
     @Override
     public void write(Iterable<QueryResult> results) {
         for (QueryResult result : results) {

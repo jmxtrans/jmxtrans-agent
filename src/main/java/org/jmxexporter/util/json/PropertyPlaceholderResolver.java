@@ -17,6 +17,8 @@ package org.jmxexporter.util.json;
 
 import org.jmxexporter.JmxExporterException;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.Serializable;
 
 /**
@@ -42,7 +44,15 @@ public class PropertyPlaceholderResolver implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public String resolveString(String string) {
+    /**
+     * Parse the given <code>string</code> resolving property placeholders (<code>${my-property[:default-value]}</code>)
+     *
+     * @param string the string to parse.
+     * @return the parsed string.
+     * @throws JmxExporterException a property placeholder could not be resolved and no default value has been defined.
+     */
+    @Nonnull
+    public String resolveString(@Nonnull String string) throws JmxExporterException {
 
         StringBuilder result = new StringBuilder(string.length());
 
@@ -82,11 +92,15 @@ public class PropertyPlaceholderResolver implements Serializable {
     /**
      * Search for the given placeholder in system properties then in environment variables.
      *
-     * @param property
-     * @param defaultValue Default value if the place
-     * @return
+     * @param property     property to resolve
+     * @param defaultValue Default value if the placeholder is not found. <code>null</code> means not default value is
+     *                     defined and the placeholder must exist
+     * @return the resolved property or the default value if the placeholder is not found and the default value is defined
+     * @throws JmxExporterException if the placeholder is not found and the given <code>defaultValue</code> is not
+     *                              defined (<code>null</code>)
      */
-    protected String resolvePlaceholder(String property, String defaultValue) {
+    @Nonnull
+    protected String resolvePlaceholder(String property, @Nullable String defaultValue) throws JmxExporterException {
 
 
         // "graphite.host" -> "GRAPHITE_HOST"

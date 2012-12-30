@@ -78,7 +78,6 @@ public class DiscardingBlockingQueue<E> extends ArrayBlockingQueue<E> implements
      * removing elements if necessary (ie if the queue is full).
      *
      * @param e the element to add to the queue
-     * @return <code>true</code>
      */
     protected void discardingOffer(E e) {
         while (!super.offer(e)) {
@@ -119,7 +118,6 @@ public class DiscardingBlockingQueue<E> extends ArrayBlockingQueue<E> implements
      * removing elements if necessary (ie if the queue is full).
      *
      * @param e the element to add to the queue
-     * @return <code>true</code>
      */
     @Override
     public void put(E e) throws InterruptedException {

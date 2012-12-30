@@ -22,14 +22,10 @@ import org.slf4j.LoggerFactory;
 /**
  * <a href="http://www.slf4j.org/">SLF4J</a> based {@linkplain OutputWriter} implementation.
  * <p/>
- * Supported attributes:
- * <table>
- *     <tr>
- *         <th>Attribute</th>
- *         <th>Description</th>
- *         <th></th>
- *     </tr>
- * </table>
+ * Settings:
+ * <ul>
+ * <li>"logger": Name of the logger. Optional, default value: "<code>org.jmxexporter.output.Slf4jWriter</code>"</li>
+ * </ul>
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
@@ -37,6 +33,9 @@ public class Slf4jWriter extends AbstractOutputWriter {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
 
+    /**
+     * Initialize the logger.
+     */
     @Override
     public void start() {
         super.start();

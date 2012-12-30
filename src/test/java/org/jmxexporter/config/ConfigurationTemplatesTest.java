@@ -33,8 +33,6 @@ public class ConfigurationTemplatesTest {
                 "classpath:org/jmxexporter/config/jvm-sun-hotspot.json",
                 "classpath:org/jmxexporter/config/tomcat-6.json"
         );
-        JmxExporter jmxExporter = new ConfigurationParser().newJmxExporter(configurationUrls);
-
-
+        new ConfigurationParser().newJmxExporter(configurationUrls);
     }
 }

@@ -24,6 +24,9 @@ import org.jmxexporter.QueryResult;
  */
 public class ConsoleWriter extends AbstractOutputWriter implements OutputWriter {
 
+    /**
+     * Write metrics to <code>stdout</code>.
+     */
     @Override
     public void write(Iterable<QueryResult> results) {
         for (QueryResult result : results) {

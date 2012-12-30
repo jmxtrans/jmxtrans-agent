@@ -30,8 +30,6 @@ public interface OutputWriter {
 
     /**
      * Configuration settings of the {@linkplain OutputWriter}.
-     *
-     * @return
      */
     Map<String, Object> getSettings();
 
@@ -42,8 +40,6 @@ public interface OutputWriter {
 
     /**
      * Write all the given {@linkplain QueryResult} to the target system.
-     *
-     * @param results
      */
     void write(Iterable<QueryResult> results);
 

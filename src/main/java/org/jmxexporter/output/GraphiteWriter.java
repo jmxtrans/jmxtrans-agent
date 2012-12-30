@@ -32,12 +32,25 @@ import java.util.concurrent.TimeUnit;
 /**
  * <a href="http://graphite.readthedocs.org/">Graphite</a> implementation of the {@linkplain OutputWriter}.
  * <p/>
+ * This implementation uses <a href="http://graphite.readthedocs.org/en/0.9.10/feeding-carbon.html#the-plaintext-protocol">
+ * Carbon Plan Text protocol</a> over TCP/IP.
  * <p/>
- * This implementation uses <a href="http://graphite.readthedocs.org/en/0.9.10/feeding-carbon.html#the-plaintext-protocol">Carbon Plan Text protocol</a>.
+ * Settings:
+ * <ul>
+ * <li>"host": hostname or ip address of the Graphite server. Mandatory</li>
+ * <li>"port": listen port for the TCP Plain Text Protocol of the Graphite server.
+ * Optional, default value: {@value #DEFAULT_GRAPHITE_SERVER_PORT}.</li>
+ * <li>"namePrefix": prefix append to the metrics name.
+ * Optional, default value: {@value #DEFAULT_NAME_PREFIX}.</li>
+ * </ul>
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter {
+
+    public static final int DEFAULT_GRAPHITE_SERVER_PORT = 2003;
+
+    public static final String DEFAULT_NAME_PREFIX = "servers.#hostname#.";
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -52,15 +65,20 @@ public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter
 
     private ObjectName socketPoolObjectName;
 
+    /**
+     * Load settings, initialize the {@link SocketWriter} pool and test the connection to the graphite server.
+     * <p/>
+     * a {@link Logger#warn(String)} message is emitted if the connection to the graphite server fails.
+     */
     @Override
     public void start() {
-        int port = getIntSetting(SETTING_PORT, 2003);
+        int port = getIntSetting(SETTING_PORT, DEFAULT_GRAPHITE_SERVER_PORT);
         String host = getStringSetting(SETTING_HOST);
         graphiteServerSocketAddress = new InetSocketAddress(host, port);
 
         logger.info("Start Graphite writer connected to '{}'...", graphiteServerSocketAddress);
 
-        metricPathPrefix = getStringSetting(SETTING_NAME_PREFIX, "servers.#hostname#.");
+        metricPathPrefix = getStringSetting(SETTING_NAME_PREFIX, DEFAULT_NAME_PREFIX);
         metricPathPrefix = getStrategy().resolveExpression(metricPathPrefix);
         if (!metricPathPrefix.isEmpty() && !metricPathPrefix.endsWith(".")) {
             metricPathPrefix = metricPathPrefix + ".";
@@ -89,6 +107,9 @@ public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter
         }
     }
 
+    /**
+     * Send given metrics to the Graphite server.
+     */
     @Override
     public void write(Iterable<QueryResult> results) {
         logger.debug("Export to '{}' results {}", graphiteServerSocketAddress, results);
@@ -114,6 +135,9 @@ public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter
         }
     }
 
+    /**
+     * Close the {@link SocketWriter} pool.
+     */
     @Override
     public void stop() throws Exception {
         logger.info("Stop GraphiteWriter connected to '{}' ...", graphiteServerSocketAddress);

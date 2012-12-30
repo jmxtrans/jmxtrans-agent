@@ -77,7 +77,7 @@ public class QueryAttribute {
     /**
      * @param name        name of the JMX attribute
      * @param resultAlias name of the result that will be exported
-     * @param keys
+     * @param keys        of the {@link CompositeData} to collect
      */
     public QueryAttribute(@Nonnull String name, @Nullable String resultAlias, @Nullable Collection<String> keys) {
         this(name, resultAlias);
