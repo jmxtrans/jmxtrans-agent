@@ -18,6 +18,7 @@ package org.jmxexporter;
 import org.jmxexporter.output.OutputWriter;
 import org.jmxexporter.util.Preconditions;
 import org.jmxexporter.util.concurrent.DiscardingBlockingQueue;
+import org.jmxexporter.util.jmx.JmxUtils2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,7 @@ import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.management.*;
+import java.lang.management.ManagementFactory;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,12 +41,19 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class Query implements QueryMBean {
 
+    private static final AtomicInteger queryIdSequence = new AtomicInteger();
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     /**
      * Parent.
      */
     private JmxExporter jmxExporter;
+
+    /**
+     * Mainly used for monitoring.
+     */
+    private String id = "query-" + queryIdSequence.getAndIncrement();
 
     /**
      * ObjectName of the Query MBean(s) to monitor, can contain
@@ -88,7 +97,7 @@ public class Query implements QueryMBean {
     private final AtomicLong collectionDurationInNanos = new AtomicLong();
 
     @Nonnull
-    final AtomicInteger collectionCount = new AtomicInteger();
+    private final AtomicInteger collectionCount = new AtomicInteger();
 
     @Nonnull
     private final AtomicInteger exportedMetricsCount = new AtomicInteger();
@@ -97,9 +106,17 @@ public class Query implements QueryMBean {
     private final AtomicLong exportDurationInNanos = new AtomicLong();
 
     @Nonnull
-    final AtomicInteger exportCount = new AtomicInteger();
+    private final AtomicInteger exportCount = new AtomicInteger();
 
     /**
+     * {@link ObjectName} of this {@link QueryMBean}
+     */
+    @Nullable
+    private ObjectName queryMbeanObjectName;
+
+    /**
+     * Creates a {@linkplain Query} on the given {@param objectName}.
+     *
      * @param objectName {@link ObjectName} to query, can contain wildcards ('*' or '?')
      */
     public Query(@Nonnull String objectName) {
@@ -110,6 +127,11 @@ public class Query implements QueryMBean {
         }
     }
 
+    /**
+     * Creates a {@linkplain Query} on the given {@param objectName}.
+     *
+     * @param objectName {@link ObjectName} to query, can contain wildcards ('*' or '?')
+     */
     public Query(@Nonnull ObjectName objectName) {
         this.objectName = objectName;
     }
@@ -184,6 +206,9 @@ public class Query implements QueryMBean {
      */
     @PostConstruct
     public void start() throws Exception {
+        queryMbeanObjectName = JmxUtils2.registerObject(this, "org.jmxexporter:Type=Query,id=" + id, getJmxExporter().getMbeanServer());
+
+
         for (OutputWriter outputWriter : outputWriters) {
             outputWriter.start();
         }
@@ -194,6 +219,8 @@ public class Query implements QueryMBean {
      */
     @PreDestroy
     public void stop() throws Exception {
+        JmxUtils2.unregisterObject(queryMbeanObjectName, jmxExporter.getMbeanServer());
+
         for (OutputWriter outputWriter : outputWriters) {
             outputWriter.stop();
         }
@@ -328,5 +355,28 @@ public class Query implements QueryMBean {
     @Override
     public int getExportCount() {
         return exportCount.get();
+    }
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * Returns the number of discarded elements in the {@link #queryResults} queue
+     * or <code>-1</code> if the queue is not a {@link DiscardingBlockingQueue}.
+     */
+    @Override
+    public int getDiscardedResultsCount() {
+        if (queryResults instanceof DiscardingBlockingQueue) {
+            DiscardingBlockingQueue discardingBlockingQueue = (DiscardingBlockingQueue) queryResults;
+            return discardingBlockingQueue.getDiscardedElementCount();
+        } else {
+            return -1;
+        }
     }
 }

@@ -88,7 +88,7 @@ public class JmxExporter implements JmxExporterMBean {
     private MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
     @Nonnull
-    private List<Query> queries = new ArrayList<Query>();
+    private final List<Query> queries = new ArrayList<Query>();
 
     /**
      * Use to {@linkplain Set} to deduplicate during configuration merger
@@ -328,6 +328,17 @@ public class JmxExporter implements JmxExporterMBean {
         int result = 0;
         for (Query query : queries) {
             result += query.getExportCount();
+        }
+        return result;
+    }
+
+    public int getDiscardedResultsCount() {
+        int result = 0;
+        for (Query query : queries) {
+            int discardedResultsCount = query.getDiscardedResultsCount();
+            if (discardedResultsCount != -1) {
+                result += discardedResultsCount;
+            }
         }
         return result;
     }

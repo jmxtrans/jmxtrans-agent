@@ -40,4 +40,8 @@ public interface QueryMBean {
     String getResultAlias();
 
     ObjectName getObjectName();
+
+    String getId();
+
+    int getDiscardedResultsCount();
 }

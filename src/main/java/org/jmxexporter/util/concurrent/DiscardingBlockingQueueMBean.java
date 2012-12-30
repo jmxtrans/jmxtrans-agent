@@ -13,42 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jmxexporter;
+package org.jmxexporter.util.concurrent;
 
 /**
- * JMX MBean interface of the {@link JmxExporter}.
- *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public interface JmxExporterMBean {
-
-    int getNumQueryThreads();
-
-    int getQueryIntervalInSeconds();
-
-    int getExportIntervalInSeconds();
-
-    int getNumExportThreads();
-
-    void collectMetrics();
-
-    void exportCollectedMetrics();
-
-    int getCollectedMetricsCount();
-
-    long getCollectionDurationInNanos();
-
-    long getCollectionDurationInMillis();
-
-    int getCollectionCount();
-
-    int getExportedMetricsCount();
-
-    long getExportDurationInNanos();
-
-    long getExportDurationInMillis();
-
-    int getExportCount();
-
-    int getDiscardedResultsCount();
+public interface DiscardingBlockingQueueMBean {
+    int getDiscardedElementCount();
 }

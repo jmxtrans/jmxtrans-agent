@@ -18,21 +18,57 @@ package org.jmxexporter.util.concurrent;
 import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Automatically discard the oldest element if the queue is full.
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class DiscardingBlockingQueue<E> extends ArrayBlockingQueue<E> {
+public class DiscardingBlockingQueue<E> extends ArrayBlockingQueue<E> implements DiscardingBlockingQueueMBean {
+
+    private final AtomicInteger discardedElementCount = new AtomicInteger();
+
+    /**
+     * Creates a {@code DiscardingBlockingQueue} with the given (fixed)
+     * capacity and default access policy.
+     *
+     * @param capacity the capacity of this queue
+     * @throws IllegalArgumentException if {@code capacity < 1}
+     */
     public DiscardingBlockingQueue(int capacity) {
         super(capacity);
     }
 
+    /**
+     * Creates a {@code DiscardingBlockingQueue} with the given (fixed)
+     * capacity and the specified access policy.
+     *
+     * @param capacity the capacity of this queue
+     * @param fair if {@code true} then queue accesses for threads blocked
+     *        on insertion or removal, are processed in FIFO order;
+     *        if {@code false} the access order is unspecified.
+     * @throws IllegalArgumentException if {@code capacity < 1}
+     */
     public DiscardingBlockingQueue(int capacity, boolean fair) {
         super(capacity, fair);
     }
 
+    /**
+     * Creates an {@code DiscardingBlockingQueue} with the given (fixed)
+     * capacity, the specified access policy and initially containing the
+     * elements of the given collection,
+     * added in traversal order of the collection's iterator.
+     *
+     * @param capacity the capacity of this queue
+     * @param fair if {@code true} then queue accesses for threads blocked
+     *        on insertion or removal, are processed in FIFO order;
+     *        if {@code false} the access order is unspecified.
+     * @param c the collection of elements to initially contain
+     * @throws IllegalArgumentException if {@code capacity} is less than
+     *         {@code c.size()}, or less than 1.
+     * @throws NullPointerException if the specified collection or any
+     */
     public DiscardingBlockingQueue(int capacity, boolean fair, Collection<? extends E> c) {
         super(capacity, fair, c);
     }
@@ -48,6 +84,7 @@ public class DiscardingBlockingQueue<E> extends ArrayBlockingQueue<E> {
         while (!super.offer(e)) {
             // remove elements as long as offer() fails.
             poll();
+            discardedElementCount.incrementAndGet();
         }
     }
 
@@ -103,11 +140,11 @@ public class DiscardingBlockingQueue<E> extends ArrayBlockingQueue<E> {
     }
 
     /**
-     * Add the given elements to the {@linkplain java.util.concurrent.BlockingQueue}
+     * Offer the given elements to the {@linkplain java.util.concurrent.BlockingQueue}
      * removing elements if necessary (ie if the queue is full).
      *
-     * @param e the element to add to the queue
-     * @return <code>true</code>
+     * @param c the element to add to the queue
+     * @return <code>true</code> if the given elements collection is not empty
      */
     @Override
     public boolean addAll(Collection<? extends E> c) {
@@ -115,5 +152,10 @@ public class DiscardingBlockingQueue<E> extends ArrayBlockingQueue<E> {
             discardingOffer(e);
         }
         return !c.isEmpty();
+    }
+
+    @Override
+    public int getDiscardedElementCount() {
+        return discardedElementCount.get();
     }
 }

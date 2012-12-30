@@ -17,13 +17,13 @@ package org.jmxexporter.output;
 
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.jmxexporter.QueryResult;
+import org.jmxexporter.util.jmx.JmxUtils2;
 import org.jmxexporter.util.net.SocketWriter;
 import org.jmxexporter.util.pool.ManagedGenericKeyedObjectPool;
 import org.jmxexporter.util.pool.SocketWriterPoolFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
@@ -49,6 +49,7 @@ public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter
     private InetSocketAddress graphiteServerSocketAddress;
 
     private ManagedGenericKeyedObjectPool<InetSocketAddress, SocketWriter> socketWriterPool;
+
     private ObjectName socketPoolObjectName;
 
     @Override
@@ -75,13 +76,10 @@ public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter
 
         socketWriterPool = new ManagedGenericKeyedObjectPool<InetSocketAddress, SocketWriter>(new SocketWriterPoolFactory("UTF-8"), config);
 
-        try {
-            socketPoolObjectName = new ObjectName("org.jmxexporter:Type=SocketPool,Host=" + host + ",Port=" + port + ",Name=GraphiteSocketPool@" + System.identityHashCode(this));
-            ObjectInstance objectInstance = ManagementFactory.getPlatformMBeanServer().registerMBean(socketWriterPool, socketPoolObjectName);
-            socketPoolObjectName = objectInstance.getObjectName();
-        } catch (Exception e) {
-            logger.warn("Silently ignore exception registering mbean {}", socketPoolObjectName, e);
-        }
+        socketPoolObjectName = JmxUtils2.registerObject(
+                socketWriterPool,
+                "org.jmxexporter:Type=SocketPool,Host=" + host + ",Port=" + port + ",Name=GraphiteSocketPool@" + System.identityHashCode(this),
+                ManagementFactory.getPlatformMBeanServer());
 
         try {
             SocketWriter socketWriter = socketWriterPool.borrowObject(graphiteServerSocketAddress);
@@ -121,10 +119,6 @@ public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter
         logger.info("Stop GraphiteWriter connected to '{}' ...", graphiteServerSocketAddress);
         super.stop();
         socketWriterPool.close();
-        try {
-            ManagementFactory.getPlatformMBeanServer().unregisterMBean(socketPoolObjectName);
-        } catch (Exception e) {
-            logger.warn("Silently ignore exception registering mbean {}", socketPoolObjectName, e);
-        }
+        JmxUtils2.unregisterObject(socketPoolObjectName, ManagementFactory.getPlatformMBeanServer());
     }
 }
