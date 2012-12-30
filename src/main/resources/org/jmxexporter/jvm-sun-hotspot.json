@@ -1,0 +1,57 @@
+{
+    "queries": [
+        {
+            "objectName": "java.lang:type=Memory",
+            "resultAlias": "jvm.memory",
+            "attributes": [
+                {
+                    "name": "HeapMemoryUsage",
+                    "keys": ["committed", "init", "max", "used"]
+                },
+                {
+                    "name": "NonHeapMemoryUsage",
+                    "keys": ["committed", "init", "max", "used"]
+                }
+            ]
+
+        },
+        {
+            "objectName": "java.lang:type=Runtime",
+            "resultAlias": "jvm.runtime",
+            "attributes": [
+                "Uptime"
+            ]
+
+        },
+        {
+            "objectName": "java.lang:type=GarbageCollector,name=%name%",
+            "resultAlias": "jvm.garbage-collector.%name%",
+            "attributes": [
+                "CollectionCount",
+                "CollectionTime"
+            ]
+
+        },
+        {
+            "objectName": "java.lang:type=Threading",
+            "resultAlias": "jvm.thread",
+            "attributes": [
+                "ThreadCount"
+            ]
+
+        },
+        {
+            "objectName": "java.lang:type=OperatingSystem",
+            "resultAlias": "jvm.thread",
+            "attributes": [
+                "CommittedVirtualMemorySize",
+                "FreePhysicalMemorySize",
+                "FreeSwapSpaceSize",
+                "OpenFileDescriptorCount",
+                "ProcessCpuTime",
+                "SystemLoadAverage"
+            ]
+
+        }
+    ]
+}
