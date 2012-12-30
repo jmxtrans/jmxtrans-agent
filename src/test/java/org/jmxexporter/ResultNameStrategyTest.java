@@ -58,7 +58,7 @@ public class ResultNameStrategyTest {
         String actual = strategy.resolveExpression(expression, new ObjectName(objectName));
 
         // verify
-        assertThat(actual, is("tomcat1.tomcat.datasource.localhost._.jdbc_my_datasource"));
+        assertThat(actual, is("tomcat1.tomcat.datasource.localhost._.jdbc_my-datasource"));
     }
 
     @Test
@@ -72,6 +72,6 @@ public class ResultNameStrategyTest {
     public void testEscapeObjectName2() throws Exception {
         String objectName = "Catalina:type=Resource,resourcetype=Context,path=/,host=localhost,class=javax.sql.DataSource,name=\"jdbc/my-datasource\"";
         String actual = strategy.escapeObjectName(new ObjectName(objectName));
-        assertThat(actual, is("Catalina.class__javax_sql_DataSource.host__localhost.name__jdbc_my_datasource.path___.resourcetype__Context.type__Resource"));
+        assertThat(actual, is("Catalina.class__javax_sql_DataSource.host__localhost.name__jdbc_my-datasource.path___.resourcetype__Context.type__Resource"));
     }
 }

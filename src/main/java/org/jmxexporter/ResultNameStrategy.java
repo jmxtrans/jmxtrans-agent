@@ -273,6 +273,8 @@ public class ResultNameStrategy {
     }
 
     /**
+     * Escape all non a->z,A->Z, 0->9 and '-' with a '_'.
+     *
      * @param str    the string to escape
      * @param result the {@linkplain StringBuilder} in which the escaped string is appended
      */
@@ -280,7 +282,7 @@ public class ResultNameStrategy {
         char[] chars = str.toCharArray();
         for (int i = 0; i < chars.length; i++) {
             char ch = chars[i];
-            if (Character.isLetter(ch) || Character.isDigit(ch)) {
+            if (Character.isLetter(ch) || Character.isDigit(ch) || ch == '-') {
                 result.append(ch);
             } else if (ch == '"' && ((i == 0) || (i == chars.length - 1))) {
                 // ignore starting and ending '"' that are used to quote() objectname's values (see ObjectName.value())
