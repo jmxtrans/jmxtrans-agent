@@ -28,6 +28,8 @@ import javax.annotation.PreDestroy;
 import javax.management.*;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Describe a JMX query on which metrics are collected and hold the query and export business logic
@@ -35,7 +37,7 @@ import java.util.concurrent.BlockingQueue;
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class Query {
+public class Query implements QueryMBean {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -79,10 +81,28 @@ public class Query {
     @Nonnull
     private BlockingQueue<QueryResult> queryResults = new DiscardingBlockingQueue<QueryResult>(200);
 
+    @Nonnull
+    private final AtomicInteger collectedMetricsCount = new AtomicInteger();
+
+    @Nonnull
+    private final AtomicLong collectionDurationInNanos = new AtomicLong();
+
+    @Nonnull
+    final AtomicInteger collectionCount = new AtomicInteger();
+
+    @Nonnull
+    private final AtomicInteger exportedMetricsCount = new AtomicInteger();
+
+    @Nonnull
+    private final AtomicLong exportDurationInNanos = new AtomicLong();
+
+    @Nonnull
+    final AtomicInteger exportCount = new AtomicInteger();
+
     /**
      * @param objectName {@link ObjectName} to query, can contain wildcards ('*' or '?')
      */
-    public Query(String objectName) {
+    public Query(@Nonnull String objectName) {
         try {
             this.objectName = new ObjectName(objectName);
         } catch (MalformedObjectNameException e) {
@@ -90,7 +110,7 @@ public class Query {
         }
     }
 
-    public Query(ObjectName objectName) {
+    public Query(@Nonnull ObjectName objectName) {
         this.objectName = objectName;
     }
 
@@ -98,7 +118,9 @@ public class Query {
     /**
      * Collect the values for this query and store them as {@link QueryResult} in the {@linkplain Query#queryResults} queue
      */
+    @Override
     public void collectMetrics() {
+        long nanosBefore = System.nanoTime();
         /*
          * Optimisation tip: no need to skip 'mbeanServer.queryNames()' if the ObjectName is not a pattern
          * (i.e. not '*' or '?' wildcard) because the mbeanserver internally performs the check.
@@ -113,12 +135,16 @@ public class Query {
                 for (Attribute jmxAttribute : jmxAttributes.asList()) {
                     QueryAttribute queryAttribute = this.attributesByName.get(jmxAttribute.getName());
                     Object value = jmxAttribute.getValue();
-                    queryAttribute.performQuery(matchingObjectName, value, epochInMillis, this.queryResults);
+                    int count = queryAttribute.collectMetrics(matchingObjectName, value, epochInMillis, this.queryResults);
+                    collectedMetricsCount.addAndGet(count);
                 }
             } catch (Exception e) {
                 logger.warn("Exception processing query {}", this, e);
             }
         }
+        collectionCount.incrementAndGet();
+        long nanosAfter = System.nanoTime();
+        collectionDurationInNanos.addAndGet(nanosAfter - nanosBefore);
     }
 
     /**
@@ -129,22 +155,28 @@ public class Query {
      *
      * @return the number of exported {@linkplain QueryResult}
      */
+    @Override
     public int exportCollectedMetrics() {
 
-        int resultCount = 0;
+        int totalExportedMetricsCount = 0;
+        long nanosBefore = System.nanoTime();
 
         List<OutputWriter> effectiveOutputWriters = getEffectiveOutputWriters();
         int exportBatchSize = getJmxExporter().getExportBatchSize();
         List<QueryResult> availableQueryResults = new ArrayList<QueryResult>(exportBatchSize);
 
-        while (queryResults.drainTo(availableQueryResults, exportBatchSize) > 0) {
-            resultCount += availableQueryResults.size();
+        int size;
+        while ((size = queryResults.drainTo(availableQueryResults, exportBatchSize)) > 0) {
+            totalExportedMetricsCount += size;
+            exportedMetricsCount.addAndGet(size);
             for (OutputWriter outputWriter : effectiveOutputWriters) {
                 outputWriter.write(availableQueryResults);
             }
             availableQueryResults.clear();
         }
-        return resultCount;
+        exportDurationInNanos.addAndGet(System.nanoTime() - nanosBefore);
+        exportCount.incrementAndGet();
+        return totalExportedMetricsCount;
     }
 
     /**
@@ -167,6 +199,7 @@ public class Query {
         }
     }
 
+    @Override
     @Nonnull
     public ObjectName getObjectName() {
         return objectName;
@@ -251,6 +284,7 @@ public class Query {
         return outputWriters;
     }
 
+    @Override
     @Nullable
     public String getResultAlias() {
         return resultAlias;
@@ -264,5 +298,35 @@ public class Query {
                 ", outputWriters=" + outputWriters +
                 ", attributes=" + attributesByName.values() +
                 '}';
+    }
+
+    @Override
+    public int getCollectedMetricsCount() {
+        return collectedMetricsCount.get();
+    }
+
+    @Override
+    public long getCollectionDurationInNanos() {
+        return collectionDurationInNanos.get();
+    }
+
+    @Override
+    public int getCollectionCount() {
+        return collectionCount.get();
+    }
+
+    @Override
+    public int getExportedMetricsCount() {
+        return exportedMetricsCount.get();
+    }
+
+    @Override
+    public long getExportDurationInNanos() {
+        return exportDurationInNanos.get();
+    }
+
+    @Override
+    public int getExportCount() {
+        return exportCount.get();
     }
 }

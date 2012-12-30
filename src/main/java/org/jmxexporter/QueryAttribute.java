@@ -30,7 +30,7 @@ import java.util.*;
  * <p/>
  * Collected values are sent to a {@linkplain java.util.concurrent.BlockingQueue}
  * for later export to the target monitoring systems
- * (see {@link #performQuery(javax.management.ObjectName, Object, long, java.util.Queue)}).
+ * (see {@link #collectMetrics(javax.management.ObjectName, Object, long, java.util.Queue)}).
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
@@ -114,10 +114,12 @@ public class QueryAttribute {
      *                      or a {@link javax.management.openmbean.CompositeData}
      * @param epochInMillis time at which the metric was collected
      * @param results       queue to which the the computed result(s) must be added
-     * @return collected results
+     * @return collected metrics count
      */
-    public void performQuery(@Nonnull ObjectName objectName, @Nonnull Object value, long epochInMillis,
-                             @Nonnull Queue<QueryResult> results) {
+    public int collectMetrics(@Nonnull ObjectName objectName, @Nonnull Object value, long epochInMillis,
+                              @Nonnull Queue<QueryResult> results) {
+
+        int metricsCounter = 0;
 
         if (value instanceof CompositeData) {
             CompositeData compositeData = (CompositeData) value;
@@ -135,6 +137,7 @@ public class QueryAttribute {
                     QueryResult result = new QueryResult(resultName, compositeValue, epochInMillis);
                     logger.debug("Collect {}", result);
                     results.add(result);
+                    metricsCounter++;
                 } else {
                     logger.debug("Skip non supported value {}:{}:{}:{}={}", getQuery(), objectName, this, key, compositeValue);
                 }
@@ -147,9 +150,11 @@ public class QueryAttribute {
             QueryResult result = new QueryResult(resultName, value, epochInMillis);
             logger.debug("Collect {}", result);
             results.add(result);
+            metricsCounter++;
         } else {
             logger.info("Ignore non CompositeData attribute value {}:{}:{}={}", getQuery(), objectName, this, value);
         }
+        return metricsCounter;
     }
 
     /**

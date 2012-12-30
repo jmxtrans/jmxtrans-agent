@@ -15,28 +15,19 @@
  */
 package org.jmxexporter;
 
+import javax.management.ObjectName;
+
 /**
- * JMX MBean interface of the {@link JmxExporter}.
- *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public interface JmxExporterMBean {
-
-    int getQueryIntervalInSeconds();
-
-    int getExportIntervalInSeconds();
-
-    int getNumExportThreads();
-
+public interface QueryMBean {
     void collectMetrics();
 
-    void exportCollectedMetrics();
+    int exportCollectedMetrics();
 
     int getCollectedMetricsCount();
 
     long getCollectionDurationInNanos();
-
-    long getCollectionDurationInMillis();
 
     int getCollectionCount();
 
@@ -44,7 +35,9 @@ public interface JmxExporterMBean {
 
     long getExportDurationInNanos();
 
-    long getExportDurationInMillis();
-
     int getExportCount();
+
+    String getResultAlias();
+
+    ObjectName getObjectName();
 }

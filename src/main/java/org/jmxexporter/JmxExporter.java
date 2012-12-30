@@ -16,7 +16,6 @@
 package org.jmxexporter;
 
 import org.jmxexporter.output.OutputWriter;
-import org.jmxexporter.util.Preconditions;
 import org.jmxexporter.util.concurrent.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,9 +64,23 @@ import java.util.concurrent.TimeUnit;
  */
 public class JmxExporter implements JmxExporterMBean {
 
+    /**
+     * Shutdown hook to collect and export metrics a last time if {@link org.jmxexporter.JmxExporter#stop()} was not called.
+     */
+    private class JmxExporterShutdownHook extends Thread {
+
+        @Override
+        public void run() {
+            super.run();
+            collectMetrics();
+            exportCollectedMetrics();
+            logger.info("JmxExporterShutdownHook collected and exported metrics");
+        }
+    }
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private ScheduledExecutorService queryScheduledExecutor;
+    private ScheduledExecutorService collectScheduledExecutor;
 
     private ScheduledExecutorService exportScheduledExecutor;
 
@@ -92,6 +105,8 @@ public class JmxExporter implements JmxExporterMBean {
 
     private int exportBatchSize = 50;
 
+    private JmxExporterShutdownHook shutdownHook = new JmxExporterShutdownHook();
+
     @PostConstruct
     public void start() throws Exception {
 
@@ -102,11 +117,11 @@ public class JmxExporter implements JmxExporterMBean {
             outputWriter.start();
         }
 
-        queryScheduledExecutor = Executors.newScheduledThreadPool(getNumQueryThreads(), new NamedThreadFactory("jmxexporter-query-"));
+        collectScheduledExecutor = Executors.newScheduledThreadPool(getNumQueryThreads(), new NamedThreadFactory("jmxexporter-collect-"));
         exportScheduledExecutor = Executors.newScheduledThreadPool(getNumExportThreads(), new NamedThreadFactory("jmxexporter-export-"));
 
         for (final Query query : getQueries()) {
-            queryScheduledExecutor.scheduleWithFixedDelay(new Runnable() {
+            collectScheduledExecutor.scheduleWithFixedDelay(new Runnable() {
                 @Override
                 public void run() {
                     query.collectMetrics();
@@ -119,14 +134,19 @@ public class JmxExporter implements JmxExporterMBean {
                 }
             }, 0, getQueryIntervalInSeconds(), TimeUnit.SECONDS);
         }
+
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
 
+    /**
+     * Stop executors and collect-and-export metrics one last time.
+     */
     @PreDestroy
     public void stop() {
-        queryScheduledExecutor.shutdown();
+        collectScheduledExecutor.shutdown();
         try {
-            queryScheduledExecutor.awaitTermination(getQueryIntervalInSeconds(), TimeUnit.SECONDS);
+            collectScheduledExecutor.awaitTermination(getQueryIntervalInSeconds(), TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             logger.warn("Ignore InterruptedException stopping", e);
         }
@@ -135,6 +155,15 @@ public class JmxExporter implements JmxExporterMBean {
             exportScheduledExecutor.awaitTermination(getExportIntervalInSeconds(), TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             logger.warn("Ignore InterruptedException stopping", e);
+        }
+        collectMetrics();
+        exportCollectedMetrics();
+        logger.info("JMX Exporter stopped. Metrics have been collected and exported one last time.");
+        boolean shutdownHookRemoved = Runtime.getRuntime().removeShutdownHook(shutdownHook);
+        if (shutdownHookRemoved) {
+            logger.debug("ShutdownHook successfully removed");
+        } else {
+            logger.warn("Failure to remove ShutdownHook");
         }
     }
 
@@ -238,4 +267,68 @@ public class JmxExporter implements JmxExporterMBean {
         return mbeanServer;
     }
 
+    @Override
+    public int getCollectedMetricsCount() {
+        int result = 0;
+        for (Query query : queries) {
+            result += query.getCollectedMetricsCount();
+        }
+        return result;
+    }
+
+    @Override
+    public long getCollectionDurationInNanos() {
+        long result = 0;
+        for (Query query : queries) {
+            result += query.getCollectionDurationInNanos();
+        }
+        return result;
+    }
+
+
+    @Override
+    public long getCollectionDurationInMillis() {
+        return TimeUnit.MILLISECONDS.convert(getCollectionDurationInNanos(), TimeUnit.NANOSECONDS);
+    }
+
+    @Override
+    public int getCollectionCount() {
+        int result = 0;
+        for (Query query : queries) {
+            result += query.getCollectionCount();
+        }
+        return result;
+    }
+
+    @Override
+    public int getExportedMetricsCount() {
+        int result = 0;
+        for (Query query : queries) {
+            result += query.getExportedMetricsCount();
+        }
+        return result;
+    }
+
+    @Override
+    public long getExportDurationInNanos() {
+        long result = 0;
+        for (Query query : queries) {
+            result += query.getExportDurationInNanos();
+        }
+        return result;
+    }
+
+    @Override
+    public long getExportDurationInMillis() {
+        return TimeUnit.MILLISECONDS.convert(getExportDurationInNanos(), TimeUnit.NANOSECONDS);
+    }
+
+    @Override
+    public int getExportCount() {
+        int result = 0;
+        for (Query query : queries) {
+            result += query.getExportCount();
+        }
+        return result;
+    }
 }

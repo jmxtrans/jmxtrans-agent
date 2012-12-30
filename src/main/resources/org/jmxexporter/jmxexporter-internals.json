@@ -1,0 +1,17 @@
+{
+    "queries": [
+        {
+            "objectName": "org.jmxexporter:name=*,type=JmxExporter",
+            "resultAlias": "jmxexporter.%name%",
+            "attributes": [
+                "CollectedMetricsCount",
+                "CollectionCount",
+                "CollectionDurationInNanos",
+                "ExportCount",
+                "ExportDurationInNanos",
+                "ExportedMetricsCount"
+            ]
+
+        }
+    ]
+}

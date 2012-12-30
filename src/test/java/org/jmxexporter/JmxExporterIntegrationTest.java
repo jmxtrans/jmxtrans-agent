@@ -51,8 +51,8 @@ public class JmxExporterIntegrationTest {
                     buffer[bufferIdx] = random.nextInt();
                 }
                 int total = 0;
-                for (int bufferIdx = 0; bufferIdx < buffer.length; bufferIdx++) {
-                    total += buffer[bufferIdx];
+                for (int aBuffer : buffer) {
+                    total += aBuffer;
                 }
                 msg += total + " ";
                 TimeUnit.MILLISECONDS.sleep(10);

@@ -18,11 +18,15 @@ package org.jmxexporter;
 import org.jmxexporter.config.ConfigurationParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.jmx.export.naming.SelfNaming;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -31,13 +35,22 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Default {@linkplain #configurationUrls} :
+ * <ul>
+ * <li><code>classpath:jmxexporter.json</code>: expected to be provided by the application</li>
+ * <li><code>classpath:org/jmxexporter/jmxexporter-internals.json</code>: provided by jmxexporter jar for its internal monitoring</li>
+ * </ul>
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class JmxExporterFactory implements FactoryBean<JmxExporter>, DisposableBean {
+public class JmxExporterFactory implements FactoryBean<JmxExporter>, DisposableBean, BeanNameAware, SelfNaming {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private List<String> configurationUrls = Collections.singletonList("classpath:jmxexporter.json");
+    private List<String> configurationUrls =
+            Arrays.asList("classpath:jmxexporter.json", "classpath:org/jmxexporter/jmxexporter-internals.json");
+
+    private String name;
 
     private JmxExporter jmxExporter;
 
@@ -63,7 +76,6 @@ public class JmxExporterFactory implements FactoryBean<JmxExporter>, DisposableB
         return true;
     }
 
-
     /**
      * @param configurationUrl delimited list of configuration urls (',', ';', '\n')
      */
@@ -80,8 +92,8 @@ public class JmxExporterFactory implements FactoryBean<JmxExporter>, DisposableB
         configurationUrl = configurationUrl.replaceAll("\n", ",");
         String[] arr = configurationUrl.split(",");
         List<String> result = new ArrayList<String>();
-        for (int i = 0; i < arr.length; i++) {
-            String str = arr[i].trim();
+        for (String str : arr) {
+            str = str.trim();
             if (!str.isEmpty()) {
                 result.add(str);
             }
@@ -95,5 +107,15 @@ public class JmxExporterFactory implements FactoryBean<JmxExporter>, DisposableB
         if (jmxExporter != null) {
             jmxExporter.stop();
         }
+    }
+
+    @Override
+    public void setBeanName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public ObjectName getObjectName() throws MalformedObjectNameException {
+        return new ObjectName("org.jmxexporter:type=JmxExporter,name=" + name);
     }
 }
