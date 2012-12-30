@@ -18,6 +18,8 @@ package org.jmxexporter.output;
 import org.jmxexporter.QueryResult;
 
 /**
+ * Output results to <code>stdout</code>.
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public class ConsoleWriter extends AbstractOutputWriter implements OutputWriter {

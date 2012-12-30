@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * JSON Configuration parser to build {@link JmxExporter}.
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public class ConfigurationParser {

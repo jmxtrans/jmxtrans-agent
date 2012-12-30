@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.Writer;
 
 /**
- * Used for testing.
+ * Used for testing. Send results to "<code>/dev/null</code>".
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */

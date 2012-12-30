@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Convenience abstract class to implement an {@link OutputWriter}.
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
 public abstract class AbstractOutputWriter implements OutputWriter {

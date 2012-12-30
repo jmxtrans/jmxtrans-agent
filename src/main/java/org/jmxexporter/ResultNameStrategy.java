@@ -18,6 +18,7 @@ package org.jmxexporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.management.ObjectName;
 import java.net.InetAddress;
 import java.util.*;
@@ -97,6 +98,7 @@ public class ResultNameStrategy {
     /**
      * Function based evaluators for expressions like '#hostname#' or '#hostname_canonical#'
      */
+    @Nonnull
     private Map<String, Callable<String>> expressionEvaluators = new HashMap<String, Callable<String>>();
 
     public ResultNameStrategy() {
@@ -302,6 +304,7 @@ public class ResultNameStrategy {
         expressionEvaluators.put(expression, new StaticEvaluator(value));
     }
 
+    @Nonnull
     public Map<String, Callable<String>> getExpressionEvaluators() {
         return expressionEvaluators;
     }

@@ -22,6 +22,8 @@ package org.jmxexporter;
  */
 public interface JmxExporterMBean {
 
+    int getNumQueryThreads();
+
     int getQueryIntervalInSeconds();
 
     int getExportIntervalInSeconds();

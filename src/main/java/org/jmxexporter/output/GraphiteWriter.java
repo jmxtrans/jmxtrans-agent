@@ -30,10 +30,10 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
- * <a hrev="http://graphite.readthedocs.org/">Graphite</a> implementation of the {@linkplain OutputWriter}.
+ * <a href="http://graphite.readthedocs.org/">Graphite</a> implementation of the {@linkplain OutputWriter}.
  * <p/>
  * <p/>
- * This implementation uses <a hrev="http://graphite.readthedocs.org/en/0.9.10/feeding-carbon.html#the-plaintext-protocol">Carbon Plan Text protocol</a>.
+ * This implementation uses <a href="http://graphite.readthedocs.org/en/0.9.10/feeding-carbon.html#the-plaintext-protocol">Carbon Plan Text protocol</a>.
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
