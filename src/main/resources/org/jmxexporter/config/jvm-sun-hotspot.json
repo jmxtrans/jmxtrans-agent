@@ -24,13 +24,12 @@
 
         },
         {
-            "objectName": "java.lang:type=GarbageCollector,name=%name%",
+            "objectName": "java.lang:type=GarbageCollector,name=*",
             "resultAlias": "jvm.gc.%name%",
             "attributes": [
                 "CollectionCount",
                 "CollectionTime"
             ]
-
         },
         {
             "objectName": "java.lang:type=Threading",
