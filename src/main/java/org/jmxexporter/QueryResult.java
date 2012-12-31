@@ -69,7 +69,7 @@ public class QueryResult {
     @Override
     public String toString() {
         return "QueryResult{" +
-                ", epoch=" + new Timestamp(epochInMillis) +
+                " epoch=" + new Timestamp(epochInMillis) +
                 ", name='" + name + '\'' +
                 ", value=" + value +
                 '}';
