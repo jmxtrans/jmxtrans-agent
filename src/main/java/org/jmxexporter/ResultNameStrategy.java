@@ -62,10 +62,12 @@ import java.util.concurrent.Callable;
  * <tr>
  * <th><code>#hostaddress#</code></th>
  * <td>localhost - hostaddress {@link java.net.InetAddress#getHostAddress()}</td>
+ * <td>TODO</td>
  * </tr>
  * <tr>
  * <th><code>#escaped_hostname#</code></th>
  * <td>localhost - hostaddress {@link java.net.InetAddress#getHostAddress()} with '.' replaced by '_'</td>
+ * <td>TODO</td>
  * </tr>
  * </table>
  *
