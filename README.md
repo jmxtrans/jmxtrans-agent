@@ -10,3 +10,4 @@ An in process JMX Exporter will solve the problem of remote JMX access in cloud-
 
 * [Documentation](https://github.com/cyrille-leclerc/jmxexporter/wiki)
 * [Latest javadocs](http://cyrille-leclerc.github.com/jmxexporter/apidocs/)
+* [Sample](https://github.com/cyrille-leclerc/jmxexporter-samples)
