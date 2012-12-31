@@ -52,6 +52,7 @@ public class SocketWriterPoolFactory extends BaseKeyedPoolableObjectFactory<Inet
     public void destroyObject(InetSocketAddress inetSocketAddress, SocketWriter socketWriter) throws Exception {
         super.destroyObject(inetSocketAddress, socketWriter);
         socketWriter.close();
+        socketWriter.getSocket().close();
     }
 
     /**
