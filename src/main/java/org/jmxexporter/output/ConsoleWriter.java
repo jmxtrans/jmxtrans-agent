@@ -30,7 +30,7 @@ public class ConsoleWriter extends AbstractOutputWriter implements OutputWriter 
     @Override
     public void write(Iterable<QueryResult> results) {
         for (QueryResult result : results) {
-            System.out.println(result);
+            System.out.println(result.getName() + "\t" + result.getEpochInMillis() + "\t" + result.getValue());
         }
     }
 }
