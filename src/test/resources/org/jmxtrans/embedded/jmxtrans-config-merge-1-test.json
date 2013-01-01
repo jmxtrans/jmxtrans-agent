@@ -1,0 +1,68 @@
+{
+    "queries": [
+        {
+            "objectName": "java.lang:type=MemoryPool,name=PS Eden Space",
+            "attribute": "CollectionUsageThreshold"
+
+        },
+        {
+            "objectName": "java.lang:type=MemoryPool,name=PS Eden Space",
+            "resultAlias": "test-aliased-query",
+            "attribute": "CollectionUsageThresholdCount"
+        },
+        {
+            "objectName": "java.lang:type=MemoryPool,name=PS Eden Space",
+            "resultAlias": "test-attribute-with-alias",
+            "attribute": {
+                "name": "CollectionUsageThresholdCount",
+                "resultAlias": "test-alias"
+            }
+        },
+        {
+            "objectName": "java.lang:type=MemoryPool,name=PS Eden Space",
+            "resultAlias": "test-attributes",
+            "attributes": ["CollectionUsageThresholdExceeded", "CollectionUsageThresholdSupported"]
+        },
+        {
+            "objectName": "java.lang:type=MemoryPool,name=PS Eden Space",
+            "resultAlias": "test-attributes-with-alias",
+            "attributes": [
+                {
+                    "name": "CollectionUsageThresholdExceeded",
+                    "resultAlias": "collection-usage-threshold-exceeded"
+                },
+                {
+                    "name": "CollectionUsageThresholdSupported",
+                    "resultAlias": "collection-usage-threshold-supported"
+                },
+                "CollectionUsageThresholdCount"
+            ]
+        },
+        {
+            "objectName": "java.lang:type=MemoryPool,name=PS Eden Space",
+            "resultAlias": "test-attribute-with-key",
+            "attribute": {
+                "name": "PeakUsage",
+                "key": "committed"
+            }
+        },
+        {
+            "objectName": "java.lang:type=MemoryPool,name=PS Eden Space",
+            "resultAlias": "test-attribute-with-keys",
+            "attribute": {
+                "name": "PeakUsage",
+                "keys": ["committed", "init", "max", "used"]
+            }
+        },
+        {
+            "objectName": "java.lang:type=MemoryPool,name=PS Eden Space",
+            "resultAlias": "test-with-outputwriter",
+            "attribute": "CollectionUsageThresholdCount",
+            "outputWriters": [
+                {
+                    "@class": "org.jmxtrans.embedded.output.NoOpWriter"
+                }
+            ]
+        }
+    ]
+}

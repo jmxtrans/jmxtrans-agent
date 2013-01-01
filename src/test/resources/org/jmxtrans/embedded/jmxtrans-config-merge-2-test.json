@@ -1,0 +1,20 @@
+{
+    "outputWriters": [
+        {
+            "@class": "org.jmxtrans.embedded.output.ConsoleWriter"
+        },
+        {
+            "@class": "org.jmxtrans.embedded.output.GraphiteWriter",
+            "settings": {
+                "host": "${graphite.host:localhost}",
+                "port": "${graphite.port:2003}",
+                "namePrefix": "servers.${server.name:localhost}."
+            }
+        }
+    ],
+    "queryIntervalInSeconds": 5,
+    "numQueryThreads": 3,
+    "exportIntervalInSeconds": 10,
+    "numExportThreads": 2,
+    "exportBatchSize": 30
+}

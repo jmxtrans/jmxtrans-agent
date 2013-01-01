@@ -1,0 +1,59 @@
+{
+    "queries": [
+        {
+            "objectName": "java.lang:type=GarbageCollector,name=PS MarkSweep",
+            "resultAlias": "jvm.gc.ps-marksweep",
+            "attributes": ["CollectionCount", "CollectionTime"]
+        },
+        {
+            "objectName": "java.lang:type=GarbageCollector,name=PS Scavenge",
+            "resultAlias": "jvm.gc.ps-scavenge",
+            "attributes": ["CollectionCount", "CollectionTime"]
+        },
+        {
+            "objectName": "java.lang:type=Memory",
+            "resultAlias": "jvm.memory",
+            "attributes": [
+                {
+                    "name": "HeapMemoryUsage",
+                    "keys": ["committed", "init", "max", "used"]
+                },
+                {
+                    "name": "NonHeapMemoryUsage",
+                    "keys": ["committed", "init", "max", "used"]
+                }
+            ]
+        },
+        {
+            "objectName": "java.lang:type=Threading",
+            "resultAlias": "jvm.thread",
+            "attributes": ["ThreadCount", "TotalStartedThreadCount", "DaemonThreadCount"]
+        },
+        {
+            "objectName": "java.lang:type=Runtime",
+            "resultAlias": "jvm.runtime",
+            "attribute": "Uptime"
+        },
+        {
+            "objectName": "java.lang:type=OperatingSystem",
+            "resultAlias": "jvm.operatingsystem",
+            "attributes": ["SystemLoadAverage", "ProcessCpuTime", "FreePhysicalMemorySize", "FreeSwapSpaceSize"]
+        }
+    ],
+    "outputWriters": [
+        {
+            "@class": "org.jmxtrans.embedded.output.NoOpWriter"
+        },
+        {
+            "@class": "org.jmxtrans.embedded.output.GraphiteWriter",
+            "settings": {
+                "host": "${graphite.host}",
+                "port": "${graphite.port:2003}",
+                "namePrefix": "servers.${server.name:localhost}."
+            }
+        }
+    ],
+    "queryIntervalInSeconds": 1,
+    "numQueryThreads": 1,
+    "exportIntervalInSeconds": 20
+}
