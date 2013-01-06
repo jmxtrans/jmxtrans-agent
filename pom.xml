@@ -27,11 +27,11 @@
     <packaging>jar</packaging>
     <name>embedded-jmxtrans</name>
     <description>In process JMX metrics exporter</description>
-    <url>https://github.com/cyrille-leclerc/jmxexporter</url>
+    <url>https://github.com/jmxtrans/embedded-jmxtrans</url>
     <scm>
-        <connection>scm:git:git@github.com:cyrille-leclerc/jmxexporter.git</connection>
-        <developerConnection>scm:git:git@github.com:cyrille-leclerc/jmxexporter.git</developerConnection>
-        <url>https://github.com/cyrille-leclerc/jmxexporter</url>
+        <connection>scm:git:git@github.com:jmxtrans/embedded-jmxtrans.git</connection>
+        <developerConnection>scm:git:git@github.com:jmxtrans/embedded-jmxtrans.git</developerConnection>
+        <url>https://github.com/jmxtrans/embedded-jmxtrans</url>
     </scm>
     <build>
         <plugins>
