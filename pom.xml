@@ -89,6 +89,9 @@
                 </executions>
             </plugin>
             <plugin>
+                <!--
+                mvn clean source:jar install ghDownloads:upload
+                -->
                 <groupId>com.github.github</groupId>
                 <artifactId>downloads-maven-plugin</artifactId>
                 <version>0.6</version>
@@ -97,30 +100,18 @@
                     <override>true</override>
                     <includeAttached>true</includeAttached>
                 </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>upload</goal>
-                        </goals>
-                        <phase>site</phase>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
+                <!--
+                Run mvn ghSite:site
+                See https://github.com/github/maven-plugins
+                -->
                 <groupId>com.github.github</groupId>
                 <artifactId>site-maven-plugin</artifactId>
                 <version>0.7</version>
                 <configuration>
                     <message>Creating site for ${project.version}</message>
                 </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>site</goal>
-                        </goals>
-                        <phase>site</phase>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
         <resources>
@@ -142,7 +133,13 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>2.6</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9</version>
                 <configuration>
                     <links>
                         <link>http://commons.apache.org/pool/api-1.6</link>
