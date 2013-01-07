@@ -63,6 +63,7 @@
                         <exclude>.gitignore</exclude>
                         <exclude>**/*.json</exclude>
                         <exclude>**/*.md</exclude>
+                        <exclude>src/site/resources/CNAME</exclude>
                     </excludes>
                 </configuration>
             </plugin>
