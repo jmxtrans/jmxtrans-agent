@@ -297,9 +297,18 @@ public class Query implements QueryMBean {
      */
     @Nonnull
     public List<OutputWriter> getEffectiveOutputWriters() {
+        // Google Guava predicates would be nicer but we don't include guava to ease embeddability
         List<OutputWriter> result = new ArrayList<OutputWriter>(embeddedJmxTrans.getOutputWriters().size() + outputWriters.size());
-        result.addAll(embeddedJmxTrans.getOutputWriters());
-        result.addAll(outputWriters);
+        for (OutputWriter outputWriter : embeddedJmxTrans.getOutputWriters()) {
+            if (outputWriter.isEnabled()) {
+                result.add(outputWriter);
+            }
+        }
+        for (OutputWriter outputWriter : outputWriters) {
+            if (outputWriter.isEnabled()) {
+                result.add(outputWriter);
+            }
+        }
         return result;
     }
 

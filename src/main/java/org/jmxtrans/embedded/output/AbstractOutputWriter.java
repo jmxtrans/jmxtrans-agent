@@ -36,6 +36,8 @@ public abstract class AbstractOutputWriter implements OutputWriter {
 
     private Map<String, Object> settings = new HashMap<String, Object>();
 
+    private boolean enabled = true;
+
     /**
      * No-op implementation
      */
@@ -175,7 +177,8 @@ public abstract class AbstractOutputWriter implements OutputWriter {
     @Override
     public String toString() {
         return getClass() + "{" +
-                "settings=" + settings +
+                "enabled=" + enabled +
+                ", settings=" + settings +
                 '}';
     }
 
@@ -196,6 +199,14 @@ public abstract class AbstractOutputWriter implements OutputWriter {
         this.strategy = strategy;
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -210,7 +221,7 @@ public abstract class AbstractOutputWriter implements OutputWriter {
 
     @Override
     public int hashCode() {
-        return 0;
+        return getClass().hashCode();
     }
 
 

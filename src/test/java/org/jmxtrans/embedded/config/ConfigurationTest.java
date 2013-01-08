@@ -71,6 +71,14 @@ public class ConfigurationTest {
     }
 
     @Test
+    public void validateDisabledOutputWriters() throws MalformedObjectNameException {
+        Query query = queriesByResultName.get("test-aliased-query");
+        assertThat(query.getOutputWriters().size(), is(0));
+        assertThat(query.getEffectiveOutputWriters().size(), is(2));
+        assertThat(embeddedJmxTrans.getOutputWriters().size(), is(4));
+    }
+
+    @Test
     public void validateQueryWithAttributeAlias() throws MalformedObjectNameException {
         ObjectName objectName = new ObjectName("java.lang:type=MemoryPool,name=PS Eden Space");
         Query query = queriesByResultName.get("test-attribute-with-alias");
@@ -147,6 +155,7 @@ public class ConfigurationTest {
         QueryAttribute queryAttribute = query.getQueryAttributes().iterator().next();
         assertThat(queryAttribute.getName(), is("CollectionUsageThresholdCount"));
         assertThat(query.getOutputWriters().size(), is(1));
+        assertThat(query.getEffectiveOutputWriters().size(), is(3));
         OutputWriter outputWriter = query.getOutputWriters().get(0);
         assertThat(outputWriter, instanceOf(NoOpWriter.class));
     }
