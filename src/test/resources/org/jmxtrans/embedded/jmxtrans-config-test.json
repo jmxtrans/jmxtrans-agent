@@ -70,6 +70,14 @@
             "@class": "org.jmxtrans.embedded.output.ConsoleWriter"
         },
         {
+            "@class": "org.jmxtrans.embedded.output.Slf4jWriter",
+            "enabled": false
+        },
+        {
+            "@class": "org.jmxtrans.embedded.output.NoOpWriter",
+            "enabled": "${jmxtrans.writer.enabled:false}"
+        },
+        {
             "@class": "org.jmxtrans.embedded.output.GraphiteWriter",
             "settings": {
                 "host": "${graphite.host:localhost}",

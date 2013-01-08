@@ -62,5 +62,9 @@ public interface OutputWriter {
      */
     @PreDestroy
     void stop() throws Exception;
+
+    boolean isEnabled();
+
+    void setEnabled(boolean enabled);
 }
 

@@ -195,6 +195,10 @@ public class ConfigurationParser {
                 try {
                     String className = outputWriterNode.path("@class").asText();
                     OutputWriter outputWriter = (OutputWriter) Class.forName(className).newInstance();
+                    JsonNode enabledNode = outputWriterNode.path("enabled");
+                    if(!enabledNode.isMissingNode()) {
+                        outputWriter.setEnabled(enabledNode.asBoolean());
+                    }
                     JsonNode settingsNode = outputWriterNode.path("settings");
                     if (settingsNode.isMissingNode()) {
                     } else if (settingsNode.isObject()) {

@@ -130,4 +130,34 @@ public class QueryTest {
         assertThat(exportResultCount.get(), is(100));
         assertThat(actualExportResultCount, is(100));
     }
+
+    @Test
+    public void testDisabledOutputWriter(){
+        EmbeddedJmxTrans embeddedJmxTrans = new EmbeddedJmxTrans();
+
+        // CONFIGURE
+        Query query = new Query("test:type=GarbageCollector,name=PS Scavenge");
+        embeddedJmxTrans.addQuery(query);
+        query.addAttribute("CollectionCount").addAttribute("CollectionTime");
+        embeddedJmxTrans.addQuery(query);
+
+        final AtomicInteger exportCount = new AtomicInteger();
+        final AtomicInteger exportResultCount = new AtomicInteger();
+
+        OutputWriter outputWriter = new AbstractOutputWriter() {
+
+            @Override
+            public void write(Iterable<QueryResult> results) {
+                exportCount.incrementAndGet();
+                for (QueryResult result : results) {
+                    exportResultCount.incrementAndGet();
+                }
+            }
+        };
+        outputWriter.setEnabled(false);
+
+        embeddedJmxTrans.getOutputWriters().add(outputWriter);
+        assertThat(query.getOutputWriters().size(), is(0));
+        assertThat(query.getEffectiveOutputWriters().size(), is(0));
+    }
 }
