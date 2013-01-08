@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jmxtrans.embedded;
+package org.jmxtrans.embedded.spring;
 
+import org.jmxtrans.embedded.EmbeddedJmxTrans;
+import org.jmxtrans.embedded.spring.EmbeddedJmxTransFactory;
 import org.junit.Test;
 
 import java.util.Arrays;
