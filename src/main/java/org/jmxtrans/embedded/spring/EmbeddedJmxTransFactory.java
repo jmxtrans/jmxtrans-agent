@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jmxtrans.embedded;
+package org.jmxtrans.embedded.spring;
 
+import org.jmxtrans.embedded.EmbeddedJmxTrans;
 import org.jmxtrans.embedded.config.ConfigurationParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * {@link EmbeddedJmxTrans} factory for Spring Framework integration.
+ * {@link org.jmxtrans.embedded.EmbeddedJmxTrans} factory for Spring Framework integration.
  * <p/>
  * Default {@linkplain #configurationUrls} :
  * <ul>
