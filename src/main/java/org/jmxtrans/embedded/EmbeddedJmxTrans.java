@@ -108,9 +108,9 @@ public class EmbeddedJmxTrans implements EmbeddedJmxTransMBean {
 
     private int numExportThreads = 1;
 
-    private int queryIntervalInSeconds = 5;
+    private int queryIntervalInSeconds = 30;
 
-    private int exportIntervalInSeconds = 30;
+    private int exportIntervalInSeconds = 5;
 
     private int exportBatchSize = 50;
 
@@ -139,12 +139,13 @@ public class EmbeddedJmxTrans implements EmbeddedJmxTransMBean {
                     query.collectMetrics();
                 }
             }, 0, getQueryIntervalInSeconds(), TimeUnit.SECONDS);
+            // start export just after first collect
             exportScheduledExecutor.scheduleWithFixedDelay(new Runnable() {
                 @Override
                 public void run() {
                     query.exportCollectedMetrics();
                 }
-            }, 0, getQueryIntervalInSeconds(), TimeUnit.SECONDS);
+            }, getQueryIntervalInSeconds() + 1, getExportIntervalInSeconds(), TimeUnit.SECONDS);
         }
 
         Runtime.getRuntime().addShutdownHook(shutdownHook);
