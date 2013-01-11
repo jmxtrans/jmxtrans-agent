@@ -25,7 +25,6 @@
 <xsd:schema xmlns="http://www.jmxtrans.org/schema/embedded"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             xmlns:tool="http://www.springframework.org/schema/tool"
-            xmlns:beans="http://www.springframework.org/schema/beans"
             targetNamespace="http://www.jmxtrans.org/schema/embedded"
             elementFormDefault="qualified" attributeFormDefault="unqualified">
 
@@ -35,7 +34,8 @@
 		]]></xsd:documentation>
     </xsd:annotation>
 
-    <xsd:import namespace="http://www.springframework.org/schema/beans" schemaLocation="http://www.springframework.org/schema/beans/spring-beans-3.0.xsd" />
+    <xsd:import namespace="http://www.springframework.org/schema/beans"
+                schemaLocation="http://www.springframework.org/schema/beans/spring-beans-3.0.xsd"/>
 
     <xsd:element name="jmxtrans">
         <xsd:annotation>
@@ -50,29 +50,36 @@
             </xsd:appinfo>
         </xsd:annotation>
         <xsd:complexType>
-            <xsd:complexContent>
-                <xsd:extension base="beans:identifiedType">
-                    <xsd:attribute name="configuration" type="xsd:string">
-                        <xsd:annotation>
-                            <xsd:documentation><![CDATA[
+            <xsd:sequence>
+                <xsd:element name="configuration" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+            </xsd:sequence>
+            <xsd:attribute name="id" type="xsd:string" >
+                <xsd:annotation>
+                    <xsd:documentation><![CDATA[
+	The unique identifier for a bean. A bean id may not be used more than once
+	within the same <beans> element.
+				]]></xsd:documentation>
+                </xsd:annotation>
+            </xsd:attribute>
+            <xsd:attribute name="configuration" type="xsd:string">
+                <xsd:annotation>
+                    <xsd:documentation><![CDATA[
 	The location of the json configuration file, as a Spring resource location: a URL, a "classpath:" pseudo URL,
 	or a relative file path.
 	Multiple configurations may be specified, separated by commas.
 				]]></xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:attribute>
-                    <xsd:attribute name="ignore-configuration-not-found" type="xsd:boolean"
-                                   default="false">
-                        <xsd:annotation>
-                            <xsd:documentation><![CDATA[
+                </xsd:annotation>
+            </xsd:attribute>
+            <xsd:attribute name="ignore-configuration-not-found" type="xsd:boolean"
+                           default="false">
+                <xsd:annotation>
+                    <xsd:documentation><![CDATA[
 	Specifies if failure to find the JSON configuration resource location should be ignored.  Default
 	is "false", meaning that if there is no file in the configuration specified an exception will
 	be raised at runtime.
 				]]></xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:attribute>
-                </xsd:extension>
-            </xsd:complexContent>
+                </xsd:annotation>
+            </xsd:attribute>
         </xsd:complexType>
     </xsd:element>
 </xsd:schema>
