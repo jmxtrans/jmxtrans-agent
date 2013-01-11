@@ -187,6 +187,9 @@ public class Query implements QueryMBean {
      */
     @Override
     public int exportCollectedMetrics() {
+        if(queryResults.isEmpty()) {
+            return 0;
+        }
 
         int totalExportedMetricsCount = 0;
         long nanosBefore = System.nanoTime();
