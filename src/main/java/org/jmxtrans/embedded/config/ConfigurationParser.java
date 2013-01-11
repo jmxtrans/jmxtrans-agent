@@ -80,7 +80,7 @@ public class ConfigurationParser {
      * @param configurationUrl JSON configuration file URL ("http://...", "classpath:com/mycompany...", ...)
      */
     @Nonnull
-    public EmbeddedJmxTrans newEmbeddedJmxTrans(@Nonnull String configurationUrl)throws EmbeddedJmxTransException {
+    public EmbeddedJmxTrans newEmbeddedJmxTrans(@Nonnull String configurationUrl) throws EmbeddedJmxTransException {
         EmbeddedJmxTrans embeddedJmxTrans = new EmbeddedJmxTrans();
         mergeEmbeddedJmxTransConfiguration(configurationUrl, embeddedJmxTrans);
         return embeddedJmxTrans;
@@ -103,13 +103,14 @@ public class ConfigurationParser {
         }
     }
 
+    @Nonnull
     public EmbeddedJmxTrans newEmbeddedJmxTrans(@Nonnull InputStream configuration) throws IOException {
         EmbeddedJmxTrans embeddedJmxTrans = new EmbeddedJmxTrans();
         mergeEmbeddedJmxTransConfiguration(configuration, embeddedJmxTrans);
         return embeddedJmxTrans;
     }
 
-    protected void mergeEmbeddedJmxTransConfiguration(@Nonnull InputStream configuration, EmbeddedJmxTrans embeddedJmxTrans) throws IOException {
+    public void mergeEmbeddedJmxTransConfiguration(@Nonnull InputStream configuration, EmbeddedJmxTrans embeddedJmxTrans) throws IOException {
         JsonNode configurationRootNode = mapper.readValue(configuration, JsonNode.class);
         mergeEmbeddedJmxTransConfiguration(configurationRootNode, embeddedJmxTrans);
     }
@@ -204,7 +205,7 @@ public class ConfigurationParser {
                     String className = outputWriterNode.path("@class").asText();
                     OutputWriter outputWriter = (OutputWriter) Class.forName(className).newInstance();
                     JsonNode enabledNode = outputWriterNode.path("enabled");
-                    if(!enabledNode.isMissingNode()) {
+                    if (!enabledNode.isMissingNode()) {
                         outputWriter.setEnabled(enabledNode.asBoolean());
                     }
                     JsonNode settingsNode = outputWriterNode.path("settings");

@@ -24,21 +24,24 @@
 package org.jmxtrans.embedded.spring;
 
 import org.jmxtrans.embedded.EmbeddedJmxTrans;
+import org.jmxtrans.embedded.EmbeddedJmxTransException;
 import org.jmxtrans.embedded.config.ConfigurationParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.jmx.export.naming.SelfNaming;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * {@link org.jmxtrans.embedded.EmbeddedJmxTrans} factory for Spring Framework integration.
@@ -53,21 +56,58 @@ import java.util.List;
  */
 public class EmbeddedJmxTransFactory implements FactoryBean<EmbeddedJmxTrans>, DisposableBean, BeanNameAware, SelfNaming {
 
+    private final static String DEFAULT_CONFIGURATION_URL = "classpath:jmxtrans.json, classpath:org/jmxtrans/embedded/config/jmxtrans-internals.json";
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private List<String> configurationUrls =
-            Arrays.asList("classpath:jmxtrans.json", "classpath:org/jmxtrans/embedded/config/jmxtrans-internals.json");
+    private List<String> configurationUrls;
 
     private String name;
 
     private EmbeddedJmxTrans embeddedJmxTrans;
+
+    private ResourceLoader resourceLoader;
+
+    private boolean ignoreConfigurationNotFound = false;
+
+    @Autowired
+    public EmbeddedJmxTransFactory(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
+    }
 
     @PostConstruct
     @Override
     public EmbeddedJmxTrans getObject() throws Exception {
         logger.info("Load JmxTrans with configuration '{}'", configurationUrls);
         if (embeddedJmxTrans == null) {
-            embeddedJmxTrans = new ConfigurationParser().newEmbeddedJmxTrans(configurationUrls);
+
+            if (configurationUrls == null) {
+                configurationUrls = Collections.singletonList(DEFAULT_CONFIGURATION_URL);
+            }
+            ConfigurationParser parser = new ConfigurationParser();
+            EmbeddedJmxTrans newJmxTrans = new EmbeddedJmxTrans();
+
+            for (String delimitedConfigurationUrl : configurationUrls) {
+                String[] tokens = StringUtils.commaDelimitedListToStringArray(delimitedConfigurationUrl);
+                tokens = StringUtils.trimArrayElements(tokens);
+                for (String configurationUrl : tokens) {
+                    configurationUrl = configurationUrl.trim();
+                    logger.debug("Load configuration {}", configurationUrl);
+                    Resource configuration = resourceLoader.getResource(configurationUrl);
+                    if (configuration.exists()) {
+                        try {
+                            parser.mergeEmbeddedJmxTransConfiguration(configuration.getInputStream(), newJmxTrans);
+                        } catch (Exception e) {
+                            throw new EmbeddedJmxTransException("Exception loading configuration " + configuration, e);
+                        }
+                    } else if (ignoreConfigurationNotFound) {
+                        logger.debug("Ignore missing configuration file {}", configuration);
+                    } else {
+                        throw new EmbeddedJmxTransException("Configuration file " + configuration + " not found");
+                    }
+                }
+            }
+            embeddedJmxTrans = newJmxTrans;
             logger.info("Start JmxTrans with configuration {})", configurationUrls);
             embeddedJmxTrans.start();
         }
@@ -85,28 +125,20 @@ public class EmbeddedJmxTransFactory implements FactoryBean<EmbeddedJmxTrans>, D
     }
 
     /**
-     * @param configurationUrl delimited list of configuration urls (',', ';', '\n')
+     * @param configurationUrl coma delimited list
      */
     public void setConfigurationUrl(String configurationUrl) {
-        this.configurationUrls = delimitedStringToList(configurationUrl);
+        if (this.configurationUrls == null) {
+            this.configurationUrls = new ArrayList<String>();
+        }
+        this.configurationUrls.add(configurationUrl);
     }
 
     public void setConfigurationUrls(List<String> configurationUrls) {
-        this.configurationUrls = configurationUrls;
-    }
-
-    protected List<String> delimitedStringToList(String configurationUrl) {
-        configurationUrl = configurationUrl.replaceAll(";", ",");
-        configurationUrl = configurationUrl.replaceAll("\n", ",");
-        String[] arr = configurationUrl.split(",");
-        List<String> result = new ArrayList<String>();
-        for (String str : arr) {
-            str = str.trim();
-            if (!str.isEmpty()) {
-                result.add(str);
-            }
+        if (this.configurationUrls == null) {
+            this.configurationUrls = new ArrayList<String>();
         }
-        return result;
+        this.configurationUrls.addAll(configurationUrls);
     }
 
     @PreDestroy
@@ -120,6 +152,10 @@ public class EmbeddedJmxTransFactory implements FactoryBean<EmbeddedJmxTrans>, D
     @Override
     public void setBeanName(String name) {
         this.name = name;
+    }
+
+    public void setIgnoreConfigurationNotFound(boolean ignoreConfigurationNotFound) {
+        this.ignoreConfigurationNotFound = ignoreConfigurationNotFound;
     }
 
     @Override
