@@ -108,7 +108,7 @@ public class EmbeddedJmxTrans implements EmbeddedJmxTransMBean {
 
     private int numExportThreads = 1;
 
-    private int queryIntervalInSeconds = 15;
+    private int queryIntervalInSeconds = 5;
 
     private int exportIntervalInSeconds = 30;
 
@@ -129,8 +129,8 @@ public class EmbeddedJmxTrans implements EmbeddedJmxTransMBean {
             outputWriter.start();
         }
 
-        collectScheduledExecutor = Executors.newScheduledThreadPool(getNumQueryThreads(), new NamedThreadFactory("embedded-collect-"));
-        exportScheduledExecutor = Executors.newScheduledThreadPool(getNumExportThreads(), new NamedThreadFactory("embedded-export-"));
+        collectScheduledExecutor = Executors.newScheduledThreadPool(getNumQueryThreads(), new NamedThreadFactory("jmxtrans-collect-"));
+        exportScheduledExecutor = Executors.newScheduledThreadPool(getNumExportThreads(), new NamedThreadFactory("jmxtrans-export-"));
 
         for (final Query query : getQueries()) {
             collectScheduledExecutor.scheduleWithFixedDelay(new Runnable() {
