@@ -157,11 +157,13 @@ public class Query implements QueryMBean {
          * Seen on com.sun.jmx.interceptor.DefaultMBeanServerInterceptor
          */
         Set<ObjectName> matchingObjectNames = embeddedJmxTrans.getMbeanServer().queryNames(this.objectName, null);
+        logger.trace("Query {} returned {}", objectName, matchingObjectNames);
 
         for (ObjectName matchingObjectName : matchingObjectNames) {
             long epochInMillis = System.currentTimeMillis();
             try {
                 AttributeList jmxAttributes = embeddedJmxTrans.getMbeanServer().getAttributes(matchingObjectName, this.attributeNames);
+                logger.trace("Query {} returned {}", matchingObjectName, jmxAttributes);
                 for (Attribute jmxAttribute : jmxAttributes.asList()) {
                     QueryAttribute queryAttribute = this.attributesByName.get(jmxAttribute.getName());
                     Object value = jmxAttribute.getValue();

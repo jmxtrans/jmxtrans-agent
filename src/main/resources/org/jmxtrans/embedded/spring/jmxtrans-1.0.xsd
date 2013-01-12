@@ -40,7 +40,7 @@
     <xsd:element name="jmxtrans">
         <xsd:annotation>
             <xsd:documentation><![CDATA[
-	Loads Embedded JmxTrans
+	Load Embedded JmxTrans
 			]]></xsd:documentation>
             <xsd:appinfo>
                 <tool:annotation>
@@ -51,13 +51,19 @@
         </xsd:annotation>
         <xsd:complexType>
             <xsd:sequence>
-                <xsd:element name="configuration" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element name="configuration" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                    <xsd:annotation>
+                        <xsd:documentation><![CDATA[
+    jmxtrans json configuration file defined as a spring resource. Can be 'classpath:...', 'file://...', 'http://...', ...
+                        ]]></xsd:documentation>
+                    </xsd:annotation>
+                </xsd:element>
             </xsd:sequence>
-            <xsd:attribute name="id" type="xsd:string" >
+            <xsd:attribute name="id" type="xsd:string">
                 <xsd:annotation>
                     <xsd:documentation><![CDATA[
 	The unique identifier for a bean. A bean id may not be used more than once
-	within the same <beans> element.
+	within the same <beans> element. Optional. If not defined, defaults to 'jmxtrans'.
 				]]></xsd:documentation>
                 </xsd:annotation>
             </xsd:attribute>

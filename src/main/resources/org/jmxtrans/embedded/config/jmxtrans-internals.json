@@ -1,7 +1,7 @@
 {
     "queries": [
         {
-            "objectName": "org.jmxtrans:name=*,type=EmbeddedJmxTrans",
+            "objectName": "org.jmxtrans.embedded:name=*,type=EmbeddedJmxTrans",
             "resultAlias": "jmxtrans.%name%",
             "attributes": [
                 "CollectedMetricsCount",
