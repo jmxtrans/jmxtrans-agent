@@ -54,15 +54,13 @@ import java.util.*;
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class EmbeddedJmxTransFactory implements FactoryBean<EmbeddedJmxTrans>, DisposableBean, BeanNameAware, SelfNaming {
+public class EmbeddedJmxTransFactory implements FactoryBean<EmbeddedJmxTrans>, DisposableBean {
 
     private final static String DEFAULT_CONFIGURATION_URL = "classpath:jmxtrans.json, classpath:org/jmxtrans/embedded/config/jmxtrans-internals.json";
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private List<String> configurationUrls;
-
-    private String name;
 
     private EmbeddedJmxTrans embeddedJmxTrans;
 
@@ -108,8 +106,8 @@ public class EmbeddedJmxTransFactory implements FactoryBean<EmbeddedJmxTrans>, D
                 }
             }
             embeddedJmxTrans = newJmxTrans;
-            logger.info("Start JmxTrans with configuration {})", configurationUrls);
-            embeddedJmxTrans.start();
+            logger.info("Created EmbeddedJmxTrans with configuration {})", configurationUrls);
+            // embeddedJmxTrans.start();
         }
         return embeddedJmxTrans;
     }
@@ -144,22 +142,13 @@ public class EmbeddedJmxTransFactory implements FactoryBean<EmbeddedJmxTrans>, D
     @PreDestroy
     @Override
     public void destroy() throws Exception {
-        if (embeddedJmxTrans != null) {
-            embeddedJmxTrans.stop();
-        }
-    }
-
-    @Override
-    public void setBeanName(String name) {
-        this.name = name;
+        logger.info("EmbeddedJmxFactory.destroy");
+        // if (embeddedJmxTrans != null) {
+        //    embeddedJmxTrans.stop();
+        //}
     }
 
     public void setIgnoreConfigurationNotFound(boolean ignoreConfigurationNotFound) {
         this.ignoreConfigurationNotFound = ignoreConfigurationNotFound;
-    }
-
-    @Override
-    public ObjectName getObjectName() throws MalformedObjectNameException {
-        return new ObjectName("org.jmxtrans:type=EmbeddedJmxTrans,name=" + name);
     }
 }
