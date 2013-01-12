@@ -149,6 +149,7 @@ public class EmbeddedJmxTrans implements EmbeddedJmxTransMBean {
         }
 
         Runtime.getRuntime().addShutdownHook(shutdownHook);
+        logger.info("EmbeddedJmxTrans started");
     }
 
 
