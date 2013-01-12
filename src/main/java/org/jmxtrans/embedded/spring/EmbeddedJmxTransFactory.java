@@ -160,6 +160,6 @@ public class EmbeddedJmxTransFactory implements FactoryBean<EmbeddedJmxTrans>, D
 
     @Override
     public ObjectName getObjectName() throws MalformedObjectNameException {
-        return new ObjectName("org.jmxtrans.embedded:type=EmbeddedJmxTrans,name=" + name);
+        return new ObjectName("org.jmxtrans:type=EmbeddedJmxTrans,name=" + name);
     }
 }
