@@ -89,6 +89,8 @@ public class EmbeddedJmxTrans implements EmbeddedJmxTransMBean {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    private boolean running = false;
+
     private ScheduledExecutorService collectScheduledExecutor;
 
     private ScheduledExecutorService exportScheduledExecutor;
@@ -120,7 +122,11 @@ public class EmbeddedJmxTrans implements EmbeddedJmxTransMBean {
      * Start the exporter: initialize underlying queries, start scheduled executors, register shutdown hook
      */
     @PostConstruct
-    public void start() throws Exception {
+    public synchronized void start() throws Exception {
+        if(running) {
+            logger.debug("Ignore start() command for already running instance");
+            return;
+        }
 
         for (Query query : queries) {
             query.start();
@@ -149,6 +155,7 @@ public class EmbeddedJmxTrans implements EmbeddedJmxTransMBean {
         }
 
         Runtime.getRuntime().addShutdownHook(shutdownHook);
+        running = true;
         logger.info("EmbeddedJmxTrans started");
     }
 
@@ -157,7 +164,11 @@ public class EmbeddedJmxTrans implements EmbeddedJmxTransMBean {
      * Stop scheduled executors and collect-and-export metrics one last time.
      */
     @PreDestroy
-    public void stop() throws Exception {
+    public synchronized void stop() throws Exception {
+        if(!running) {
+            logger.debug("Ignore stop() command for not running instance");
+            return;
+        }
         collectScheduledExecutor.shutdown();
         try {
             collectScheduledExecutor.awaitTermination(getQueryIntervalInSeconds(), TimeUnit.SECONDS);
@@ -186,6 +197,7 @@ public class EmbeddedJmxTrans implements EmbeddedJmxTransMBean {
         } else {
             logger.warn("Failure to remove ShutdownHook");
         }
+        running = false;
     }
 
 
