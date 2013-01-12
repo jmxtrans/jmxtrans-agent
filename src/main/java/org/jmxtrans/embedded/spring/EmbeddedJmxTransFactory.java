@@ -107,7 +107,7 @@ public class EmbeddedJmxTransFactory implements FactoryBean<EmbeddedJmxTrans>, D
             }
             embeddedJmxTrans = newJmxTrans;
             logger.info("Created EmbeddedJmxTrans with configuration {})", configurationUrls);
-            // embeddedJmxTrans.start();
+            embeddedJmxTrans.start();
         }
         return embeddedJmxTrans;
     }
@@ -143,9 +143,9 @@ public class EmbeddedJmxTransFactory implements FactoryBean<EmbeddedJmxTrans>, D
     @Override
     public void destroy() throws Exception {
         logger.info("EmbeddedJmxFactory.destroy");
-        // if (embeddedJmxTrans != null) {
-        //    embeddedJmxTrans.stop();
-        //}
+        if (embeddedJmxTrans != null) {
+            embeddedJmxTrans.stop();
+        }
     }
 
     public void setIgnoreConfigurationNotFound(boolean ignoreConfigurationNotFound) {
