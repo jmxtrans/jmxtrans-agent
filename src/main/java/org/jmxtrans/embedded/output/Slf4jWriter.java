@@ -27,6 +27,8 @@ import org.jmxtrans.embedded.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * <a href="http://www.slf4j.org/">SLF4J</a> based {@linkplain OutputWriter} implementation.
  * <p/>
@@ -34,6 +36,13 @@ import org.slf4j.LoggerFactory;
  * <ul>
  * <li>"logger": Name of the logger. Optional, default value: "<code>org.jmxtrans.embedded.output.Slf4jWriter</code>"</li>
  * </ul>
+ * <p/>
+ * Output: Graphite's <a href="http://graphite.readthedocs.org/en/0.9.10/feeding-carbon.html#the-plaintext-protocol">
+ * Carbon Plan Text protocol</a>
+ * <pre>
+ *     <code>&lt;metric path&gt; &lt;metric value&gt; &lt;metric timestamp&gt;.</code>
+ * </pre>
+ * With timestamp in seconds.
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
@@ -53,7 +62,8 @@ public class Slf4jWriter extends AbstractOutputWriter {
     @Override
     public void write(Iterable<QueryResult> results) {
         for (QueryResult result : results) {
-            logger.info(result.getName() + "\t" + result.getEpochInMillis() + "\t" + result.getValue());
+            String msg = result.getName() + " " + result.getValue() + " " + result.getEpoch(TimeUnit.SECONDS) + "\n";
+            logger.info(msg);
         }
     }
 }
