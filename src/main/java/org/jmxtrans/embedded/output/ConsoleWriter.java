@@ -25,8 +25,17 @@ package org.jmxtrans.embedded.output;
 
 import org.jmxtrans.embedded.QueryResult;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Output results to <code>stdout</code>.
+ * <p/>
+ * Output: Graphite's <a href="http://graphite.readthedocs.org/en/0.9.10/feeding-carbon.html#the-plaintext-protocol">
+ * Carbon Plan Text protocol</a>
+ * <pre>
+ *     <code>&lt;metric path&gt; &lt;metric value&gt; &lt;metric timestamp&gt;.</code>
+ * </pre>
+ * With timestamp in seconds.
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
@@ -38,7 +47,8 @@ public class ConsoleWriter extends AbstractOutputWriter implements OutputWriter 
     @Override
     public void write(Iterable<QueryResult> results) {
         for (QueryResult result : results) {
-            System.out.println(result.getName() + "\t" + result.getEpochInMillis() + "\t" + result.getValue());
+            String msg = result.getName() + " " + result.getValue() + " " + result.getEpoch(TimeUnit.SECONDS) + "\n";
+            System.out.println(msg);
         }
     }
 }
