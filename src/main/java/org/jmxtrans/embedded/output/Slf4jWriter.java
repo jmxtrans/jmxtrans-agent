@@ -62,7 +62,7 @@ public class Slf4jWriter extends AbstractOutputWriter {
     @Override
     public void write(Iterable<QueryResult> results) {
         for (QueryResult result : results) {
-            String msg = result.getName() + " " + result.getValue() + " " + result.getEpoch(TimeUnit.SECONDS) + "\n";
+            String msg = result.getName() + " " + result.getValue() + " " + result.getEpoch(TimeUnit.SECONDS);
             logger.info(msg);
         }
     }

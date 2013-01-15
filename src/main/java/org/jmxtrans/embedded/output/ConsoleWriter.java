@@ -47,7 +47,7 @@ public class ConsoleWriter extends AbstractOutputWriter implements OutputWriter 
     @Override
     public void write(Iterable<QueryResult> results) {
         for (QueryResult result : results) {
-            String msg = result.getName() + " " + result.getValue() + " " + result.getEpoch(TimeUnit.SECONDS) + "\n";
+            String msg = result.getName() + " " + result.getValue() + " " + result.getEpoch(TimeUnit.SECONDS);
             System.out.println(msg);
         }
     }
