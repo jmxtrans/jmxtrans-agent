@@ -39,19 +39,24 @@ public class NamedThreadFactory implements ThreadFactory {
 
     private final ThreadFactory backingThreadFactory = Executors.defaultThreadFactory();
 
-    public NamedThreadFactory(String threadNamePrefix) {
-        this.threadNamePrefix = threadNamePrefix;
-    }
+    private boolean daemon;
 
     private String threadNamePrefix;
 
     private AtomicLong increment = new AtomicLong();
+
+    public NamedThreadFactory(String threadNamePrefix, boolean daemon) {
+        this.threadNamePrefix = threadNamePrefix;
+        this.daemon = daemon;
+    }
+
 
     @Override
     @Nonnull
     public Thread newThread(Runnable r) {
         Thread thread = backingThreadFactory.newThread(r);
         thread.setName(threadNamePrefix + increment.incrementAndGet());
+        thread.setDaemon(daemon);
         return thread;
     }
 }
