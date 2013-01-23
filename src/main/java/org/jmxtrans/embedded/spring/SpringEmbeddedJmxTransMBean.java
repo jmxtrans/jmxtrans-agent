@@ -23,31 +23,12 @@
  */
 package org.jmxtrans.embedded.spring;
 
-import org.jmxtrans.embedded.EmbeddedJmxTrans;
-import org.junit.Test;
-import org.springframework.core.io.DefaultResourceLoader;
-
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import org.jmxtrans.embedded.EmbeddedJmxTransMBean;
 
 /**
+ * JMX MBean interface for {@link SpringEmbeddedJmxTrans}.
+ *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class EmbeddedJmxTransFactoryTest {
-
-
-    @Test
-    public void testGetObject() throws Exception {
-        String configuration = "classpath:org/jmxtrans/embedded/jmxtrans-factory-test.json";
-        EmbeddedJmxTransFactory factory = new EmbeddedJmxTransFactory(new DefaultResourceLoader());
-        factory.setConfigurationUrl(configuration);
-
-        EmbeddedJmxTrans embeddedJmxTrans = factory.getObject();
-        assertThat(embeddedJmxTrans, notNullValue());
-        assertThat(embeddedJmxTrans.getQueries().size(), is(8));
-        assertThat(embeddedJmxTrans.getOutputWriters().size(), is(1));
-
-        embeddedJmxTrans.stop();
-
-    }
+public interface SpringEmbeddedJmxTransMBean extends EmbeddedJmxTransMBean {
 }

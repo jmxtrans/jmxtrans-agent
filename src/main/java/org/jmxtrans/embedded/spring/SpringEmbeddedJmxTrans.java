@@ -24,30 +24,36 @@
 package org.jmxtrans.embedded.spring;
 
 import org.jmxtrans.embedded.EmbeddedJmxTrans;
-import org.junit.Test;
-import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.jmx.export.naming.SelfNaming;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class EmbeddedJmxTransFactoryTest {
+public class SpringEmbeddedJmxTrans extends EmbeddedJmxTrans implements SpringEmbeddedJmxTransMBean, InitializingBean, DisposableBean, SelfNaming {
 
+    private String objectName;
 
-    @Test
-    public void testGetObject() throws Exception {
-        String configuration = "classpath:org/jmxtrans/embedded/jmxtrans-factory-test.json";
-        EmbeddedJmxTransFactory factory = new EmbeddedJmxTransFactory(new DefaultResourceLoader());
-        factory.setConfigurationUrl(configuration);
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        super.start();
+    }
 
-        EmbeddedJmxTrans embeddedJmxTrans = factory.getObject();
-        assertThat(embeddedJmxTrans, notNullValue());
-        assertThat(embeddedJmxTrans.getQueries().size(), is(8));
-        assertThat(embeddedJmxTrans.getOutputWriters().size(), is(1));
+    @Override
+    public void destroy() throws Exception {
+        super.stop();
+    }
 
-        embeddedJmxTrans.stop();
+    @Override
+    public ObjectName getObjectName() throws MalformedObjectNameException {
+        return new ObjectName(objectName);
+    }
 
+    public void setObjectName(String objectName) {
+        this.objectName = objectName;
     }
 }

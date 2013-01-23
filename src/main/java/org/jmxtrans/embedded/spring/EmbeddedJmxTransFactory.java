@@ -54,7 +54,7 @@ import java.util.*;
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class EmbeddedJmxTransFactory implements FactoryBean<EmbeddedJmxTrans>, DisposableBean {
+public class EmbeddedJmxTransFactory implements FactoryBean<SpringEmbeddedJmxTrans>, BeanNameAware {
 
     private final static String DEFAULT_CONFIGURATION_URL = "classpath:jmxtrans.json, classpath:org/jmxtrans/embedded/config/jmxtrans-internals.json";
 
@@ -62,20 +62,21 @@ public class EmbeddedJmxTransFactory implements FactoryBean<EmbeddedJmxTrans>, D
 
     private List<String> configurationUrls;
 
-    private EmbeddedJmxTrans embeddedJmxTrans;
+    private SpringEmbeddedJmxTrans embeddedJmxTrans;
 
     private ResourceLoader resourceLoader;
 
     private boolean ignoreConfigurationNotFound = false;
+
+    private String beanName = "jmxtrans";
 
     @Autowired
     public EmbeddedJmxTransFactory(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
     }
 
-    @PostConstruct
     @Override
-    public EmbeddedJmxTrans getObject() throws Exception {
+    public SpringEmbeddedJmxTrans getObject() throws Exception {
         logger.info("Load JmxTrans with configuration '{}'", configurationUrls);
         if (embeddedJmxTrans == null) {
 
@@ -83,7 +84,8 @@ public class EmbeddedJmxTransFactory implements FactoryBean<EmbeddedJmxTrans>, D
                 configurationUrls = Collections.singletonList(DEFAULT_CONFIGURATION_URL);
             }
             ConfigurationParser parser = new ConfigurationParser();
-            EmbeddedJmxTrans newJmxTrans = new EmbeddedJmxTrans();
+            SpringEmbeddedJmxTrans newJmxTrans = new SpringEmbeddedJmxTrans();
+            newJmxTrans.setObjectName("org.jmxtrans.embedded:type=EmbeddedJmxTrans,name=" + beanName);
 
             for (String delimitedConfigurationUrl : configurationUrls) {
                 String[] tokens = StringUtils.commaDelimitedListToStringArray(delimitedConfigurationUrl);
@@ -139,16 +141,12 @@ public class EmbeddedJmxTransFactory implements FactoryBean<EmbeddedJmxTrans>, D
         this.configurationUrls.addAll(configurationUrls);
     }
 
-    @PreDestroy
-    @Override
-    public void destroy() throws Exception {
-        logger.info("EmbeddedJmxFactory.destroy");
-        if (embeddedJmxTrans != null) {
-            embeddedJmxTrans.stop();
-        }
-    }
-
     public void setIgnoreConfigurationNotFound(boolean ignoreConfigurationNotFound) {
         this.ignoreConfigurationNotFound = ignoreConfigurationNotFound;
+    }
+
+    @Override
+    public void setBeanName(String beanName) {
+        this.beanName = beanName;
     }
 }
