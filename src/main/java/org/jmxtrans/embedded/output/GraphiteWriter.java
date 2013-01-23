@@ -50,6 +50,7 @@ import java.util.concurrent.TimeUnit;
  * Optional, default value: {@value #DEFAULT_GRAPHITE_SERVER_PORT}.</li>
  * <li>"namePrefix": prefix append to the metrics name.
  * Optional, default value: {@value #DEFAULT_NAME_PREFIX}.</li>
+ * <li>"enabled": flag to enable/disable the writer. Optional, default value: <code>true</code>.</li>
  * </ul>
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
@@ -107,11 +108,13 @@ public class GraphiteWriter extends AbstractOutputWriter implements OutputWriter
                 "org.jmxtrans.embedded:Type=SocketPool,Host=" + host + ",Port=" + port + ",Name=GraphiteSocketPool@" + System.identityHashCode(this),
                 ManagementFactory.getPlatformMBeanServer());
 
-        try {
-            SocketWriter socketWriter = socketWriterPool.borrowObject(graphiteServerSocketAddress);
-            socketWriterPool.returnObject(graphiteServerSocketAddress, socketWriter);
-        } catch (Exception e) {
-            logger.warn("Graphite server '{}' connection test failure", e);
+        if (isEnabled()) {
+            try {
+                SocketWriter socketWriter = socketWriterPool.borrowObject(graphiteServerSocketAddress);
+                socketWriterPool.returnObject(graphiteServerSocketAddress, socketWriter);
+            } catch (Exception e) {
+                logger.warn("Test Connection: FAILURE to connect to Graphite server '{}'", graphiteServerSocketAddress, e);
+            }
         }
     }
 
