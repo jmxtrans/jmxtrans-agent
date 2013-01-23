@@ -56,6 +56,8 @@ public interface OutputWriter {
      * Initialize the {@linkplain OutputWriter}. Called at the startup of the {@linkplain org.jmxtrans.embedded.EmbeddedJmxTrans}.
      * <p/>
      * This is the place to load the configuration (from the injected settings) and to initialize writer's resource like object pools.
+     * <p/>
+     * Writer are started even if {@link #isEnabled()} is <code>false</code>.
      *
      * @throws Exception
      */

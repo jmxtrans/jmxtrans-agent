@@ -30,6 +30,12 @@ import java.io.Writer;
 
 /**
  * Used for testing. Send results to "<code>/dev/null</code>".
+ * <p/>
+ * Settings:
+ * <ul>
+ * <li>"enabled": flag to enable/disable the writer. Optional, default value: <code>true</code>.</li>
+ * </ul>
+ * <p/>
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */

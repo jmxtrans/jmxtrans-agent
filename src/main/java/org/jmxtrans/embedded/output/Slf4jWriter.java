@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
  * Settings:
  * <ul>
  * <li>"logger": Name of the logger. Optional, default value: "<code>org.jmxtrans.embedded.output.Slf4jWriter</code>"</li>
+ * <li>"enabled": flag to enable/disable the writer. Optional, default value: <code>true</code>.</li>
  * </ul>
  * <p/>
  * Output: Graphite's <a href="http://graphite.readthedocs.org/en/0.9.10/feeding-carbon.html#the-plaintext-protocol">
