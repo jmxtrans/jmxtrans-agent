@@ -135,8 +135,8 @@ public class EmbeddedJmxTrans implements EmbeddedJmxTransMBean {
             outputWriter.start();
         }
 
-        collectScheduledExecutor = Executors.newScheduledThreadPool(getNumQueryThreads(), new NamedThreadFactory("jmxtrans-collect-"));
-        exportScheduledExecutor = Executors.newScheduledThreadPool(getNumExportThreads(), new NamedThreadFactory("jmxtrans-export-"));
+        collectScheduledExecutor = Executors.newScheduledThreadPool(getNumQueryThreads(), new NamedThreadFactory("jmxtrans-collect-", true));
+        exportScheduledExecutor = Executors.newScheduledThreadPool(getNumExportThreads(), new NamedThreadFactory("jmxtrans-export-", true));
 
         for (final Query query : getQueries()) {
             collectScheduledExecutor.scheduleWithFixedDelay(new Runnable() {

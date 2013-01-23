@@ -21,42 +21,39 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  */
-package org.jmxtrans.embedded.util.concurrent;
+package org.jmxtrans.embedded.spring;
 
-import javax.annotation.Nonnull;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicLong;
+import org.jmxtrans.embedded.EmbeddedJmxTrans;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.jmx.export.naming.SelfNaming;
+
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 /**
- * Basic {@linkplain ThreadFactory} to redifine the name of the created thread.
- * <p/>
- * Inspired by Google Guava's {@link com.google.common.util.concurrent.ThreadFactoryBuilder}
- *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class NamedThreadFactory implements ThreadFactory {
+public class SpringEmbeddedJmxTrans extends EmbeddedJmxTrans implements SpringEmbeddedJmxTransMBean, InitializingBean, DisposableBean, SelfNaming {
 
-    private final ThreadFactory backingThreadFactory = Executors.defaultThreadFactory();
-
-    private boolean daemon;
-
-    private String threadNamePrefix;
-
-    private AtomicLong increment = new AtomicLong();
-
-    public NamedThreadFactory(String threadNamePrefix, boolean daemon) {
-        this.threadNamePrefix = threadNamePrefix;
-        this.daemon = daemon;
-    }
-
+    private String objectName;
 
     @Override
-    @Nonnull
-    public Thread newThread(Runnable r) {
-        Thread thread = backingThreadFactory.newThread(r);
-        thread.setName(threadNamePrefix + increment.incrementAndGet());
-        thread.setDaemon(daemon);
-        return thread;
+    public void afterPropertiesSet() throws Exception {
+        super.start();
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        super.stop();
+    }
+
+    @Override
+    public ObjectName getObjectName() throws MalformedObjectNameException {
+        return new ObjectName(objectName);
+    }
+
+    public void setObjectName(String objectName) {
+        this.objectName = objectName;
     }
 }

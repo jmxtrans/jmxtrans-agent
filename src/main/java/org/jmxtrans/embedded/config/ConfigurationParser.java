@@ -204,9 +204,10 @@ public class ConfigurationParser {
                 try {
                     String className = outputWriterNode.path("@class").asText();
                     OutputWriter outputWriter = (OutputWriter) Class.forName(className).newInstance();
-                    JsonNode enabledNode = outputWriterNode.path("enabled");
-                    if (!enabledNode.isMissingNode()) {
-                        outputWriter.setEnabled(enabledNode.asBoolean());
+                    JsonNode deprecatedEnabledNode = outputWriterNode.path("enabled");
+                    if (!deprecatedEnabledNode.isMissingNode()) {
+                        logger.warn("OutputWriter {}, deprecated usage of attribute 'enabled', settings{ \"enabled\":... } should be used instead");
+                        outputWriter.setEnabled(deprecatedEnabledNode.asBoolean());
                     }
                     JsonNode settingsNode = outputWriterNode.path("settings");
                     if (settingsNode.isMissingNode()) {
@@ -215,6 +216,9 @@ public class ConfigurationParser {
                         @SuppressWarnings("unchecked")
                         Map<String, Object> settings = mapper.treeToValue(settingsNode, Map.class);
                         outputWriter.setSettings(settings);
+                        if (settings.containsKey("enabled")) {
+                            outputWriter.setEnabled(Boolean.valueOf("enabled"));
+                        }
                     } else {
                         logger.warn("Ignore invalid node {}", outputWriterNode);
                     }

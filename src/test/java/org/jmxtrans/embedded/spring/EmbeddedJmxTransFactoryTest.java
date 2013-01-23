@@ -47,7 +47,7 @@ public class EmbeddedJmxTransFactoryTest {
         assertThat(embeddedJmxTrans.getQueries().size(), is(8));
         assertThat(embeddedJmxTrans.getOutputWriters().size(), is(1));
 
-        factory.destroy();
+        embeddedJmxTrans.stop();
 
     }
 }

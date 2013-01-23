@@ -30,6 +30,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * Output results to <code>stdout</code>.
  * <p/>
+ * Settings:
+ * <ul>
+ * <li>"enabled": flag to enable/disable the writer. Optional, default value: <code>true</code>.</li>
+ * </ul>
+ * <p/>
  * Output: Graphite's <a href="http://graphite.readthedocs.org/en/0.9.10/feeding-carbon.html#the-plaintext-protocol">
  * Carbon Plan Text protocol</a>
  * <pre>

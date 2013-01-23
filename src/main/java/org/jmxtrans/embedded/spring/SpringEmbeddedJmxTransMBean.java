@@ -21,42 +21,14 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  */
-package org.jmxtrans.embedded.util.concurrent;
+package org.jmxtrans.embedded.spring;
 
-import javax.annotation.Nonnull;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicLong;
+import org.jmxtrans.embedded.EmbeddedJmxTransMBean;
 
 /**
- * Basic {@linkplain ThreadFactory} to redifine the name of the created thread.
- * <p/>
- * Inspired by Google Guava's {@link com.google.common.util.concurrent.ThreadFactoryBuilder}
+ * JMX MBean interface for {@link SpringEmbeddedJmxTrans}.
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class NamedThreadFactory implements ThreadFactory {
-
-    private final ThreadFactory backingThreadFactory = Executors.defaultThreadFactory();
-
-    private boolean daemon;
-
-    private String threadNamePrefix;
-
-    private AtomicLong increment = new AtomicLong();
-
-    public NamedThreadFactory(String threadNamePrefix, boolean daemon) {
-        this.threadNamePrefix = threadNamePrefix;
-        this.daemon = daemon;
-    }
-
-
-    @Override
-    @Nonnull
-    public Thread newThread(Runnable r) {
-        Thread thread = backingThreadFactory.newThread(r);
-        thread.setName(threadNamePrefix + increment.incrementAndGet());
-        thread.setDaemon(daemon);
-        return thread;
-    }
+public interface SpringEmbeddedJmxTransMBean extends EmbeddedJmxTransMBean {
 }
