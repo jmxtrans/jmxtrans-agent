@@ -32,13 +32,9 @@ Add `embedded-jmxtrans` dependency
 Declare `<jmxtrans:jmxtrans>` in your Spring configuration :
 ```xml
 <beans ...
-       xmlns:context="http://www.springframework.org/schema/context"
        xmlns:jmxtrans="http://www.jmxtrans.org/schema/embedded"
        xsi:schemaLocation="...
-		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
 		http://www.jmxtrans.org/schema/embedded http://www.jmxtrans.org/schema/embedded/jmxtrans-1.0.xsd">
-
-    <context:annotation-config/>
 
     <jmxtrans:jmxtrans>
         <jmxtrans:configuration>classpath:jmxtrans.json</jmxtrans:configuration>
@@ -48,22 +44,33 @@ Declare `<jmxtrans:jmxtrans>` in your Spring configuration :
     </jmxtrans:jmxtrans>
 </beans>
 ```
-**NOTE:** Don't forget to declare `<context:annotation-config/>` to handle embedded-jmxtrans' lifecycle annotation `@PreDestroy` at shutdown.
+**NOTE:** Before version 1.0.1, don't forget to declare `<context:annotation-config/>` to handle embedded-jmxtrans' lifecycle annotation `@PreDestroy` at shutdown.
 
 ### Configure writers
 
-Create `src/main/resources/jmxtrans.json` and declare bot `ConsoleWriter` (output to `stdout`) and `GraphiteWriter`
+Create `src/main/resources/jmxtrans.json`, add your mbeans and declare both `ConsoleWriter` (output to `stdout`) and `GraphiteWriter`
 
 ```json
 {
-  "@class": "org.embedded-jmxtrans.output.ConsoleWriter"
-},
-{
-  "@class": "org.embedded-jmxtrans.output.GraphiteWriter",
-  "settings": {
-    "host": "${graphite.host:localhost}",
-    "port": "${graphite.port:2003}"
-  }
+  "queries": [
+    {
+      "objectName": "com.cocktail:type=CocktailService,name=cocktailService",
+      "resultAlias": "cocktail.controller",
+      "attributes": ["SearchedCocktailCount", "DisplayedCocktailCount", "SendCocktailRecipeCount"]
+    }
+  ],
+  "outputWriters": [
+    {
+      "@class": "org.jmxtrans.embedded.output.ConsoleWriter"
+    },
+    {
+      "@class": "org.jmxtrans.embedded.output.GraphiteWriter",
+      "settings": {
+        "host": "${graphite.host:localhost}",
+        "port": "${graphite.port:2003}"
+      }
+    }
+  ]
 }
 ```
 
