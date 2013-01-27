@@ -30,7 +30,7 @@
     </parent>
     <groupId>org.jmxtrans.embedded</groupId>
     <artifactId>embedded-jmxtrans</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.2-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>embedded-jmxtrans</name>
     <description>In process JMX metrics exporter</description>
