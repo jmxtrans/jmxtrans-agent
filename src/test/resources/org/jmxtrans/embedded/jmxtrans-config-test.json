@@ -71,11 +71,15 @@
         },
         {
             "@class": "org.jmxtrans.embedded.output.Slf4jWriter",
-            "enabled": false
+            "settings": {
+                "enabled": false
+            }
         },
         {
             "@class": "org.jmxtrans.embedded.output.NoOpWriter",
-            "enabled": "${jmxtrans.writer.enabled:false}"
+            "settings": {
+                "enabled": "${jmxtrans.writer.enabled:false}"
+            }
         },
         {
             "@class": "org.jmxtrans.embedded.output.GraphiteWriter",
