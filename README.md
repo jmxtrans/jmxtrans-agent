@@ -23,7 +23,7 @@ Add `embedded-jmxtrans` dependency
 <dependency>
     <groupId>org.jmxtrans.embedded</groupId>
     <artifactId>embedded-jmxtrans</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
@@ -44,6 +44,7 @@ Declare `<jmxtrans:jmxtrans>` in your Spring configuration :
     </jmxtrans:jmxtrans>
 </beans>
 ```
+
 **NOTE:** Before version 1.0.1, don't forget to declare `<context:annotation-config/>` to handle embedded-jmxtrans' lifecycle annotation `@PreDestroy` at shutdown.
 
 ### Configure writers
@@ -88,6 +89,7 @@ tomcat.manager.localhost._.activeSessions 0 1358242458
 tomcat.servlet.__localhost_.jsp.processingTime 0 1358242458
 tomcat.servlet.__localhost_.jsp.errorCount 0 1358242458
 tomcat.servlet.__localhost_.jsp.requestCount 0 1358242458
+cocktail.controller.SearchedCocktailCount 12 1358242458
 ...
 ```
 
