@@ -37,10 +37,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * JSON Configuration parser to build {@link org.jmxtrans.embedded.EmbeddedJmxTrans}.
@@ -217,7 +214,7 @@ public class ConfigurationParser {
                         Map<String, Object> settings = mapper.treeToValue(settingsNode, Map.class);
                         outputWriter.setSettings(settings);
                         if (settings.containsKey("enabled")) {
-                            outputWriter.setEnabled(Boolean.valueOf("enabled"));
+                            outputWriter.setEnabled(Boolean.valueOf(String.valueOf(settings.get("enabled"))));
                         }
                     } else {
                         logger.warn("Ignore invalid node {}", outputWriterNode);

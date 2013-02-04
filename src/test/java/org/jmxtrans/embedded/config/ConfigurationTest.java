@@ -28,8 +28,7 @@ import org.jmxtrans.embedded.EmbeddedJmxTrans;
 import org.jmxtrans.embedded.Query;
 import org.jmxtrans.embedded.QueryAttribute;
 import org.jmxtrans.embedded.TestUtils;
-import org.jmxtrans.embedded.output.NoOpWriter;
-import org.jmxtrans.embedded.output.OutputWriter;
+import org.jmxtrans.embedded.output.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -39,6 +38,7 @@ import java.util.*;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
@@ -82,8 +82,21 @@ public class ConfigurationTest {
     public void validateDisabledOutputWriters() throws MalformedObjectNameException {
         Query query = queriesByResultName.get("test-aliased-query");
         assertThat(query.getOutputWriters().size(), is(0));
-        assertThat(query.getEffectiveOutputWriters().size(), is(2));
-        assertThat(embeddedJmxTrans.getOutputWriters().size(), is(4));
+        assertThat(query.getEffectiveOutputWriters().size(), is(4));
+
+    }
+
+    @Test
+    public void validateDisabledRootOutputWriters() throws MalformedObjectNameException {
+        Map<Class<? extends OutputWriter>, OutputWriter> outputWritersByClass = TestUtils.indexOutputWritersByClass(embeddedJmxTrans.getOutputWriters());
+
+        assertThat(embeddedJmxTrans.getOutputWriters().size(), is(6));
+
+        assertThat(outputWritersByClass.get(ConsoleWriter.class).isEnabled(), is(true));
+        assertThat(outputWritersByClass.get(TestWriter1.class).isEnabled(), is(false));
+        assertThat(outputWritersByClass.get(TestWriter2.class).isEnabled(), is(true));
+        assertThat(outputWritersByClass.get(TestWriter3.class).isEnabled(), is(false));
+        assertThat(outputWritersByClass.get(TestWriter4.class).isEnabled(), is(true));
     }
 
     @Test
@@ -163,7 +176,7 @@ public class ConfigurationTest {
         QueryAttribute queryAttribute = query.getQueryAttributes().iterator().next();
         assertThat(queryAttribute.getName(), is("CollectionUsageThresholdCount"));
         assertThat(query.getOutputWriters().size(), is(1));
-        assertThat(query.getEffectiveOutputWriters().size(), is(3));
+        assertThat(query.getEffectiveOutputWriters().size(), is(5));
         OutputWriter outputWriter = query.getOutputWriters().get(0);
         assertThat(outputWriter, instanceOf(NoOpWriter.class));
     }
