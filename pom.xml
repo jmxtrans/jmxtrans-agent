@@ -30,7 +30,7 @@
     </parent>
     <groupId>org.jmxtrans.embedded</groupId>
     <artifactId>embedded-jmxtrans</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.2</version>
     <packaging>jar</packaging>
     <name>embedded-jmxtrans</name>
     <description>In process JMX metrics exporter</description>
@@ -50,6 +50,11 @@
                     <source>1.6</source>
                     <target>1.6</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.4</version>
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
