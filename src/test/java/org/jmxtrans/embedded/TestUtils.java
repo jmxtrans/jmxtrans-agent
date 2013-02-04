@@ -23,6 +23,8 @@
  */
 package org.jmxtrans.embedded;
 
+import org.jmxtrans.embedded.output.OutputWriter;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,4 +52,11 @@ public class TestUtils {
         return results;
     }
 
+    public static Map<Class<? extends OutputWriter>, OutputWriter> indexOutputWritersByClass(Iterable<OutputWriter> outputWriters) {
+        Map<Class<? extends OutputWriter>, OutputWriter> results = new HashMap<Class<? extends OutputWriter>, OutputWriter>();
+        for (OutputWriter outputWriter : outputWriters) {
+            results.put(outputWriter.getClass(), outputWriter);
+        }
+        return results;
+    }
 }

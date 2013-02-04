@@ -70,15 +70,27 @@
             "@class": "org.jmxtrans.embedded.output.ConsoleWriter"
         },
         {
-            "@class": "org.jmxtrans.embedded.output.Slf4jWriter",
+            "@class": "org.jmxtrans.embedded.output.TestWriter1",
             "settings": {
                 "enabled": false
             }
         },
         {
-            "@class": "org.jmxtrans.embedded.output.NoOpWriter",
+            "@class": "org.jmxtrans.embedded.output.TestWriter2",
+            "settings": {
+                "enabled": true
+            }
+        },
+        {
+            "@class": "org.jmxtrans.embedded.output.TestWriter3",
             "settings": {
                 "enabled": "${jmxtrans.writer.enabled:false}"
+            }
+        },
+        {
+            "@class": "org.jmxtrans.embedded.output.TestWriter4",
+            "settings": {
+                "enabled": "${jmxtrans.writer.enabled:true}"
             }
         },
         {
