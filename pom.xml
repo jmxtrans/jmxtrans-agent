@@ -169,6 +169,7 @@
             <optional>true</optional>
         </dependency>
         <dependency>
+            <!-- used by GraphitePickleWriter -->
             <groupId>org.python</groupId>
             <artifactId>jython</artifactId>
             <version>2.5.3</version>
