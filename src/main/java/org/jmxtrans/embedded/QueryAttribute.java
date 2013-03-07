@@ -66,6 +66,14 @@ public class QueryAttribute {
     private String resultAlias;
 
     /**
+     * Attribute type like '{@code gauge}' or '{@code counter}'. Used by monitoring systems like Librato who require this information.
+     *
+     * @see org.jmxtrans.embedded.QueryResult#getName()
+     */
+    @Nullable
+    private String type;
+
+    /**
      * <code>null</code> if no 'key' as been defined in the config.
      * Empty list if empty 'key' node has been declared in the config.
      *
@@ -76,20 +84,23 @@ public class QueryAttribute {
 
     /**
      * @param name        name of the JMX attribute
+     * @param type        type of the metric (e.g. "{@code counter}", "{@code gauge}", ...)
      * @param resultAlias name of the result that will be exported
      */
-    public QueryAttribute(@Nonnull String name, @Nullable String resultAlias) {
+    public QueryAttribute(@Nonnull String name, @Nullable String type, @Nullable String resultAlias) {
         this.name = Preconditions.checkNotEmpty(name);
+        this.type = type;
         this.resultAlias = resultAlias;
     }
 
     /**
      * @param name        name of the JMX attribute
+     * @param type        type of the metric (e.g. "{@code counter}", "{@code gauge}", ...)
      * @param resultAlias name of the result that will be exported
      * @param keys        of the {@link CompositeData} to collect
      */
-    public QueryAttribute(@Nonnull String name, @Nullable String resultAlias, @Nullable Collection<String> keys) {
-        this(name, resultAlias);
+    public QueryAttribute(@Nonnull String name, @Nullable String type, @Nullable String resultAlias, @Nullable Collection<String> keys) {
+        this(name, type, resultAlias);
         addKeys(keys);
     }
 
@@ -115,6 +126,11 @@ public class QueryAttribute {
     @Nullable
     public String getResultAlias() {
         return resultAlias;
+    }
+
+    @Nullable
+    public String getType() {
+        return type;
     }
 
     /**

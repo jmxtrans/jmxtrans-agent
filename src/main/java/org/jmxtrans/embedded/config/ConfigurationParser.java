@@ -270,10 +270,12 @@ public class ConfigurationParser {
             String name = attributeNode.path("name").asText();
             JsonNode resultAliasNode = attributeNode.path("resultAlias");
             String resultAlias = resultAliasNode.isMissingNode() ? null : resultAliasNode.asText();
+            JsonNode typeNode = attributeNode.path("type");
+            String type = typeNode.isMissingNode() ? null : typeNode.asText();
             if (keys == null) {
-                query.addAttribute(new QueryAttribute(name, resultAlias));
+                query.addAttribute(new QueryAttribute(name, type, resultAlias));
             } else {
-                query.addAttribute(new QueryAttribute(name, resultAlias, keys));
+                query.addAttribute(new QueryAttribute(name, type, resultAlias, keys));
             }
         } else {
             logger.warn("Ignore invalid node {}", attributeNode);

@@ -275,7 +275,7 @@ public class Query implements QueryMBean {
      */
     @Nonnull
     public Query addAttribute(@Nonnull String attributeName) {
-        return addAttribute(new QueryAttribute(attributeName, null));
+        return addAttribute(new QueryAttribute(attributeName, null, null));
     }
 
     @Nonnull
