@@ -36,14 +36,16 @@ import java.util.Map;
  */
 public abstract class AbstractOutputWriter implements OutputWriter {
 
+    public final static String SETTING_URL = "url";
+    public final static String SETTING_USERNAME = "username";
+    public final static String SETTING_TOKEN = "token";
     public final static String SETTING_PORT = "port";
     public final static String SETTING_HOST = "host";
+    public final static String SETTING_PROXY_PORT = "proxyPort";
+    public final static String SETTING_PROXY_HOST = "proxyHost";
     public final static String SETTING_NAME_PREFIX = "namePrefix";
-
     private ResultNameStrategy strategy = new ResultNameStrategy();
-
     private Map<String, Object> settings = new HashMap<String, Object>();
-
     private boolean enabled = true;
 
     /**
@@ -189,7 +191,6 @@ public abstract class AbstractOutputWriter implements OutputWriter {
                 ", settings=" + settings +
                 '}';
     }
-
 
     public Map<String, Object> getSettings() {
         return settings;
