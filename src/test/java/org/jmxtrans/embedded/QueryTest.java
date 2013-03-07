@@ -82,7 +82,7 @@ public class QueryTest {
 
         Query query = new Query("test:type=MemoryPool,name=PS Perm Gen");
         embeddedJmxTrans.addQuery(query);
-        query.addAttribute(new QueryAttribute("Usage", null, Arrays.asList("committed", "init", "max", "used")));
+        query.addAttribute(new QueryAttribute("Usage", null, null, Arrays.asList("committed", "init", "max", "used")));
         query.collectMetrics();
         assertThat(query.getResults().size(), is(4));
 
