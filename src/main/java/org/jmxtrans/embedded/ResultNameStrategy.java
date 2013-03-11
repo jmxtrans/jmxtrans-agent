@@ -83,28 +83,7 @@ import java.util.concurrent.Callable;
  */
 public class ResultNameStrategy {
 
-    public static class StaticEvaluator implements Callable<String> {
-        public StaticEvaluator(String value) {
-            this.value = value;
-        }
-
-        final String value;
-
-        @Override
-        public String call() throws Exception {
-            return value;
-        }
-
-        @Override
-        public String toString() {
-            return "StaticStringCallable{" +
-                    "value='" + value + '\'' +
-                    '}';
-        }
-    }
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
     /**
      * Function based evaluators for expressions like '#hostname#' or '#hostname_canonical#'
      */
@@ -146,18 +125,24 @@ public class ResultNameStrategy {
     protected StringBuilder _getResultName(Query query, ObjectName objectName, QueryAttribute queryAttribute) {
         StringBuilder result = new StringBuilder();
 
+        String queryName;
         if (query.getResultAlias() == null) {
-            result.append(escapeObjectName(objectName));
+            queryName = escapeObjectName(objectName);
         } else {
-            result.append(resolveExpression(query.getResultAlias(), objectName));
+            queryName = resolveExpression(query.getResultAlias(), objectName);
         }
 
-        result.append(".");
-        if (queryAttribute.getResultAlias() == null) {
-            result.append(queryAttribute.getName());
-        } else {
-            result.append(queryAttribute.getResultAlias());
+        if (queryName != null && !queryName.isEmpty()) {
+            result.append(queryName).append(".");
         }
+
+        String attributeName;
+        if (queryAttribute.getResultAlias() == null) {
+            attributeName = queryAttribute.getName();
+        } else {
+            attributeName = queryAttribute.getResultAlias();
+        }
+        result.append(attributeName);
         return result;
     }
 
@@ -319,5 +304,25 @@ public class ResultNameStrategy {
     @Nonnull
     public Map<String, Callable<String>> getExpressionEvaluators() {
         return expressionEvaluators;
+    }
+
+    public static class StaticEvaluator implements Callable<String> {
+        final String value;
+
+        public StaticEvaluator(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String call() throws Exception {
+            return value;
+        }
+
+        @Override
+        public String toString() {
+            return "StaticStringCallable{" +
+                    "value='" + value + '\'' +
+                    '}';
+        }
     }
 }
