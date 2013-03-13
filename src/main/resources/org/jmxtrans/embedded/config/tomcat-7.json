@@ -10,8 +10,8 @@
 
         },
         {
-            "objectName": "Catalina:type=Manager,path=*,host=*",
-            "resultAlias": "tomcat.manager.%host%.%path%",
+            "objectName": "Catalina:type=Manager,context=*,host=*",
+            "resultAlias": "tomcat.manager.%host%.%context%",
             "attributes": [
                 "activeSessions"
             ]
@@ -29,8 +29,8 @@
             ]
         },
         {
-            "objectName": "Catalina:type=DataSource,path=%,host=%,class=javax.sql.DataSource,name=%",
-            "resultAlias": "tomcat.data-source.%host%.%path%.%name%",
+            "objectName": "Catalina:type=DataSource,context=%,host=%,class=javax.sql.DataSource,name=%",
+            "resultAlias": "tomcat.data-source.%host%.%context%.%name%",
             "attributes": [
                 "numActive",
                 "numIdle"
