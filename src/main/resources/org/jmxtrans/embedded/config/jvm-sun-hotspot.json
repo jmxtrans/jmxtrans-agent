@@ -6,11 +6,11 @@
             "attributes": [
                 {
                     "name": "HeapMemoryUsage",
-                    "keys": ["committed", "init", "max", "used"]
+                    "keys": ["committed", "used"]
                 },
                 {
                     "name": "NonHeapMemoryUsage",
-                    "keys": ["committed", "init", "max", "used"]
+                    "keys": ["committed", "used"]
                 }
             ]
 
