@@ -1,0 +1,49 @@
+{
+    "queries": [
+        {
+            "objectName": "Catalina:type=ThreadPool,name=*",
+            "resultAlias": "tomcat.thread-pool.%name%",
+            "attributes": [
+                "currentThreadCount",
+                "currentThreadsBusy"
+            ]
+
+        },
+        {
+            "objectName": "Catalina:type=Manager,context=*,host=*",
+            "resultAlias": "tomcat.manager.%host%.%context%",
+            "attributes": [
+                "activeSessions"
+            ]
+        },
+        {
+            "objectName": "Catalina:type=GlobalRequestProcessor,name=%name%",
+            "resultAlias": "tomcat.global-request-processor.%name%",
+            "attributes": [
+                "bytesReceived",
+                "bytesSent",
+                "errorCount",
+                "processingTime",
+                "requestCount"
+
+            ]
+        },
+        {
+            "objectName": "Catalina:type=DataSource,context=%,host=%,class=javax.sql.DataSource,name=%",
+            "resultAlias": "tomcat.data-source.%host%.%context%.%name%",
+            "attributes": [
+                "numActive",
+                "numIdle"
+            ]
+        },
+        {
+            "objectName": "Catalina:j2eeType=Servlet,name=*,WebModule=*,J2EEApplication=none,J2EEServer=none",
+            "resultAlias": "tomcat.servlet.%WebModule%.%name%",
+            "attributes": [
+                "errorCount",
+                "processingTime",
+                "requestCount"
+            ]
+        }
+    ]
+}
