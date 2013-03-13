@@ -1,0 +1,49 @@
+{
+    "queries": [
+        {
+            "objectName": "localEngine:type=ThreadPool,name=*",
+            "resultAlias": "tomcat.thread-pool.%name%",
+            "attributes": [
+                "currentThreadCount",
+                "currentThreadsBusy"
+            ]
+
+        },
+        {
+            "objectName": "localEngine:type=Manager,path=*,host=*",
+            "resultAlias": "tomcat.manager.%host%.%path%",
+            "attributes": [
+                "activeSessions"
+            ]
+        },
+        {
+            "objectName": "localEngine:type=GlobalRequestProcessor,name=%name%",
+            "resultAlias": "tomcat.global-request-processor.%name%",
+            "attributes": [
+                "bytesReceived",
+                "bytesSent",
+                "errorCount",
+                "processingTime",
+                "requestCount"
+
+            ]
+        },
+        {
+            "objectName": "localEngine:type=DataSource,path=%,host=%,class=javax.sql.DataSource,name=%",
+            "resultAlias": "tomcat.data-source.%host%.%path%.%name%",
+            "attributes": [
+                "numActive",
+                "numIdle"
+            ]
+        },
+        {
+            "objectName": "localEngine:j2eeType=Servlet,name=*,WebModule=*,J2EEApplication=none,J2EEServer=none",
+            "resultAlias": "tomcat.servlet.%WebModule%.%name%",
+            "attributes": [
+                "errorCount",
+                "processingTime",
+                "requestCount"
+            ]
+        }
+    ]
+}
