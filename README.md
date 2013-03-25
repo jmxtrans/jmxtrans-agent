@@ -54,6 +54,16 @@ Create `src/main/resources/jmxtrans.json`, add your mbeans and declare both `Con
 ```json
 {
   "queries": [
+      {
+      "objectName": "cocktail:type=ShoppingCartController,name=ShoppingCartController",
+      "resultAlias": "",
+      "attributes": [
+        {
+          "name": "SalesRevenueInCentsCounter",
+          "resultAlias": "sales.revenueInCentsCounter"
+        }
+      ]
+    },
     {
       "objectName": "com.cocktail:type=CocktailService,name=cocktailService",
       "resultAlias": "cocktail.controller",
