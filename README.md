@@ -23,7 +23,7 @@ Add `embedded-jmxtrans` dependency
 <dependency>
     <groupId>org.jmxtrans.embedded</groupId>
     <artifactId>embedded-jmxtrans</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
 </dependency>
 ```
 
@@ -54,6 +54,16 @@ Create `src/main/resources/jmxtrans.json`, add your mbeans and declare both `Con
 ```json
 {
   "queries": [
+      {
+      "objectName": "cocktail:type=ShoppingCartController,name=ShoppingCartController",
+      "resultAlias": "",
+      "attributes": [
+        {
+          "name": "SalesRevenueInCentsCounter",
+          "resultAlias": "sales.revenueInCentsCounter"
+        }
+      ]
+    },
     {
       "objectName": "com.cocktail:type=CocktailService,name=cocktailService",
       "resultAlias": "cocktail.controller",
