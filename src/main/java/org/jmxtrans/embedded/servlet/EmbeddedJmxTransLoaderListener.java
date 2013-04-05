@@ -86,7 +86,7 @@ public class EmbeddedJmxTransLoaderListener implements ServletContextListener {
 
         String configuration = sce.getServletContext().getInitParameter(CONFIG_LOCATION_PARAM);
         if (configuration == null || configuration.isEmpty()) {
-            configuration = "classpath:jmxtrans.json";
+            configuration = "classpath:jmxtrans.json, classpath:org/jmxtrans/embedded/config/jmxtrans-internals.json";
         }
         List<String> configurationUrls = StringUtils2.delimitedStringToList(configuration);
         embeddedJmxTrans = configurationParser.newEmbeddedJmxTrans(configurationUrls);
