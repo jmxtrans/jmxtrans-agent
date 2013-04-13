@@ -66,7 +66,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <li>"{@code libratoApiTimeoutInMillis}": read timeout of the calls to Librato HTTP API.
  * Optional, default value: {@value #DEFAULT_LIBRATO_API_TIMEOUT_IN_MILLIS}.</li>
  * <li>"{@code enabled}": flag to enable/disable the writer. Optional, default value: <code>true</code>.</li>
- * <li>"{@code source}": Librato . Optional, default value: <code>true</code>.</li>
+ * <li>"{@code source}": Librato . Optional, default value: {@value #DEFAULT_SOURCE} (the hostname of the server).</li>
  * </ul>
  *
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
