@@ -51,25 +51,25 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This implementation uses <a href="http://dev.librato.com/v1/post/metrics">
  * POST {@code /v1/metrics}</a> HTTP API.
  * <p/>
- * {@link LibratoWriter} uses the '{@code query.attribute.type}' configuration parameter (via
+ * {@link LibratoWriter} uses the "{@code query.attribute.type}" configuration parameter (via
  * {@link org.jmxtrans.embedded.QueryResult#getType()}) to publish the metrics.<br/>
- * Supported types are '{@value #METRIC_TYPE_COUNTER}' and '{@value #METRIC_TYPE_GAUGE}'.<br/>
- * If yhe type is <code>null</code> or unsupported, metric is exported
- * as '{@value #METRIC_TYPE_COUNTER}'.
+ * Supported types are {@value #METRIC_TYPE_COUNTER} and {@value #METRIC_TYPE_GAUGE}.<br/>
+ * If the type is <code>null</code> or unsupported, metric is exported
+ * as {@value #METRIC_TYPE_COUNTER}.
  * <p/>
  * Settings:
  * <ul>
- * <li>"url": Librato server URL.
+ * <li>"{@code url}": Librato server URL.
  * Optional, default value: {@value #DEFAULT_LIBRATOR_URL}.</li>
- * <li>"user": Librato user. Mandatory</li>
- * <li>"token": Librato token. Mandatory</li>
- * <li>"libratoApiTimeoutInMillis": read timeout of the calls to Librato HTTP API.
+ * <li>"{@code user}": Librato user. Mandatory</li>
+ * <li>"{@code token}": Librato token. Mandatory</li>
+ * <li>"{@code libratoApiTimeoutInMillis}": read timeout of the calls to Librato HTTP API.
  * Optional, default value: {@value #DEFAULT_LIBRATO_API_TIMEOUT_IN_MILLIS}.</li>
- * <li>"enabled": flag to enable/disable the writer. Optional, default value: <code>true</code>.</li>
- * <li>"source": Librato . Optional, default value: <code>true</code>.</li>
+ * <li>"{@code enabled}": flag to enable/disable the writer. Optional, default value: <code>true</code>.</li>
+ * <li>"{@code source}": Librato . Optional, default value: <code>true</code>.</li>
  * </ul>
  *
- * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
+ * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public class LibratoWriter extends AbstractOutputWriter implements OutputWriter {
 
