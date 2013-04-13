@@ -39,6 +39,20 @@
             ]
         },
         {
+          "objectName": "java.lang:type=OperatingSystem",
+            "resultAlias": "test-gauge-and-counter-attributes",
+            "attributes": [
+                {
+                    "name": "SystemLoadAverage",
+                    "type":"gauge"
+                },
+                {
+                    "name": "ProcessCpuTime",
+                    "type":"counter"
+                }
+            ]
+        },
+        {
             "objectName": "java.lang:type=MemoryPool,name=PS Eden Space",
             "resultAlias": "test-attribute-with-key",
             "attribute": {

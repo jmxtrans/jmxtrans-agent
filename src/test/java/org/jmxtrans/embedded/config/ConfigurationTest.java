@@ -167,6 +167,32 @@ public class ConfigurationTest {
     }
 
     @Test
+    public void validateQueryWithGaugeAndCounterAttributes() throws MalformedObjectNameException {
+        ObjectName objectName = new ObjectName("java.lang:type=OperatingSystem");
+        Query query = queriesByResultName.get("test-gauge-and-counter-attributes");
+        assertThat(query.getObjectName(), is(objectName));
+        assertThat(query.getResultAlias(), is("test-gauge-and-counter-attributes"));
+
+        assertThat(query.getQueryAttributes().size(), is(2));
+
+        Map<String, QueryAttribute> queryAttributes = TestUtils.indexQueryAttributesByAliasOrName(query.getQueryAttributes());
+
+
+        {
+            QueryAttribute queryAttribute = queryAttributes.get("SystemLoadAverage");
+            assertThat(queryAttribute.getName(), is("SystemLoadAverage"));
+            assertThat(queryAttribute.getType(), is("gauge"));
+            assertThat(queryAttribute.getResultAlias(), nullValue());
+        }
+        {
+            QueryAttribute queryAttribute = queryAttributes.get("ProcessCpuTime");
+            assertThat(queryAttribute.getName(), is("ProcessCpuTime"));
+            assertThat(queryAttribute.getType(), is("counter"));
+            assertThat(queryAttribute.getResultAlias(), nullValue());
+        }
+    }
+
+    @Test
     public void validateQueryWithOutputWriter() throws MalformedObjectNameException {
         ObjectName objectName = new ObjectName("java.lang:type=MemoryPool,name=PS Eden Space");
         Query query = queriesByResultName.get("test-with-outputwriter");
