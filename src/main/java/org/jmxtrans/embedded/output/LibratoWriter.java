@@ -51,31 +51,31 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This implementation uses <a href="http://dev.librato.com/v1/post/metrics">
  * POST {@code /v1/metrics}</a> HTTP API.
  * <p/>
- * {@link LibratoWriter} uses the '{@code query.attribute.type}' configuration parameter (via
+ * {@link LibratoWriter} uses the "{@code query.attribute.type}" configuration parameter (via
  * {@link org.jmxtrans.embedded.QueryResult#getType()}) to publish the metrics.<br/>
- * Supported types are '{@value #METRIC_TYPE_COUNTER}' and '{@value #METRIC_TYPE_GAUGE}'.<br/>
- * If yhe type is <code>null</code> or unsupported, metric is exported
- * as '{@value #METRIC_TYPE_COUNTER}'.
+ * Supported types are {@value #METRIC_TYPE_COUNTER} and {@value #METRIC_TYPE_GAUGE}.<br/>
+ * If the type is <code>null</code> or unsupported, metric is exported
+ * as {@value #METRIC_TYPE_COUNTER}.
  * <p/>
  * Settings:
  * <ul>
- * <li>"url": Librato server URL.
- * Optional, default value: {@value #DEFAULT_LIBRATOR_URL}.</li>
- * <li>"user": Librato user. Mandatory</li>
- * <li>"token": Librato token. Mandatory</li>
- * <li>"libratoApiTimeoutInMillis": read timeout of the calls to Librato HTTP API.
+ * <li>"{@code url}": Librato server URL.
+ * Optional, default value: {@value #DEFAULT_LIBRATO_API_URL}.</li>
+ * <li>"{@code user}": Librato user. Mandatory</li>
+ * <li>"{@code token}": Librato token. Mandatory</li>
+ * <li>"{@code libratoApiTimeoutInMillis}": read timeout of the calls to Librato HTTP API.
  * Optional, default value: {@value #DEFAULT_LIBRATO_API_TIMEOUT_IN_MILLIS}.</li>
- * <li>"enabled": flag to enable/disable the writer. Optional, default value: <code>true</code>.</li>
- * <li>"source": Librato . Optional, default value: <code>true</code>.</li>
+ * <li>"{@code enabled}": flag to enable/disable the writer. Optional, default value: <code>true</code>.</li>
+ * <li>"{@code source}": Librato . Optional, default value: {@value #DEFAULT_SOURCE} (the hostname of the server).</li>
  * </ul>
  *
- * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
+ * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public class LibratoWriter extends AbstractOutputWriter implements OutputWriter {
 
     public static final String METRIC_TYPE_GAUGE = "gauge";
     public static final String METRIC_TYPE_COUNTER = "counter";
-    public static final String DEFAULT_LIBRATOR_URL = "https://metrics-api.librato.com/v1/metrics";
+    public static final String DEFAULT_LIBRATO_API_URL = "https://metrics-api.librato.com/v1/metrics";
     public static final String SETTING_LIBRATO_API_TIMEOUT_IN_MILLIS = "libratoApiTimeoutInMillis";
     public static final int DEFAULT_LIBRATO_API_TIMEOUT_IN_MILLIS = 1000;
     public static final String SETTING_SOURCE = "source";
@@ -114,7 +114,7 @@ public class LibratoWriter extends AbstractOutputWriter implements OutputWriter 
     @Override
     public void start() {
         try {
-            url = new URL(getStringSetting(SETTING_URL, DEFAULT_LIBRATOR_URL));
+            url = new URL(getStringSetting(SETTING_URL, DEFAULT_LIBRATO_API_URL));
 
             user = getStringSetting(SETTING_USERNAME);
             token = getStringSetting(SETTING_TOKEN);
