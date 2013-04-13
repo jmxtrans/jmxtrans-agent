@@ -155,6 +155,13 @@
             <version>2.1.2</version>
         </dependency>
         <dependency>
+            <!-- used for EmbeddedJmxTransLoaderListener  -->
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.5</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
             <!-- used by the EmbeddedJmxTransFactory -->
             <groupId>org.springframework</groupId>
             <artifactId>spring-beans</artifactId>
@@ -212,6 +219,12 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-all</artifactId>
+            <version>1.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
