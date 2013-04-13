@@ -23,7 +23,7 @@ Add `embedded-jmxtrans` dependency
 <dependency>
     <groupId>org.jmxtrans.embedded</groupId>
     <artifactId>embedded-jmxtrans</artifactId>
-    <version>1.0.5</version>
+    <version>1.0.6</version>
 </dependency>
 ```
 
