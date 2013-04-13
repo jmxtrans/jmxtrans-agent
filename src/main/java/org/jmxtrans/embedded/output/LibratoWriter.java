@@ -60,7 +60,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Settings:
  * <ul>
  * <li>"{@code url}": Librato server URL.
- * Optional, default value: {@value #DEFAULT_LIBRATOR_URL}.</li>
+ * Optional, default value: {@value #DEFAULT_LIBRATO_API_URL}.</li>
  * <li>"{@code user}": Librato user. Mandatory</li>
  * <li>"{@code token}": Librato token. Mandatory</li>
  * <li>"{@code libratoApiTimeoutInMillis}": read timeout of the calls to Librato HTTP API.
@@ -75,7 +75,7 @@ public class LibratoWriter extends AbstractOutputWriter implements OutputWriter 
 
     public static final String METRIC_TYPE_GAUGE = "gauge";
     public static final String METRIC_TYPE_COUNTER = "counter";
-    public static final String DEFAULT_LIBRATOR_URL = "https://metrics-api.librato.com/v1/metrics";
+    public static final String DEFAULT_LIBRATO_API_URL = "https://metrics-api.librato.com/v1/metrics";
     public static final String SETTING_LIBRATO_API_TIMEOUT_IN_MILLIS = "libratoApiTimeoutInMillis";
     public static final int DEFAULT_LIBRATO_API_TIMEOUT_IN_MILLIS = 1000;
     public static final String SETTING_SOURCE = "source";
@@ -114,7 +114,7 @@ public class LibratoWriter extends AbstractOutputWriter implements OutputWriter 
     @Override
     public void start() {
         try {
-            url = new URL(getStringSetting(SETTING_URL, DEFAULT_LIBRATOR_URL));
+            url = new URL(getStringSetting(SETTING_URL, DEFAULT_LIBRATO_API_URL));
 
             user = getStringSetting(SETTING_USERNAME);
             token = getStringSetting(SETTING_TOKEN);
