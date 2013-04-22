@@ -35,7 +35,7 @@ import java.util.logging.Logger;
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class SimpleJmxExporter {
+public class JmxTransExporter {
     /**
      * visible for test
      */
@@ -62,21 +62,21 @@ public class SimpleJmxExporter {
     protected TimeUnit collectIntervalTimeUnit = TimeUnit.SECONDS;
     private ScheduledFuture scheduledFuture;
 
-    public SimpleJmxExporter withQuery(String objectName, String attribute, String resultAlias) {
+    public JmxTransExporter withQuery(String objectName, String attribute, String resultAlias) {
         return withQuery(objectName, attribute, null, resultAlias);
     }
 
-    public SimpleJmxExporter withQuery(String objectName, String attribute, String key, String resultAlias) {
+    public JmxTransExporter withQuery(String objectName, String attribute, String key, String resultAlias) {
         queries.add(new Query(objectName, attribute, key, resultAlias));
         return this;
     }
 
-    public SimpleJmxExporter withOutputWriter(OutputWriter outputWriter) {
+    public JmxTransExporter withOutputWriter(OutputWriter outputWriter) {
         this.outputWriter = outputWriter;
         return this;
     }
 
-    public SimpleJmxExporter withCollectInterval(int collectInterval, TimeUnit collectIntervalTimeUnit) {
+    public JmxTransExporter withCollectInterval(int collectInterval, TimeUnit collectIntervalTimeUnit) {
         this.collectInterval = collectInterval;
         this.collectIntervalTimeUnit = collectIntervalTimeUnit;
         return this;
@@ -141,7 +141,7 @@ public class SimpleJmxExporter {
 
     @Override
     public String toString() {
-        return "SimpleJmxExporter{" +
+        return "JmxTransExporter{" +
                 "queries=" + queries +
                 ", outputWriter=" + outputWriter +
                 ", collectInterval=" + collectInterval +
