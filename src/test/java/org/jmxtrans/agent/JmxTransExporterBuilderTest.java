@@ -36,17 +36,17 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class SimpleJmxExporterBuilderTest {
+public class JmxTransExporterBuilderTest {
 
     @Test
     public void testParseConfiguration() throws Exception {
-        SimpleJmxExporterBuilder builder = new SimpleJmxExporterBuilder();
-        SimpleJmxExporter simpleJmxExporter = builder.build("classpath:jmxtrans-agent.xml");
+        JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
+        JmxTransExporter jmxTransExporter = builder.build("classpath:jmxtrans-agent.xml");
 
-        assertThat(simpleJmxExporter.collectInterval, is(11));
-        assertThat(simpleJmxExporter.collectIntervalTimeUnit, is(TimeUnit.SECONDS));
+        assertThat(jmxTransExporter.collectInterval, is(11));
+        assertThat(jmxTransExporter.collectIntervalTimeUnit, is(TimeUnit.SECONDS));
 
-        OutputWriter decoratedOutputWriter = simpleJmxExporter.outputWriter;
+        OutputWriter decoratedOutputWriter = jmxTransExporter.outputWriter;
         // CircuitBreaker
         assertTrue(decoratedOutputWriter.getClass().equals(OutputWriterCircuitBreakerDecorator.class));
         OutputWriterCircuitBreakerDecorator circuitBreakerDecorator = (OutputWriterCircuitBreakerDecorator) decoratedOutputWriter;
@@ -59,9 +59,9 @@ public class SimpleJmxExporterBuilderTest {
         assertThat(graphiteWriter.graphiteServerSocketAddress.getHostName(), is("localhost"));
         assertThat(graphiteWriter.metricPathPrefix, is("app_123456.server.i876543."));
 
-        assertThat(simpleJmxExporter.queries.size(), is(13));
+        assertThat(jmxTransExporter.queries.size(), is(13));
 
-        Map<String, Query> queriesByResultAlias = indexQueriesByResultAlias(simpleJmxExporter.queries);
+        Map<String, Query> queriesByResultAlias = indexQueriesByResultAlias(jmxTransExporter.queries);
 
         {
             Query query = queriesByResultAlias.get("os.systemLoadAverage");
@@ -81,14 +81,14 @@ public class SimpleJmxExporterBuilderTest {
 
     @Test
     public void testParseConfiguration2() throws Exception {
-        SimpleJmxExporterBuilder builder = new SimpleJmxExporterBuilder();
-        SimpleJmxExporter simpleJmxExporter = builder.build("classpath:jmxtrans-agent-2.xml");
+        JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
+        JmxTransExporter jmxTransExporter = builder.build("classpath:jmxtrans-agent-2.xml");
 
-        assertThat(simpleJmxExporter.collectInterval, is(12));
-        assertThat(simpleJmxExporter.collectIntervalTimeUnit, is(TimeUnit.SECONDS));
-        assertTrue(simpleJmxExporter.outputWriter.getClass().equals(OutputWritersChain.class));
+        assertThat(jmxTransExporter.collectInterval, is(12));
+        assertThat(jmxTransExporter.collectIntervalTimeUnit, is(TimeUnit.SECONDS));
+        assertTrue(jmxTransExporter.outputWriter.getClass().equals(OutputWritersChain.class));
 
-        OutputWritersChain outputWritersChain = (OutputWritersChain) simpleJmxExporter.outputWriter;
+        OutputWritersChain outputWritersChain = (OutputWritersChain) jmxTransExporter.outputWriter;
 
         assertThat(outputWritersChain.outputWriters.size(), is(2));
 
@@ -118,9 +118,9 @@ public class SimpleJmxExporterBuilderTest {
 
         }
 
-        assertThat(simpleJmxExporter.queries.size(), is(13));
+        assertThat(jmxTransExporter.queries.size(), is(13));
 
-        Map<String, Query> queriesByResultAlias = indexQueriesByResultAlias(simpleJmxExporter.queries);
+        Map<String, Query> queriesByResultAlias = indexQueriesByResultAlias(jmxTransExporter.queries);
 
         {
             Query query = queriesByResultAlias.get("os.systemLoadAverage");

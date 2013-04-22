@@ -36,18 +36,18 @@ public class JmxTransAgent {
     public static void premain(String configFile, Instrumentation inst) {
 
         if (configFile == null || configFile.isEmpty()) {
-            String msg = "SimpleJmxExporter configurationFile must be defined";
+            String msg = "JmxTransExporter configurationFile must be defined";
             logger.log(Level.SEVERE, msg);
             throw new IllegalStateException(msg);
         }
-        SimpleJmxExporter simpleJmxExporter;
+        JmxTransExporter jmxTransExporter;
         try {
-            simpleJmxExporter = new SimpleJmxExporterBuilder().build(configFile);
+            jmxTransExporter = new JmxTransExporterBuilder().build(configFile);
             //START
-            simpleJmxExporter.start();
+            jmxTransExporter.start();
             logger.info("JmxTransAgent started with configuration '" + configFile + "'");
         } catch (Exception e) {
-            String msg = "Exception loading SimpleJmxExporter from '" + configFile + "'";
+            String msg = "Exception loading JmxTransExporter from '" + configFile + "'";
             logger.log(Level.SEVERE, msg, e);
             throw new IllegalStateException(msg, e);
         }
