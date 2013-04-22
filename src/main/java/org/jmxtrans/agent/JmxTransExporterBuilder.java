@@ -45,12 +45,12 @@ import java.util.logging.Logger;
  *
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class SimpleJmxExporterBuilder {
+public class JmxTransExporterBuilder {
 
     private Logger logger = Logger.getLogger(getClass().getName());
     private PropertyPlaceholderResolver placeholderResolver = new PropertyPlaceholderResolver();
 
-    public SimpleJmxExporter build(String configurationFilePath) throws Exception {
+    public JmxTransExporter build(String configurationFilePath) throws Exception {
         if (configurationFilePath == null) {
             throw new NullPointerException("configurationFilePath cannot be null");
         }
@@ -77,7 +77,7 @@ public class SimpleJmxExporterBuilder {
 
         Element rootElement = document.getDocumentElement();
 
-        SimpleJmxExporter simpleJmxExporter = new SimpleJmxExporter();
+        JmxTransExporter jmxTransExporter = new JmxTransExporter();
 
         NodeList collectIntervalNodeList = rootElement.getElementsByTagName("collectIntervalInSeconds");
         switch (collectIntervalNodeList.getLength()) {
@@ -88,7 +88,7 @@ public class SimpleJmxExporterBuilder {
                 Element collectIntervalElement = (Element) collectIntervalNodeList.item(0);
                 String collectIntervalString = placeholderResolver.resolveString(collectIntervalElement.getTextContent());
                 try {
-                    simpleJmxExporter.withCollectInterval(Integer.parseInt(collectIntervalString), TimeUnit.SECONDS);
+                    jmxTransExporter.withCollectInterval(Integer.parseInt(collectIntervalString), TimeUnit.SECONDS);
                 } catch (NumberFormatException e) {
                     throw new IllegalStateException("Invalid <collectIntervalInSeconds> value '" + collectIntervalString + "', integer expected", e);
                 }
@@ -98,7 +98,7 @@ public class SimpleJmxExporterBuilder {
                 Element lastCollectIntervalElement = (Element) collectIntervalNodeList.item(collectIntervalNodeList.getLength() - 1);
                 String lastCollectIntervalString = placeholderResolver.resolveString(lastCollectIntervalElement.getTextContent());
                 try {
-                    simpleJmxExporter.withCollectInterval(Integer.parseInt(lastCollectIntervalString), TimeUnit.SECONDS);
+                    jmxTransExporter.withCollectInterval(Integer.parseInt(lastCollectIntervalString), TimeUnit.SECONDS);
                 } catch (NumberFormatException e) {
                     throw new IllegalStateException("Invalid <collectIntervalInSeconds> value '" + lastCollectIntervalString + "', integer expected", e);
                 }
@@ -106,14 +106,14 @@ public class SimpleJmxExporterBuilder {
 
         }
 
-        buildQueries(rootElement, simpleJmxExporter);
+        buildQueries(rootElement, jmxTransExporter);
 
-        buildOutputWriters(rootElement, simpleJmxExporter);
+        buildOutputWriters(rootElement, jmxTransExporter);
 
-        return simpleJmxExporter;
+        return jmxTransExporter;
     }
 
-    private void buildQueries(Element rootElement, SimpleJmxExporter simpleJmxExporter) {
+    private void buildQueries(Element rootElement, JmxTransExporter jmxTransExporter) {
         NodeList queries = rootElement.getElementsByTagName("query");
         for (int i = 0; i < queries.getLength(); i++) {
             Element queryElement = (Element) queries.item(i);
@@ -122,11 +122,11 @@ public class SimpleJmxExporterBuilder {
             String key = queryElement.hasAttribute("key") ? queryElement.getAttribute("key") : null;
             String resultAlias = queryElement.getAttribute("resultAlias");
 
-            simpleJmxExporter.withQuery(objectName, attribute, key, resultAlias);
+            jmxTransExporter.withQuery(objectName, attribute, key, resultAlias);
         }
     }
 
-    private void buildOutputWriters(Element rootElement, SimpleJmxExporter simpleJmxExporter) {
+    private void buildOutputWriters(Element rootElement, JmxTransExporter jmxTransExporter) {
         NodeList outputWriterNodeList = rootElement.getElementsByTagName("outputWriter");
         List<OutputWriter> outputWriters = new ArrayList<OutputWriter>();
 
@@ -159,10 +159,10 @@ public class SimpleJmxExporterBuilder {
                 logger.warning("No outputwriter defined.");
                 break;
             case 1:
-                simpleJmxExporter.withOutputWriter(outputWriters.get(0));
+                jmxTransExporter.withOutputWriter(outputWriters.get(0));
                 break;
             default:
-                simpleJmxExporter.withOutputWriter(new OutputWritersChain(outputWriters));
+                jmxTransExporter.withOutputWriter(new OutputWritersChain(outputWriters));
         }
     }
 }
