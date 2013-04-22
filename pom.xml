@@ -29,7 +29,7 @@
         <artifactId>oss-parent</artifactId>
         <version>7</version>
     </parent>
-    <groupId>org.jmxtrans.embedded</groupId>
+    <groupId>org.jmxtrans.agent</groupId>
     <artifactId>jmxtrans-agent</artifactId>
     <packaging>jar</packaging>
     <version>1.0.0-SNAPSHOT</version>
@@ -67,7 +67,6 @@
                         </manifestEntries>
                     </archive>
                 </configuration>
-
             </plugin>
         </plugins>
     </build>
@@ -78,12 +77,15 @@
             <email>cleclerc@cloudbees.com</email>
         </developer>
     </developers>
-
     <licenses>
         <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <github.global.server>github</github.global.server>
+    </properties>
 </project>
