@@ -41,8 +41,7 @@ public class GraphiteHttpWriterIntegrationTest {
     public void before() {
         graphiteHttpWriter = new GraphiteHttpWriter();
         Map<String, Object> settings = new HashMap<String, Object>();
-        settings.put(AbstractOutputWriter.SETTING_HOST, "127.0.0.1");
-        settings.put(AbstractOutputWriter.SETTING_PORT, 2013);
+        settings.put(AbstractOutputWriter.SETTING_URL, "http://10.1.4.33:2013/upload");
 
         graphiteHttpWriter.setSettings(settings);
         graphiteHttpWriter.start();

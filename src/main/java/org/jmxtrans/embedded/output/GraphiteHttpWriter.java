@@ -35,6 +35,7 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,11 +43,12 @@ import java.util.concurrent.TimeUnit;
  * <p/>
  * This implementation uses <a href="http://graphite.readthedocs.org/en/0.9.10/feeding-carbon.html#the-plaintext-protocol">
  * Carbon Plan Text protocol</a> over HTTP.
+ * Read <a href="https://answers.launchpad.net/graphite/+question/213436">this thread</a> in order to implement a HTTP
+ * listener in front of Carbon backend.
  * <p/>
  * Settings:
  * <ul>
- * <li>"host": hostname or ip address of the Graphite proxy server. Mandatory</li>
- * <li>"port": listen port for HTTP of the Graphite proxy server.
+ * <li>"url": complete url of the Graphite proxy server. Mandatory</li>
  * <li>"namePrefix": prefix append to the metrics name.
  * Optional, default value: {@value #DEFAULT_NAME_PREFIX}.</li>
  * </ul>
@@ -73,11 +75,10 @@ public class GraphiteHttpWriter extends AbstractOutputWriter implements OutputWr
      */
     @Override
     public void start() {
-        int port = getIntSetting(SETTING_PORT);
-        String host = getStringSetting(SETTING_HOST);
+        String url = getStringSetting(SETTING_URL);
 
         try {
-            graphiteHttpUrl = new URL("http", host, port, "upload");
+            graphiteHttpUrl = new URL(url);
         } catch (MalformedURLException e) {
             throw new EmbeddedJmxTransException(e);
         }
@@ -101,17 +102,18 @@ public class GraphiteHttpWriter extends AbstractOutputWriter implements OutputWr
         HttpURLConnection urlConnection = null;
         OutputStreamWriter urlWriter = null;
         try {
-            StringBuilder sbUrlWriter = new StringBuilder("data=");
+            StringBuilder sbUrlWriter = new StringBuilder("");
             for (QueryResult result : results) {
                 String msg = metricPathPrefix + result.getName() + " " + result.getValue() + " " + result.getEpoch(TimeUnit.SECONDS) + "\n";
                 logger.debug("Export '{}'", msg);
                 sbUrlWriter.append(msg);
             }
-            if (sbUrlWriter.length() > 5) {
+            if (sbUrlWriter.length() > 0) {
+                sbUrlWriter.insert(0, "data=");
                 urlConnection = (HttpURLConnection) graphiteHttpUrl.openConnection();
                 urlConnection.setRequestMethod("POST");
                 urlConnection.setDoOutput(true);
-                urlWriter = new OutputStreamWriter(urlConnection.getOutputStream());
+                urlWriter = new OutputStreamWriter(urlConnection.getOutputStream(), Charset.forName("UTF-8"));
                 urlWriter.write(sbUrlWriter.toString());
                 urlWriter.flush();
                 IoUtils2.closeQuietly(urlWriter);
