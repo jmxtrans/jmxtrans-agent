@@ -23,16 +23,18 @@
  */
 package org.jmxtrans.embedded.output;
 
-import org.apache.commons.httpclient.HostConfiguration;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.PostMethod;
+import org.jmxtrans.embedded.EmbeddedJmxTransException;
 import org.jmxtrans.embedded.QueryResult;
+import org.jmxtrans.embedded.util.io.IoUtils2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -43,19 +45,15 @@ import java.util.concurrent.TimeUnit;
  * <p/>
  * Settings:
  * <ul>
- * <li>"host": hostname or ip address of the Graphite server. Mandatory</li>
- * <li>"port": listen port for the TCP Plain Text Protocol of the Graphite server.
- * Optional, default value: {@value #DEFAULT_GRAPHITE_SERVER_PORT}.</li>
+ * <li>"host": hostname or ip address of the Graphite proxy server. Mandatory</li>
+ * <li>"port": listen port for HTTP of the Graphite proxy server.
  * <li>"namePrefix": prefix append to the metrics name.
  * Optional, default value: {@value #DEFAULT_NAME_PREFIX}.</li>
- * <li>"enabled": flag to enable/disable the writer. Optional, default value: <code>true</code>.</li>
  * </ul>
  *
- * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
+ * @author <a href="mailto:simon.mazas@gmail.com">Simon Mazas</a>
  */
 public class GraphiteHttpWriter extends AbstractOutputWriter implements OutputWriter {
-
-    public static final int DEFAULT_GRAPHITE_SERVER_PORT = 2003;
 
     public static final String DEFAULT_NAME_PREFIX = "servers.#hostname#.";
 
@@ -66,7 +64,7 @@ public class GraphiteHttpWriter extends AbstractOutputWriter implements OutputWr
      */
     private String metricPathPrefix;
 
-    private HttpClient graphiteHttpClient;
+    private URL graphiteHttpUrl;
 
     /**
      * Load settings, initialize the {@link org.apache.commons.httpclient .HttpClient.HttpClient} client and test the connection to the graphite server.
@@ -75,16 +73,16 @@ public class GraphiteHttpWriter extends AbstractOutputWriter implements OutputWr
      */
     @Override
     public void start() {
-        int port = getIntSetting(SETTING_PORT, DEFAULT_GRAPHITE_SERVER_PORT);
+        int port = getIntSetting(SETTING_PORT);
         String host = getStringSetting(SETTING_HOST);
 
-        HostConfiguration config = new HostConfiguration();
-	    config.setHost(host, port);
+        try {
+            graphiteHttpUrl = new URL("http", host, port, "upload");
+        } catch (MalformedURLException e) {
+            throw new EmbeddedJmxTransException(e);
+        }
 
-        graphiteHttpClient = new HttpClient();
-        graphiteHttpClient.setHostConfiguration(config);
-
-        logger.info("Start Graphite writer connected to '{}'...", config);
+	    logger.info("Start Graphite writer connected to '{}'...", graphiteHttpUrl);
 
         metricPathPrefix = getStringSetting(SETTING_NAME_PREFIX, DEFAULT_NAME_PREFIX);
         metricPathPrefix = getStrategy().resolveExpression(metricPathPrefix);
@@ -99,42 +97,52 @@ public class GraphiteHttpWriter extends AbstractOutputWriter implements OutputWr
      */
     @Override
     public void write(Iterable<QueryResult> results) {
-        logger.debug("Export to '{}' results {}", graphiteHttpClient, results);
-        PostMethod post = new PostMethod("/upload");
+        logger.debug("Export to '{}' results {}", graphiteHttpUrl, results);
+        HttpURLConnection urlConnection = null;
+        OutputStreamWriter urlWriter = null;
         try {
-            StringBuilder sb = new StringBuilder("");
+            StringBuilder sbUrlWriter = new StringBuilder("data=");
             for (QueryResult result : results) {
                 String msg = metricPathPrefix + result.getName() + " " + result.getValue() + " " + result.getEpoch(TimeUnit.SECONDS) + "\n";
                 logger.debug("Export '{}'", msg);
-                sb.append(msg);
+                sbUrlWriter.append(msg);
             }
-            if (sb.length() > 0) {
-                post.addParameter("data", sb.toString());
-                logger.debug("requete = " + post);
-                int statusCode = graphiteHttpClient.executeMethod(post);
-
-                if (statusCode != HttpStatus.SC_OK) {
-                    logger.warn("Method failed: " + post.getStatusLine());
+            if (sbUrlWriter.length() > 5) {
+                urlConnection = (HttpURLConnection) graphiteHttpUrl.openConnection();
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setDoOutput(true);
+                urlWriter = new OutputStreamWriter(urlConnection.getOutputStream());
+                urlWriter.write(sbUrlWriter.toString());
+                urlWriter.flush();
+                IoUtils2.closeQuietly(urlWriter);
+                int responseCode = urlConnection.getResponseCode();
+                if (responseCode != 200) {
+                    logger.warn("Failure {}:'{}' to send result to Graphite HTTP proxy'{}' ", responseCode, urlConnection.getResponseMessage(), graphiteHttpUrl);
                 }
-                String response = post.getResponseBodyAsString();
+                if (logger.isTraceEnabled()) {
+                    IoUtils2.copy(urlConnection.getInputStream(), System.out);
+                }
             }
-        } catch (HttpException e) {
-            logger.warn("Failure to send result to graphite server '{}' due to protocol violation", graphiteHttpClient.getHostConfiguration(), e);
-        } catch (IOException e) {
-            logger.warn("Failure to send result to graphite server '{}' due to transport error", graphiteHttpClient.getHostConfiguration(), e);
+        } catch (Exception e) {
+            logger.warn("Failure to send result to Graphite HTTP proxy '{}'", graphiteHttpUrl, e);
         } finally {
             // Release the connection.
-            post.releaseConnection();
+            if (urlConnection != null) {
+                try {
+                    InputStream in = urlConnection.getInputStream();
+                    IoUtils2.copy(in, IoUtils2.nullOutputStream());
+                    IoUtils2.closeQuietly(in);
+                    InputStream err = urlConnection.getErrorStream();
+                    if (err != null) {
+                        IoUtils2.copy(err, IoUtils2.nullOutputStream());
+                        IoUtils2.closeQuietly(err);
+                    }
+                } catch (IOException e) {
+                    logger.warn("Exception flushing http connection", e);
+                }
+            }
         }
     }
 
-    /**
-     * Nothing to do for a http client
-     */
-    @Override
-    public void stop() throws Exception {
-        logger.info("Stop GraphiteHttpWriter connected to '{}' ...", graphiteHttpClient.getHostConfiguration());
-        super.stop();
-    }
 }
 

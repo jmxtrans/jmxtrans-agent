@@ -31,7 +31,7 @@ import org.junit.Test;
 import java.util.*;
 
 /**
- * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
+ * @author <a href="mailto:simon.mazas@gmail.com">Simon Mazas</a>
  */
 public class GraphiteHttpWriterIntegrationTest {
 
@@ -41,7 +41,7 @@ public class GraphiteHttpWriterIntegrationTest {
     public void before() {
         graphiteHttpWriter = new GraphiteHttpWriter();
         Map<String, Object> settings = new HashMap<String, Object>();
-        settings.put(AbstractOutputWriter.SETTING_HOST, "10.1.4.33");
+        settings.put(AbstractOutputWriter.SETTING_HOST, "127.0.0.1");
         settings.put(AbstractOutputWriter.SETTING_PORT, 2013);
 
         graphiteHttpWriter.setSettings(settings);
