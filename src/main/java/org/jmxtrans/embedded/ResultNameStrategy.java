@@ -193,7 +193,7 @@ public class ResultNameStrategy {
                         logger.warn("Error evaluating expression '" + key + "'", e);
                     }
                 }
-                appendEscapedNonAlphaNumericChars(value, result);
+                appendEscapedNonAlphaNumericChars(value, false, result);
                 position = endingSeparatorPosition + 1;
 
             } else {
@@ -246,7 +246,7 @@ public class ResultNameStrategy {
                         logger.warn("Error evaluating expression '" + key + "'", e);
                     }
                 }
-                appendEscapedNonAlphaNumericChars(value, result);
+                appendEscapedNonAlphaNumericChars(value, false, result);
                 position = endingSeparatorPosition + 1;
 
             } else {
@@ -289,11 +289,26 @@ public class ResultNameStrategy {
      * @param result the {@linkplain StringBuilder} in which the escaped string is appended
      */
     private void appendEscapedNonAlphaNumericChars(String str, StringBuilder result) {
+        appendEscapedNonAlphaNumericChars(str, true, result);
+    }
+
+    /**
+     * Escape all non a->z,A->Z, 0->9 and '-' with a '_'.
+     * <p/>
+     * '.' is escaped with a '_' if {@code escapeDot} is <code>true</code>.
+     *
+     * @param str       the string to escape
+     * @param escapeDot indicates whether '.' should be escaped into '_' or not.
+     * @param result    the {@linkplain StringBuilder} in which the escaped string is appended
+     */
+    private void appendEscapedNonAlphaNumericChars(String str, boolean escapeDot, StringBuilder result) {
         char[] chars = str.toCharArray();
         for (int i = 0; i < chars.length; i++) {
             char ch = chars[i];
             if (Character.isLetter(ch) || Character.isDigit(ch) || ch == '-') {
                 result.append(ch);
+            } else if (ch == '.') {
+                result.append(escapeDot ? '_' : ch);
             } else if (ch == '"' && ((i == 0) || (i == chars.length - 1))) {
                 // ignore starting and ending '"' that are used to quote() objectname's values (see ObjectName.value())
             } else {
