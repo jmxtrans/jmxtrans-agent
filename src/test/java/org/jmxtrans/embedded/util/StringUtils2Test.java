@@ -24,11 +24,13 @@
 package org.jmxtrans.embedded.util;
 
 import org.hamcrest.collection.IsIterableContainingInOrder;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
@@ -36,10 +38,23 @@ import java.util.List;
 public class StringUtils2Test {
 
     @Test
-    public void testSplit() {
+    public void testDelimitedStringToList() {
         List<String> actual = StringUtils2.delimitedStringToList("a,b;c\nd,,e,;f");
         System.out.println(actual);
-        Assert.assertThat(actual, IsIterableContainingInOrder.contains("a", "b", "c", "d", "e", "f"));
+        assertThat(actual, IsIterableContainingInOrder.contains("a", "b", "c", "d", "e", "f"));
+    }
 
+    @Test
+    public void testJoin() {
+        List<String> tokens = Arrays.asList("com", "mycompany", "ecommerce", "server1");
+        String actual = StringUtils2.join(tokens, ".");
+        assertThat(actual, is("com.mycompany.ecommerce.server1"));
+    }
+
+    @Test
+    public void testReverseTokens() {
+        String in = "server1.ecommerce.mycompany.com";
+        String actual = StringUtils2.reverseTokens(in, ".");
+        assertThat(actual, is("com.mycompany.ecommerce.server1"));
     }
 }

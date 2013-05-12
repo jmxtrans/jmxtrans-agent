@@ -23,9 +23,9 @@
  */
 package org.jmxtrans.embedded.util;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Yet another {@code StringUtils} class.
@@ -38,6 +38,12 @@ public class StringUtils2 {
 
     }
 
+    /**
+     * Split given String. Delimiters are <code>","</code>, <code>";"</code> and <code>"\n"</code>.
+     *
+     * @param delimitedString
+     * @return splitted string or <code>null</code> if given <code>delimitedString</code> is <code>null</code>
+     */
     public static List<String> delimitedStringToList(@Nullable String delimitedString) {
         if (delimitedString == null) {
             return null;
@@ -53,5 +59,58 @@ public class StringUtils2 {
             }
         }
         return result;
+    }
+
+    /**
+     * Join given {@code tokens} with given {@code delimiter}.
+     * <p/>
+     * Sample: tokens <code>"com", "mycompany, "ecommerce", "server1"</code> with delimiter <code>"."</code>
+     * returns <code>"com.mycompany.ecommerce.server1"</code>.
+     *
+     * @param tokens
+     * @param delimiter
+     * @return the joined tokens (<code>null</code> if given <code>tokens</code> is <code>null</code>
+     */
+    public static String join(@Nullable List<String> tokens, @Nonnull String delimiter) {
+        if (tokens == null) {
+            return null;
+        }
+        Preconditions.checkNotNull(delimiter, "given delimiter can not be null");
+
+        Iterator<String> it = tokens.iterator();
+        StringBuilder sb = new StringBuilder();
+        while (it.hasNext()) {
+            String token = it.next();
+            sb.append(token);
+            if (it.hasNext()) {
+                sb.append(delimiter);
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * <p> Reverse tokens of given tokenized <code>str</code>.</p>
+     * <p>Sample: "server1.ecommerce.mycompany.com" returns <code>"com.mycompany.ecommerce.server1"</code>.</p>
+     *
+     * @param str
+     * @param delimiter
+     * @return reversed string or <code>null</code> if given string is <code>null</code>
+     */
+    public static String reverseTokens(@Nullable String str, @Nonnull String delimiter) {
+        if (str == null) {
+            return null;
+        }
+        Preconditions.checkNotNull(delimiter, "given delimiter can not be null");
+
+        StringTokenizer st = new StringTokenizer(str, delimiter);
+        List<String> tokens = new ArrayList<String>();
+
+        while (st.hasMoreTokens()) {
+            tokens.add(st.nextToken());
+        }
+        Collections.reverse(tokens);
+
+        return join(tokens, delimiter);
     }
 }
