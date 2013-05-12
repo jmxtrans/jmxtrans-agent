@@ -23,6 +23,7 @@
  */
 package org.jmxtrans.embedded;
 
+import org.jmxtrans.embedded.util.StringUtils2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +54,11 @@ import java.util.concurrent.Callable;
  * <td>TODO</td>
  * </tr>
  * <tr>
+ * <th><code>#reversed_hostname#</code></th>
+ * <td>reversed localhost - hostname {@link java.net.InetAddress#getHostName()}</td>
+ * <td></td>
+ * </tr>
+ * <tr>
  * <th><code>#escaped_hostname#</code></th>
  * <td>localhost - hostname {@link java.net.InetAddress#getHostName()} with '.' replaced by '_'</td>
  * <td>TODO</td>
@@ -60,12 +66,17 @@ import java.util.concurrent.Callable;
  * <tr>
  * <th><code>#canonical_hostname#</code></th>
  * <td>localhost - canonical hostname {@link java.net.InetAddress#getCanonicalHostName()}</td>
- * <td>TODO</td>
+ * <td><code>server1.ecommerce.mycompany.com</code></td>
+ * </tr>
+ * <tr>
+ * <th><code>#reversed_canonical_hostname#</code></th>
+ * <td>reversed localhost - canonical hostname {@link java.net.InetAddress#getCanonicalHostName()}</td>
+ * <td><code>com.mycompany.ecommerce.server1</code></td>
  * </tr>
  * <tr>
  * <th><code>#escaped_canonical_hostname#</code></th>
  * <td>localhost - canonical hostname {@link java.net.InetAddress#getCanonicalHostName()} with '.' replaced by '_'</td>
- * <td>TODO</td>
+ * <td><code>server1_ecommerce_mycompany_com</code></td>
  * </tr>
  * <tr>
  * <th><code>#hostaddress#</code></th>
@@ -94,12 +105,16 @@ public class ResultNameStrategy {
         try {
             InetAddress localHost = InetAddress.getLocalHost();
             String hostName = localHost.getHostName();
+            String reversedHostName = StringUtils2.reverseTokens(hostName, ".");
             String canonicalHostName = localHost.getCanonicalHostName();
+            String reversedCanonicalHostName = StringUtils2.reverseTokens(canonicalHostName, ".");
             String hostAddress = localHost.getHostAddress();
 
             registerExpressionEvaluator("hostname", hostName);
+            registerExpressionEvaluator("reversed_hostname", reversedHostName);
             registerExpressionEvaluator("escaped_hostname", hostName.replaceAll("\\.", "_"));
             registerExpressionEvaluator("canonical_hostname", canonicalHostName);
+            registerExpressionEvaluator("reversed_canonical_hostname", reversedCanonicalHostName);
             registerExpressionEvaluator("escaped_canonical_hostname", canonicalHostName.replaceAll("\\.", "_"));
             registerExpressionEvaluator("hostaddress", hostAddress);
             registerExpressionEvaluator("escaped_hostaddress", hostAddress.replaceAll("\\.", "_"));
