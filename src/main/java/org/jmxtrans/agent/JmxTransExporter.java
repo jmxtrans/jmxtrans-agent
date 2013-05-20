@@ -43,7 +43,13 @@ public class JmxTransExporter {
     /**
      * visible for test
      */
+    protected List<Invocation> invocations = new ArrayList<Invocation>();
+    /**
+     * visible for test
+     */
     protected OutputWriter outputWriter = new DevNullOutputWriter();
+    protected int collectInterval = 10;
+    protected TimeUnit collectIntervalTimeUnit = TimeUnit.SECONDS;
     private Logger logger = Logger.getLogger(getClass().getName());
     private ThreadFactory threadFactory = new ThreadFactory() {
         final AtomicInteger counter = new AtomicInteger();
@@ -58,8 +64,6 @@ public class JmxTransExporter {
     };
     private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, threadFactory);
     private MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
-    protected int collectInterval = 10;
-    protected TimeUnit collectIntervalTimeUnit = TimeUnit.SECONDS;
     private ScheduledFuture scheduledFuture;
 
     public JmxTransExporter withQuery(String objectName, String attribute, String resultAlias) {
@@ -70,7 +74,10 @@ public class JmxTransExporter {
         queries.add(new Query(objectName, attribute, key, resultAlias));
         return this;
     }
-
+    public JmxTransExporter withInvocation(String objectName, String operation,String resultAlias) {
+        invocations.add(new Invocation(objectName, operation, new Object[0], new String[0], resultAlias));
+        return this;
+    }
     public JmxTransExporter withOutputWriter(OutputWriter outputWriter) {
         this.outputWriter = outputWriter;
         return this;
@@ -126,6 +133,13 @@ public class JmxTransExporter {
     protected void collectAndExport() {
         try {
             outputWriter.preCollect();
+            for (Invocation invocation : invocations) {
+                try {
+                    invocation.invoke(mbeanServer, outputWriter);
+                } catch (Exception e) {
+                    logger.log(Level.WARNING, "Ignore exception invoking " + invocation, e);
+                }
+            }
             for (Query query : queries) {
                 try {
                     query.collectAndExport(mbeanServer, outputWriter);
@@ -143,6 +157,7 @@ public class JmxTransExporter {
     public String toString() {
         return "JmxTransExporter{" +
                 "queries=" + queries +
+                ", invocations=" + invocations +
                 ", outputWriter=" + outputWriter +
                 ", collectInterval=" + collectInterval +
                 " " + collectIntervalTimeUnit +

@@ -77,6 +77,13 @@ public class JmxTransExporterBuilderTest {
             assertThat(query.resultAlias, is("jvm.heapMemoryUsage.used"));
             assertThat(query.key, is("used"));
         }
+        Map<String, Invocation> invocationsByResultAlias = indexInvocationsByResultAlias(jmxTransExporter.invocations);
+        {
+            Invocation invocation = invocationsByResultAlias.get("jvm.gc");
+            assertThat(invocation.objectName, is(new ObjectName("java.lang:type=Memory")));
+            assertThat(invocation.operationName, is("gc"));
+            assertThat(invocation.resultAlias, is("jvm.gc"));
+        }
     }
 
     @Test
@@ -142,6 +149,14 @@ public class JmxTransExporterBuilderTest {
         Map<String, Query> result = new HashMap<String, Query>();
         for (Query query : queries) {
             result.put(query.resultAlias, query);
+        }
+        return result;
+    }
+
+    Map<String, Invocation> indexInvocationsByResultAlias(Iterable<Invocation> invocations) {
+        Map<String, Invocation> result = new HashMap<String, Invocation>();
+        for (Invocation invocation : invocations) {
+            result.put(invocation.resultAlias, invocation);
         }
         return result;
     }

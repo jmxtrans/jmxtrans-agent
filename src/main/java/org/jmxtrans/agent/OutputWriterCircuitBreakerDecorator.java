@@ -79,12 +79,29 @@ public class OutputWriterCircuitBreakerDecorator implements OutputWriter {
     }
 
     @Override
-    public void write(String metricName, Object value) throws IOException {
+    public void writeQueryResult(String metricName, Object value) throws IOException {
         if (isDisabled()) {
             return;
         }
         try {
-            delegate.write(metricName, value);
+            delegate.writeQueryResult(metricName, value);
+            incrementOutputWriterSuccess();
+        } catch (RuntimeException e) {
+            incrementOutputWriterFailures();
+            throw e;
+        } catch (IOException e) {
+            incrementOutputWriterFailures();
+            throw e;
+        }
+    }
+
+    @Override
+    public void writeInvocationResult(String invocationName, Object value) throws IOException {
+        if (isDisabled()) {
+            return;
+        }
+        try {
+            delegate.writeInvocationResult(invocationName, value);
             incrementOutputWriterSuccess();
         } catch (RuntimeException e) {
             incrementOutputWriterFailures();

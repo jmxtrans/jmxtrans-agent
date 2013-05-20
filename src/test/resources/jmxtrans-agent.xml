@@ -22,6 +22,9 @@
  ~
 -->
 <jmxtrans-agent>
+    <invocations>
+        <invocation objectName="java.lang:type=Memory" operation="gc" resultAlias="jvm.gc"/>
+    </invocations>
     <queries>
         <!-- OS -->
         <query objectName="java.lang:type=OperatingSystem" attribute="SystemLoadAverage" resultAlias="os.systemLoadAverage"/>

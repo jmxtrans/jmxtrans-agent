@@ -51,7 +51,14 @@ public abstract class AbstractOutputWriter implements OutputWriter {
     }
 
     @Override
-    public abstract void write(String metricName, Object value) throws IOException;
+    public void writeQueryResult(String metricName, Object value) throws IOException {
+        writeResult(metricName, value);
+    }
 
+    @Override
+    public void writeInvocationResult(String invocationName, Object value) throws IOException {
+        writeResult(invocationName, value);
+    }
 
+    protected abstract void writeResult(String name, Object value) throws IOException;
 }

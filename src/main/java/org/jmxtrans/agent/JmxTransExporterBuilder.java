@@ -106,6 +106,7 @@ public class JmxTransExporterBuilder {
 
         }
 
+        buildInvocations(rootElement, jmxTransExporter);
         buildQueries(rootElement, jmxTransExporter);
 
         buildOutputWriters(rootElement, jmxTransExporter);
@@ -123,6 +124,18 @@ public class JmxTransExporterBuilder {
             String resultAlias = queryElement.getAttribute("resultAlias");
 
             jmxTransExporter.withQuery(objectName, attribute, key, resultAlias);
+        }
+    }
+
+    private void buildInvocations(Element rootElement, JmxTransExporter jmxTransExporter) {
+        NodeList invocations = rootElement.getElementsByTagName("invocation");
+        for (int i = 0; i < invocations.getLength(); i++) {
+            Element invocationElement = (Element) invocations.item(i);
+            String objectName = invocationElement.getAttribute("objectName");
+            String operation = invocationElement.getAttribute("operation");
+            String resultAlias = invocationElement.getAttribute("resultAlias");
+
+            jmxTransExporter.withInvocation(objectName, operation, resultAlias);
         }
     }
 
