@@ -67,9 +67,18 @@ public class FileOverwriterOutputWriter extends AbstractOutputWriter {
     }
 
     @Override
-    public synchronized void write(String metricName, Object value) throws IOException {
+    public synchronized void writeQueryResult(String metricName, Object value) throws IOException {
+        writeResult(metricName, value);
+    }
+
+    @Override
+    public void writeInvocationResult(String invocationName, Object value) throws IOException {
+        writeResult(invocationName, value);
+    }
+
+    protected void writeResult(String name, Object value) throws IOException {
         try {
-            getTemporaryFileWriter().write(metricName + " " + value + "\n");
+            getTemporaryFileWriter().write(name + " " + value + "\n");
         } catch (IOException e) {
             releaseTemporaryWriter();
             throw e;

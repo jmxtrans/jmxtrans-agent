@@ -31,6 +31,7 @@ import java.util.Map;
  */
 public interface OutputWriter {
     void postConstruct(Map<String, String> settings);
+
     void preDestroy();
 
     /**
@@ -38,11 +39,13 @@ public interface OutputWriter {
      */
     void preCollect() throws IOException;
 
-    void write(String metricName, Object value) throws IOException;
+    void writeQueryResult(String metricName, Object value) throws IOException;
 
     /**
      * <p>called after a serie of writes, typically at the end of a collection.</p>
      * <p>Useful with batch writers.</p>
      */
     void postCollect() throws IOException;
+
+    void writeInvocationResult(String invocationName, Object value) throws IOException;
 }

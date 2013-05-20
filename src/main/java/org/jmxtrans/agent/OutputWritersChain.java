@@ -44,10 +44,22 @@ public class OutputWritersChain extends AbstractOutputWriter implements OutputWr
     }
 
     @Override
-    public void write(String metricName, Object value) throws IOException {
+    public void writeQueryResult(String metricName, Object value) throws IOException {
         for (OutputWriter outputWriter : outputWriters) {
-            outputWriter.write(metricName, value);
+            outputWriter.writeQueryResult(metricName, value);
         }
+    }
+
+    @Override
+    public void writeInvocationResult(String invocationName, Object value) throws IOException {
+        for (OutputWriter outputWriter : outputWriters) {
+            outputWriter.writeInvocationResult(invocationName, value);
+        }
+    }
+
+    @Override
+    protected void writeResult(String name, Object value) throws IOException {
+        throw new IllegalStateException("Method #writeQueryResult() or #writeInvocationResult() should have been called");
     }
 
     @Override

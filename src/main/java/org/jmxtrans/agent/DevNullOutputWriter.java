@@ -23,11 +23,13 @@
  */
 package org.jmxtrans.agent;
 
+import java.io.IOException;
+
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public class DevNullOutputWriter extends AbstractOutputWriter {
     @Override
-    public void write(String metricName, Object value) {
+    protected void writeResult(String name, Object value) throws IOException {
     }
 }

@@ -29,8 +29,9 @@ import java.util.concurrent.TimeUnit;
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public class ConsoleOutputWriter extends AbstractOutputWriter implements OutputWriter {
+
     @Override
-    public void write(String metricName, Object value) {
-        System.out.println(metricName + " " + value + " " + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+    public void writeResult(String name, Object value) {
+        System.out.println(name + " " + value + " " + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
     }
 }

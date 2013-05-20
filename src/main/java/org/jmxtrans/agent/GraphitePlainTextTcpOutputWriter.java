@@ -82,7 +82,7 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
     }
 
     @Override
-    public void write(String metricName, Object value) throws IOException {
+    public void writeResult(String metricName, Object value) throws IOException {
         String msg = buildMetricPathPrefix() + metricName + " " + value + " " + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         try {
             ensureGraphiteConnection();

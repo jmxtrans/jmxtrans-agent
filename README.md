@@ -1,19 +1,20 @@
 # Jmxtrans Agent
 
+[![Build Status](https://jmxtrans.ci.cloudbees.com/job/jmxtrans-agent/badge/icon)](https://jmxtrans.ci.cloudbees.com/job/jmxtrans-agent/)
 
-## What is JmxTrans Agent ?
+## What is jmxtrans-agent ?
 
-JmxTrans Agent is a version of [jmxtrans](http://jmxtrans.org/) intended to be used as a java agent. JmxTrans Agent has zero dependencies to ease integration.
+jmxtrans-agent is a version of [jmxtrans](http://jmxtrans.org/) intended to be used as a java agent. JmxTrans Agent has zero dependencies to ease integration.
 
 ## Java Agent Declaration
 
-Download [jmxtrans-agent-1.0.0-20130417.130310-1.jar](https://repository-jmxtrans.forge.cloudbees.com/snapshot/org/jmxtrans/agent/jmxtrans-agent/1.0.0-SNAPSHOT/jmxtrans-agent-1.0.0-20130417.130310-1.jar)
+Download [jmxtrans-agent-1.0.0.jar](http://repo1.maven.org/maven2/org/jmxtrans/agent/jmxtrans-agent/1.0.0/jmxtrans-agent-1.0.0.jar)
 
 Sample `setenv.sh`
 
 ```
 export JAVA_OPTS="$JAVA_OPTS 
-  -javaagent:/path/to/jmxtrans-agent-1.0.0-SNAPSHOT.jar=jmxtrans-agent.xml"
+  -javaagent:/path/to/jmxtrans-agent-1.0.0.jar=jmxtrans-agent.xml"
 ```
 
 * java agent jar path can be relative to the working dir
