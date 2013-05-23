@@ -10,7 +10,7 @@ jmxtrans-agent is a version of [jmxtrans](http://jmxtrans.org/) intended to be u
 
 Download [jmxtrans-agent-1.0.0.jar](http://repo1.maven.org/maven2/org/jmxtrans/agent/jmxtrans-agent/1.0.0/jmxtrans-agent-1.0.0.jar)
 
-Sample `setenv.sh`
+Sample `setenv.sh` for Apache Tomcat
 
 ```
 export JAVA_OPTS="$JAVA_OPTS 
