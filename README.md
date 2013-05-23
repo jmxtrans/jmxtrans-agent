@@ -87,7 +87,7 @@ Out of the box output writers
 * [FileOverwriterOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/FileOverwriterOutputWriter.java): store the last collection of metrics in a file. Configuration parameters:
   * `fileName`: name of the file in which the collected metrics are stored. Optional, default value `jmxtrans-agent.data` (in JVM working dir, for example `$TOMCAT_HOME/bin`)
 
-Output writers configuration support  an expression language based on property placeholders with the `{prop-name[:default-value]} syntax (e.g. "`${graphite.host:2003}`").
+Output writers configuration support  an expression language based on property placeholders with the `{prop-name[:default-value]}` syntax (e.g. "`${graphite.host:2003}`").
 
 The `default-value` is optional. An exception is raised if no default value is defined and the property placeholder is not found.
 
