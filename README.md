@@ -120,7 +120,7 @@ tomcat.bytesReceived 0 1366199958
 application.activeSessions 0 1366199958
 ```
 
-## Sample of jmxtrans-agent.data
+## Sample of FileOverwriterOutputWriter jmxtrans-agent.data
 
 Content of `$ cat jmxtrans-agent.data`
 
