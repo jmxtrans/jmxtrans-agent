@@ -25,6 +25,7 @@ package org.jmxtrans.embedded.util.pool;
 
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
 import org.apache.commons.pool.KeyedPoolableObjectFactory;
+import org.jmxtrans.embedded.util.net.HostAndPort;
 import org.jmxtrans.embedded.util.net.SocketWriter;
 
 import java.net.InetSocketAddress;
@@ -32,33 +33,37 @@ import java.net.Socket;
 import java.nio.charset.Charset;
 
 /**
- * Factory for {@linkplain SocketWriter} instances created from {@linkplain InetSocketAddress}.
+ * Factory for {@linkplain SocketWriter} instances created from {@linkplain HostAndPort}.
  *
- * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
+ * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class SocketWriterPoolFactory extends BaseKeyedPoolableObjectFactory<InetSocketAddress, SocketWriter> implements KeyedPoolableObjectFactory<InetSocketAddress, SocketWriter> {
+public class SocketWriterPoolFactory extends BaseKeyedPoolableObjectFactory<HostAndPort, SocketWriter> implements KeyedPoolableObjectFactory<HostAndPort, SocketWriter> {
 
+    public static final int DEFAULT_SOCKET_CONNECT_TIMEOUT_IN_MILLIS = 500;
     private final Charset charset;
+    private final int socketConnectTimeoutInMillis;
 
-    public SocketWriterPoolFactory(String charset) {
-        this(Charset.forName(charset));
+    public SocketWriterPoolFactory(String charset, int socketConnectTimeoutInMillis) {
+        this(Charset.forName(charset), socketConnectTimeoutInMillis);
     }
 
-    public SocketWriterPoolFactory(Charset charset) {
+    public SocketWriterPoolFactory(Charset charset, int socketConnectTimeoutInMillis) {
         this.charset = charset;
+        this.socketConnectTimeoutInMillis = socketConnectTimeoutInMillis;
     }
 
     @Override
-    public SocketWriter makeObject(InetSocketAddress inetSocketAddress) throws Exception {
-        Socket socket = new Socket(inetSocketAddress.getAddress(), inetSocketAddress.getPort());
+    public SocketWriter makeObject(HostAndPort HostAndPort) throws Exception {
+        Socket socket = new Socket();
         socket.setKeepAlive(true);
+        socket.connect(new InetSocketAddress(HostAndPort.getHost(), HostAndPort.getPort()), socketConnectTimeoutInMillis);
 
         return new SocketWriter(socket, charset);
     }
 
     @Override
-    public void destroyObject(InetSocketAddress inetSocketAddress, SocketWriter socketWriter) throws Exception {
-        super.destroyObject(inetSocketAddress, socketWriter);
+    public void destroyObject(HostAndPort HostAndPort, SocketWriter socketWriter) throws Exception {
+        super.destroyObject(HostAndPort, socketWriter);
         socketWriter.close();
         socketWriter.getSocket().close();
     }
@@ -67,7 +72,7 @@ public class SocketWriterPoolFactory extends BaseKeyedPoolableObjectFactory<Inet
      * Defensive approach: we test all the "<code>Socket.isXXX()</code>" flags.
      */
     @Override
-    public boolean validateObject(InetSocketAddress inetSocketAddress, SocketWriter socketWriter) {
+    public boolean validateObject(HostAndPort HostAndPort, SocketWriter socketWriter) {
         Socket socket = socketWriter.getSocket();
         return socket.isConnected()
                 && socket.isBound()
@@ -75,4 +80,5 @@ public class SocketWriterPoolFactory extends BaseKeyedPoolableObjectFactory<Inet
                 && !socket.isInputShutdown()
                 && !socket.isOutputShutdown();
     }
+
 }
