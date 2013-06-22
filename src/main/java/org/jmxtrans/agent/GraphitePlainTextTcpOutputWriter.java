@@ -23,6 +23,8 @@
  */
 package org.jmxtrans.agent;
 
+import org.jmxtrans.agent.util.net.HostAndPort;
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -41,25 +43,35 @@ import static org.jmxtrans.agent.util.ConfigurationUtils.getString;
  */
 public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter implements OutputWriter {
 
-    public final static String SETTING_PORT = "port";
     public final static String SETTING_HOST = "host";
-    public final static String SETTING_NAME_PREFIX = "namePrefix";
+    public final static String SETTING_PORT = "port";
     public static final int SETTING_PORT_DEFAULT_VALUE = 2003;
+    public final static String SETTING_NAME_PREFIX = "namePrefix";
+    public final static String SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS = "socket.connectTimeoutInMillis";
+    public final static int SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS_DEFAULT_VALUE = 500;
+
     private final static Charset UTF_8 = Charset.forName("UTF-8");
     private final Logger logger = Logger.getLogger(getClass().getName());
     protected String metricPathPrefix;
-    protected InetSocketAddress graphiteServerSocketAddress;
+    protected HostAndPort graphiteServerHostAndPort;
     private Socket socket;
     private Writer writer;
+    private int socketConnectTimeoutInMillis = SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS_DEFAULT_VALUE;
 
     @Override
     public void postConstruct(Map<String, String> settings) {
         super.postConstruct(settings);
 
-        graphiteServerSocketAddress = new InetSocketAddress(
+        graphiteServerHostAndPort = new HostAndPort(
                 getString(settings, SETTING_HOST),
                 getInt(settings, SETTING_PORT, SETTING_PORT_DEFAULT_VALUE));
         metricPathPrefix = getString(settings, SETTING_NAME_PREFIX, null);
+        socketConnectTimeoutInMillis = getInt(settings,
+                SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS,
+                SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS_DEFAULT_VALUE);
+
+        logger.info("GraphitePlainTextTcpOutputWriter is configured with " + graphiteServerHostAndPort + ", metricPathPrefix=" + metricPathPrefix +
+                ", socketConnectTimeoutInMillis=" + socketConnectTimeoutInMillis);
     }
 
     /**
@@ -87,11 +99,11 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
         try {
             ensureGraphiteConnection();
             if (logger.isLoggable(Level.FINEST)) {
-                logger.finest("Send '" + msg + "' to " + graphiteServerSocketAddress);
+                logger.finest("Send '" + msg + "' to " + graphiteServerHostAndPort);
             }
             writer.write(msg + "\n");
         } catch (IOException e) {
-            logger.log(Level.WARNING, "Exception sending '" + msg + "' to " + graphiteServerSocketAddress, e);
+            logger.log(Level.WARNING, "Exception sending '" + msg + "' to " + graphiteServerHostAndPort, e);
             releaseGraphiteConnection();
             throw e;
         }
@@ -131,9 +143,13 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
         if (!socketIsValid) {
             writer = null;
             try {
-                socket = new Socket(graphiteServerSocketAddress.getAddress(), graphiteServerSocketAddress.getPort());
+                socket = new Socket();
+                socket.setKeepAlive(true);
+                socket.connect(
+                        new InetSocketAddress(graphiteServerHostAndPort.getHost(), graphiteServerHostAndPort.getPort()),
+                        socketConnectTimeoutInMillis);
             } catch (IOException e) {
-                ConnectException ce = new ConnectException("Exception connecting to " + graphiteServerSocketAddress);
+                ConnectException ce = new ConnectException("Exception connecting to " + graphiteServerHostAndPort);
                 ce.initCause(e);
                 throw ce;
             }
@@ -155,7 +171,7 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
     @Override
     public String toString() {
         return "GraphitePlainTextTcpOutputWriter{" +
-                ", graphiteServerSocketAddress=" + graphiteServerSocketAddress +
+                ", " + graphiteServerHostAndPort +
                 ", metricPathPrefix='" + metricPathPrefix + '\'' +
                 '}';
     }
