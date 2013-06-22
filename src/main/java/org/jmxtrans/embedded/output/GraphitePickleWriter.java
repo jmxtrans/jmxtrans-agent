@@ -27,6 +27,7 @@ import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.jmxtrans.embedded.EmbeddedJmxTransException;
 import org.jmxtrans.embedded.QueryResult;
 import org.jmxtrans.embedded.util.jmx.JmxUtils2;
+import org.jmxtrans.embedded.util.net.HostAndPort;
 import org.jmxtrans.embedded.util.net.SocketOutputStream;
 import org.jmxtrans.embedded.util.net.SocketWriter;
 import org.jmxtrans.embedded.util.pool.ManagedGenericKeyedObjectPool;
@@ -38,7 +39,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -57,10 +57,12 @@ import java.util.concurrent.TimeUnit;
  * <li>"namePrefix": prefix append to the metrics name.
  * Optional, default value: {@value #DEFAULT_NAME_PREFIX}.</li>
  * <li>"enabled": flag to enable/disable the writer. Optional, default value: <code>true</code>.</li>
+ * <li>"graphite.socketConnectTimeoutInMillis": timeout for the socketConnect in millis.
+ * Optional, default value {@link SocketOutputStreamPoolFactory#DEFAULT_SOCKET_CONNECT_TIMEOUT_IN_MILLIS}</li>
  * </ul>
  * <p>All the results of {@link #write(Iterable)} are sent in one single {@code cPickle} message.</p>
  *
- * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
+ * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public class GraphitePickleWriter extends AbstractOutputWriter implements OutputWriter {
 
@@ -71,8 +73,8 @@ public class GraphitePickleWriter extends AbstractOutputWriter implements Output
      * Metric path prefix. Ends with "." if not empty;
      */
     private String metricPathPrefix;
-    private InetSocketAddress graphiteServerSocketAddress;
-    private ManagedGenericKeyedObjectPool<InetSocketAddress, SocketOutputStream> socketOutputStreamPool;
+    private HostAndPort graphiteServerHostAndPort;
+    private ManagedGenericKeyedObjectPool<HostAndPort, SocketOutputStream> socketOutputStreamPool;
     private ObjectName socketPoolObjectName;
 
     /**
@@ -84,9 +86,9 @@ public class GraphitePickleWriter extends AbstractOutputWriter implements Output
     public void start() {
         int port = getIntSetting(SETTING_PORT, DEFAULT_GRAPHITE_SERVER_PORT);
         String host = getStringSetting(SETTING_HOST);
-        graphiteServerSocketAddress = new InetSocketAddress(host, port);
+        graphiteServerHostAndPort = new HostAndPort(host, port);
 
-        logger.info("Start Graphite Pickle writer connected to '{}'...", graphiteServerSocketAddress);
+        logger.info("Start Graphite Pickle writer connected to '{}'...", graphiteServerHostAndPort);
 
         metricPathPrefix = getStringSetting(SETTING_NAME_PREFIX, DEFAULT_NAME_PREFIX);
         metricPathPrefix = getStrategy().resolveExpression(metricPathPrefix);
@@ -102,7 +104,9 @@ public class GraphitePickleWriter extends AbstractOutputWriter implements Output
         config.minEvictableIdleTimeMillis = getLongSetting("pool.minEvictableIdleTimeMillis", TimeUnit.MINUTES.toMillis(5));
         config.timeBetweenEvictionRunsMillis = getLongSetting("pool.timeBetweenEvictionRunsMillis", TimeUnit.MINUTES.toMillis(5));
 
-        socketOutputStreamPool = new ManagedGenericKeyedObjectPool<InetSocketAddress, SocketOutputStream>(new SocketOutputStreamPoolFactory(), config);
+        int socketConnectTimeoutInMillis = getIntSetting("graphite.socketConnectTimeoutInMillis", SocketOutputStreamPoolFactory.DEFAULT_SOCKET_CONNECT_TIMEOUT_IN_MILLIS);
+
+        socketOutputStreamPool = new ManagedGenericKeyedObjectPool<HostAndPort, SocketOutputStream>(new SocketOutputStreamPoolFactory(socketConnectTimeoutInMillis), config);
 
         socketPoolObjectName = JmxUtils2.registerObject(
                 socketOutputStreamPool,
@@ -111,10 +115,10 @@ public class GraphitePickleWriter extends AbstractOutputWriter implements Output
 
         if (isEnabled()) {
             try {
-                SocketOutputStream socketOutputStream = socketOutputStreamPool.borrowObject(graphiteServerSocketAddress);
-                socketOutputStreamPool.returnObject(graphiteServerSocketAddress, socketOutputStream);
+                SocketOutputStream socketOutputStream = socketOutputStreamPool.borrowObject(graphiteServerHostAndPort);
+                socketOutputStreamPool.returnObject(graphiteServerHostAndPort, socketOutputStream);
             } catch (Exception e) {
-                logger.warn("Test Connection: FAILURE to connect to Graphite server '{}'", graphiteServerSocketAddress, e);
+                logger.warn("Test Connection: FAILURE to connect to Graphite server '{}'", graphiteServerHostAndPort, e);
             }
         }
         try {
@@ -130,10 +134,10 @@ public class GraphitePickleWriter extends AbstractOutputWriter implements Output
      */
     @Override
     public void write(Iterable<QueryResult> results) {
-        logger.debug("Export to '{}' results {}", graphiteServerSocketAddress, results);
+        logger.debug("Export to '{}' results {}", graphiteServerHostAndPort, results);
         SocketOutputStream socketOutputStream = null;
         try {
-            socketOutputStream = socketOutputStreamPool.borrowObject(graphiteServerSocketAddress);
+            socketOutputStream = socketOutputStreamPool.borrowObject(graphiteServerHostAndPort);
             PyList list = new PyList();
 
             for (QueryResult result : results) {
@@ -166,14 +170,14 @@ public class GraphitePickleWriter extends AbstractOutputWriter implements Output
             socketOutputStream.write(payload.toBytes());
 
             socketOutputStream.flush();
-            socketOutputStreamPool.returnObject(graphiteServerSocketAddress, socketOutputStream);
+            socketOutputStreamPool.returnObject(graphiteServerHostAndPort, socketOutputStream);
         } catch (Exception e) {
-            logger.warn("Failure to send result to graphite server '{}' with {}", graphiteServerSocketAddress, socketOutputStream, e);
+            logger.warn("Failure to send result to graphite server '{}' with {}", graphiteServerHostAndPort, socketOutputStream, e);
             if (socketOutputStream != null) {
                 try {
-                    socketOutputStreamPool.invalidateObject(graphiteServerSocketAddress, socketOutputStream);
+                    socketOutputStreamPool.invalidateObject(graphiteServerHostAndPort, socketOutputStream);
                 } catch (Exception e2) {
-                    logger.warn("Exception invalidating socketWriter connected to graphite server '{}': {}", graphiteServerSocketAddress, socketOutputStream, e2);
+                    logger.warn("Exception invalidating socketWriter connected to graphite server '{}': {}", graphiteServerHostAndPort, socketOutputStream, e2);
                 }
             }
         }
@@ -184,7 +188,7 @@ public class GraphitePickleWriter extends AbstractOutputWriter implements Output
      */
     @Override
     public void stop() throws Exception {
-        logger.info("Stop GraphitePickleWriter connected to '{}' ...", graphiteServerSocketAddress);
+        logger.info("Stop GraphitePickleWriter connected to '{}' ...", graphiteServerHostAndPort);
         super.stop();
         socketOutputStreamPool.close();
         JmxUtils2.unregisterObject(socketPoolObjectName, ManagementFactory.getPlatformMBeanServer());
