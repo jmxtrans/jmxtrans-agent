@@ -91,7 +91,9 @@ public class FileOverwriterOutputWriter extends AbstractOutputWriter {
         } catch (IOException e) {
             // silently skip
         }
-        temporaryFile.delete();
+        if (temporaryFile != null) {
+           temporaryFile.delete();
+        }
         temporaryFile = null;
 
     }
