@@ -8,7 +8,7 @@ jmxtrans-agent is a version of [jmxtrans](http://jmxtrans.org/) intended to be u
 
 ## Java Agent Declaration
 
-Download [jmxtrans-agent-1.0.0.jar](http://repo1.maven.org/maven2/org/jmxtrans/agent/jmxtrans-agent/1.0.0/jmxtrans-agent-1.0.0.jar)
+Download [jmxtrans-agent-1.0.2.jar](http://repo1.maven.org/maven2/org/jmxtrans/agent/jmxtrans-agent/1.0.2/jmxtrans-agent-1.0.2.jar)
 
 Sample `setenv.sh` for Apache Tomcat
 
@@ -145,3 +145,6 @@ tomcat.bytesReceived 0
 application.activeSessions 0
 ```
 
+# Relase Notes
+
+See GitHub [milestones history](https://github.com/jmxtrans/jmxtrans-agent/issues/milestones?state=closed)
