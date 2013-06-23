@@ -14,7 +14,7 @@ Sample `setenv.sh` for Apache Tomcat
 
 ```
 export JAVA_OPTS="$JAVA_OPTS 
-  -javaagent:/path/to/jmxtrans-agent-1.0.0.jar=jmxtrans-agent.xml"
+  -javaagent:/path/to/jmxtrans-agent-1.0.2.jar=jmxtrans-agent.xml"
 ```
 
 * java agent jar path can be relative to the working dir
