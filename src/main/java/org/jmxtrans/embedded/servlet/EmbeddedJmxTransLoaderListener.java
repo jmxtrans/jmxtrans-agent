@@ -134,7 +134,12 @@ public class EmbeddedJmxTransLoaderListener implements ServletContextListener {
             return null;
         }
 
-        return "file:///" + System.getProperty(configSystemProperty);
+        String prop = System.getProperty(configSystemProperty);
+        if (prop == null || prop.isEmpty()){
+            return null;
+        }
+
+        return "file:///" + prop;
     }
 
     private String configureFromWebXmlParam(ServletContextEvent sce){
