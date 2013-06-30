@@ -71,6 +71,7 @@ public class EmbeddedJmxTransLoaderListener implements ServletContextListener {
      * Config param for the embedded-jmxtrans configuration urls.
      */
     public static final String CONFIG_LOCATION_PARAM = "jmxtrans.config";
+    public static final String SYSTEM_CONFIG_LOCATION_PARAM = "jmxtrans.system.config";
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private EmbeddedJmxTrans embeddedJmxTrans;
     private ObjectName objectName;
@@ -84,10 +85,14 @@ public class EmbeddedJmxTransLoaderListener implements ServletContextListener {
 
         ConfigurationParser configurationParser = new ConfigurationParser();
 
-        String configuration = sce.getServletContext().getInitParameter(CONFIG_LOCATION_PARAM);
-        if (configuration == null || configuration.isEmpty()) {
-            configuration = "classpath:jmxtrans.json, classpath:org/jmxtrans/embedded/config/jmxtrans-internals.json";
+        String configuration = configureFromSystemProperty(sce);
+        if (configuration == null || configuration.isEmpty()){
+            configuration = configureFromWebXmlParam(sce);
+            if (configuration == null || configuration.isEmpty()){
+                configuration = "classpath:jmxtrans.json, classpath:org/jmxtrans/embedded/config/jmxtrans-internals.json";
+            }
         }
+
         List<String> configurationUrls = StringUtils2.delimitedStringToList(configuration);
         embeddedJmxTrans = configurationParser.newEmbeddedJmxTrans(configurationUrls);
         String on = "org.jmxtrans.embedded:type=EmbeddedJmxTrans,name=jmxtrans,path=" + sce.getServletContext().getContextPath();
@@ -119,5 +124,25 @@ public class EmbeddedJmxTransLoaderListener implements ServletContextListener {
         } catch (Exception e) {
             throw new EmbeddedJmxTransException("Exception stopping '" + objectName + "'", e);
         }
+    }
+
+    private String configureFromSystemProperty(ServletContextEvent sce){
+        String configSystemProperty =
+                sce.getServletContext().getInitParameter(SYSTEM_CONFIG_LOCATION_PARAM);
+
+        if (configSystemProperty == null || configSystemProperty.isEmpty()){
+            return null;
+        }
+
+        String prop = System.getProperty(configSystemProperty);
+        if (prop == null || prop.isEmpty()){
+            return null;
+        }
+
+        return "file:///" + prop;
+    }
+
+    private String configureFromWebXmlParam(ServletContextEvent sce){
+        return sce.getServletContext().getInitParameter(CONFIG_LOCATION_PARAM);
     }
 }
