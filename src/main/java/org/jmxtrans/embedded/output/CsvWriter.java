@@ -57,10 +57,7 @@ import org.supercsv.io.CsvListWriter;
 import org.supercsv.io.ICsvListWriter;
 import org.supercsv.prefs.CsvPreference;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -85,7 +82,7 @@ public class CsvWriter extends AbstractOutputWriter implements OutputWriter {
         Writer fileWriter;
         try {
             File outputFile = createOutputFile();
-            fileWriter = new FileWriter(outputFile);
+            fileWriter = new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8");
             logger.debug("Started CSV output writer, writing to file: {}", outputFile.getAbsolutePath());
         } catch (IOException e) {
             logger.error("Error opening file located at {}", outputFilePath);
@@ -106,13 +103,13 @@ public class CsvWriter extends AbstractOutputWriter implements OutputWriter {
             SortedMap<String, List<QueryResult>> splitResults =
                     splitQueryResultsByTime(results);
 
-            for (String epoch : splitResults.keySet()) {
-                results = splitResults.get(epoch);
+            for (Map.Entry<String, List<QueryResult>> entry : splitResults.entrySet()) {
+                results = entry.getValue();
 
                 if (firstWrite) {
                     writeHeader(results);
                 }
-                writeBody(results, epoch);
+                writeBody(results, entry.getKey());
             }
         } catch (IOException e) {
             logger.error("Error writing header to file located at {}", outputFilePath);
