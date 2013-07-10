@@ -45,12 +45,6 @@ package org.jmxtrans.embedded.output;
 import org.apache.commons.io.FileUtils;
 import org.jmxtrans.embedded.QueryResult;
 
-import org.python.google.common.annotations.VisibleForTesting;
-import org.python.google.common.base.Function;
-import org.python.google.common.base.Throwables;
-import org.python.google.common.collect.Iterables;
-import org.python.google.common.collect.Lists;
-import org.python.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.supercsv.io.CsvListWriter;
@@ -58,9 +52,7 @@ import org.supercsv.io.ICsvListWriter;
 import org.supercsv.prefs.CsvPreference;
 
 import java.io.*;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class CsvWriter extends AbstractOutputWriter implements OutputWriter {
@@ -69,10 +61,8 @@ public class CsvWriter extends AbstractOutputWriter implements OutputWriter {
 
     private ICsvListWriter csv;
 
-    @VisibleForTesting
     String outputFilePath;
 
-    @VisibleForTesting
     String[] header;
 
     private boolean firstWrite = true;
@@ -86,7 +76,7 @@ public class CsvWriter extends AbstractOutputWriter implements OutputWriter {
             logger.debug("Started CSV output writer, writing to file: {}", outputFile.getAbsolutePath());
         } catch (IOException e) {
             logger.error("Error opening file located at {}", outputFilePath);
-            throw Throwables.propagate(e);
+            throw new RuntimeException(e);
         }
 
         csv = new CsvListWriter(fileWriter, CsvPreference.EXCEL_PREFERENCE);
@@ -104,20 +94,20 @@ public class CsvWriter extends AbstractOutputWriter implements OutputWriter {
                     splitQueryResultsByTime(results);
 
             for (Map.Entry<String, List<QueryResult>> entry : splitResults.entrySet()) {
-                results = entry.getValue();
+                List<QueryResult> sortedResults = entry.getValue();
 
                 if (firstWrite) {
-                    writeHeader(results);
+                    writeHeader(sortedResults);
                 }
-                writeBody(results, entry.getKey());
+                writeBody(sortedResults, entry.getKey());
             }
         } catch (IOException e) {
             logger.error("Error writing header to file located at {}", outputFilePath);
-            throw Throwables.propagate(e);
+            throw new RuntimeException(e);
         }
     }
 
-    private void writeHeader(Iterable<QueryResult> results) throws IOException {
+    private void writeHeader(List<QueryResult> results) throws IOException {
         header = createHeader(results);
 
         try {
@@ -128,7 +118,7 @@ public class CsvWriter extends AbstractOutputWriter implements OutputWriter {
         firstWrite = false;
     }
 
-    private void writeBody(Iterable<QueryResult> results, String epoch) throws IOException {
+    private void writeBody(List<QueryResult> results, String epoch) throws IOException {
         List<Object> alignedResults = alignResults(results, epoch);
         try {
             csv.write(alignedResults);
@@ -145,7 +135,7 @@ public class CsvWriter extends AbstractOutputWriter implements OutputWriter {
      * @return {@link Map} from epoch time in seconds --> results list from that time
      */
     private SortedMap<String, List<QueryResult>> splitQueryResultsByTime(Iterable<QueryResult> results) {
-        SortedMap<String, List<QueryResult>> resultsByTime = Maps.newTreeMap();
+        SortedMap<String, List<QueryResult>> resultsByTime = new TreeMap<String, List<QueryResult>>();
 
         for (QueryResult result : results) {
             String epoch = String.valueOf(result.getEpoch(TimeUnit.SECONDS));
@@ -155,7 +145,9 @@ public class CsvWriter extends AbstractOutputWriter implements OutputWriter {
                 current.add(result);
                 resultsByTime.put(epoch, current);
             } else {
-                resultsByTime.put(epoch, Lists.newArrayList(result));
+                ArrayList<QueryResult> newQueryList = new ArrayList<QueryResult>();
+                newQueryList.add(result);
+                resultsByTime.put(epoch, newQueryList);
             }
         }
 
@@ -172,12 +164,9 @@ public class CsvWriter extends AbstractOutputWriter implements OutputWriter {
         return outputFile;
     }
 
-    private String[] createHeader(Iterable<QueryResult> results) {
-        List<String> headerList = Lists.newArrayList(
-                Iterables.transform(results, queryResultToHeader()));
-
+    private String[] createHeader(List<QueryResult> results) {
+        List<String> headerList = queryResultToHeader(results);
         headerList.add(0, "time");
-
         return headerList.toArray(new String[headerList.size()]);
     }
 
@@ -185,10 +174,9 @@ public class CsvWriter extends AbstractOutputWriter implements OutputWriter {
      * We have no guarantee that the results will always be in the same order,
      * so we make sure to align them according to the header on each query.
      */
-    @VisibleForTesting
-    List<Object> alignResults(Iterable<QueryResult> results, String epoch) {
-        Object[] alignedResults = new Object[Iterables.size(results) + 1];
-        List<String> headerList = Lists.newArrayList(header);
+    List<Object> alignResults(List<QueryResult> results, String epoch) {
+        Object[] alignedResults = new Object[results.size() + 1];
+        List<String> headerList = Arrays.asList(header);
 
         alignedResults[0] = epoch;
 
@@ -196,15 +184,14 @@ public class CsvWriter extends AbstractOutputWriter implements OutputWriter {
             alignedResults[headerList.indexOf(result.getName())] = result.getValue();
         }
 
-        return Lists.newArrayList(alignedResults);
+        return Arrays.asList(alignedResults);
     }
 
-    private Function<QueryResult, String> queryResultToHeader() {
-        return new Function<QueryResult, String>() {
-            @Override
-            public String apply(QueryResult queryResult) {
-                return queryResult.getName();
-            }
-        };
+    private List<String> queryResultToHeader(List<QueryResult> results) {
+        List<String> header = new ArrayList<String>();
+        for (QueryResult result : results) {
+            header.add(result.getName());
+        }
+        return header;
     }
 }

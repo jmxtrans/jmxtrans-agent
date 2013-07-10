@@ -111,7 +111,7 @@ public class CsvWriterTest {
         }
     }
 
-    Iterable<QueryResult> makeQueryResults(String... keyValues) {
+    List<QueryResult> makeQueryResults(String... keyValues) {
         List<QueryResult> results = Lists.newArrayList();
 
         for (String keyValue : keyValues) {
