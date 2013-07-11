@@ -1,47 +1,5 @@
 package org.jmxtrans.embedded.output;
 
-/**
- * This output writer can ONLY be used on a per query basis, not in a global
- * output writer configuration because this aggregates all of the different
- * attributes returned by the query into a single line in a csv file, using the
- * {@link org.jmxtrans.embedded.QueryResult#getName()} as the value of the
- * header.
- *
- * The query can contain multiple MBeans by pattern matched ObjectName
- *
- * Example query configuration:
- *
-   "queries": [
-   {
-      "outputWriters": [
-        {
-           "@class": "com.tripwire.tap.libs.jmx.CsvWriter",
-           "settings": {
-              "outputFile": "log/jmxlog.csv"
-            }
-        }
-       ],
-       "objectName": "java.lang:type=Memory",
-       "resultAlias": "jvm.memory",
-       "attributes": [
-          {
-             "name": "HeapMemoryUsage",
-             "keys": ["committed", "used"]
-          },
-          {
-             "name": "NonHeapMemoryUsage",
-             "keys": ["committed", "used"]
-          }
-       ]
-   }
- ]
- *
- * @see https://github.com/jmxtrans/embedded-jmxtrans/wiki/Configuration
- *
- * @author <a href="mailto:ryan.mango.larson@gmail.com">Ryan Larson</a>
- *
- */
-
 import org.apache.commons.io.FileUtils;
 import org.jmxtrans.embedded.QueryResult;
 
@@ -55,6 +13,48 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * This output writer can ONLY be used on a per query basis, not in a global
+ * output writer configuration because this aggregates all of the different
+ * attributes returned by the query into a single line in a csv file, using the
+ * {@link org.jmxtrans.embedded.QueryResult#getName()} as the value of the
+ * header.<p/>
+ *
+ * The query can contain multiple MBeans by pattern matched ObjectName
+ * <p/>
+ * Example query configuration:
+ * <code><pre>
+ *  "queries": [
+ *  {
+ *     "outputWriters": [
+ *       {
+ *          "@class": "org.jmxtrans.embedded.output.CsvWriter",
+ *          "settings": {
+ *             "outputFile": "log/jmxlog.csv"
+ *           }
+ *       }
+ *      ],
+ *      "objectName": "java.lang:type=Memory",
+ *      "resultAlias": "jvm.memory",
+ *      "attributes": [
+ *         {
+ *            "name": "HeapMemoryUsage",
+ *            "keys": ["committed", "used"]
+ *         },
+ *         {
+ *            "name": "NonHeapMemoryUsage",
+ *            "keys": ["committed", "used"]
+ *         }
+ *      ]
+ *  }
+ *]
+ * </pre></code>
+ *
+ * See <a href="https://github.com/jmxtrans/embedded-jmxtrans/wiki/Configuration">embedded-jmxtrans configuration</a> for more details.
+ *
+ * @author <a href="mailto:ryan.mango.larson@gmail.com">Ryan Larson</a>
+ *
+ */
 public class CsvWriter extends AbstractOutputWriter implements OutputWriter {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
