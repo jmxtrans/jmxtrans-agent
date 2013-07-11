@@ -4,12 +4,12 @@ import org.jmxtrans.embedded.QueryResult;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.python.google.common.collect.Lists;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -112,7 +112,7 @@ public class CsvWriterTest {
     }
 
     List<QueryResult> makeQueryResults(String... keyValues) {
-        List<QueryResult> results = Lists.newArrayList();
+        List<QueryResult> results = new ArrayList<QueryResult>();
 
         for (String keyValue : keyValues) {
             results.add(makeQueryResult(keyValue.split(":")[0], keyValue.split(":")[1]));
