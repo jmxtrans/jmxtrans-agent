@@ -12,8 +12,8 @@ a java servlet, or a spring-enabled webapp.
 
 * [Documentation](https://github.com/jmxtrans/embedded-jmxtrans/wiki)
 * [Latest javadocs](http://jmxtrans.github.com/embedded-jmxtrans/apidocs/)
-* [Sample](https://github.com/sjohnsoncopperegg/embedded-jmxtrans)
-* [CopperEgg Sample](https://github.com/sjohnsoncopperegg/Sample-copperegg-jmxmon)
+* [Sample](https://github.com/CopperEgg/embedded-jmxtrans)
+* [CopperEgg Sample](https://github.com/CopperEgg/embedded-jmxtrans-samples)
 
 
 ## Instructions for enabling the CopperEggWriter
@@ -22,7 +22,7 @@ a java servlet, or a spring-enabled webapp.
 ### Clone and build the CopperEgg fork of embedded-jmxtrans :
 
 ```xml
-git clone https://github.com/sjohnsoncopperegg/embedded-jmxtrans.git
+git clone https://github.com/CopperEgg/embedded-jmxtrans.git
 cd embedded-jmxtrans
 mvn install dependency:go-offline
 ```
@@ -55,8 +55,7 @@ If you are just starting with CopperEgg monitoring, just copy the copperegg_defa
 reside in the same directory as your jmxtrans.json file.
 
 The copperegg_default_config.json file can be found here:
-   https://github.com/sjohnsoncopperegg/embedded-jmxtrans-samples/blob/master/embedded-jmxtrans-webapp-coktail/src/main/resources/copperegg_default_config.json 
-
+  https://github.com/CopperEgg/embedded-jmxtrans-samples/blob/master/embedded-jmxtrans-webapp-coktail/src/main/resources/copperegg_default_config.json
 
 ### Build your WebApp with integrated jmxtrans as described in the accopanying embedded-jmxtrans README.md.
 
