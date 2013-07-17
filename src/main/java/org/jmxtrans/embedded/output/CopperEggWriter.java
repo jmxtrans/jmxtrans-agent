@@ -32,7 +32,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.io.File;
 import java.net.*;
@@ -43,7 +42,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-
+import java.util.Collections;
+import java.util.Comparator;
 
 import com.fasterxml.jackson.core.Base64Variants;
 import com.fasterxml.jackson.core.JsonEncoding;
@@ -75,33 +75,27 @@ import javax.annotation.Nullable;
 import java.lang.management.ManagementFactory;
 
 /**
- * <a href="https://metrics.librato.com//">Librato Metrics</a> implementation of the {@linkplain org.jmxtrans.embedded.output.OutputWriter}.
+ * <a href="https://copperegg.com//">CopperEgg Metrics</a> implementation of the {@linkplain org.jmxtrans.embedded.output.OutputWriter}.
  * <p/>
- * This implementation uses <a href="http://dev.librato.com/v1/post/metrics">
- * POST {@code /v1/metrics}</a> HTTP API.
- * <p/>
- * {@link LibratoWriter} uses the "{@code query.attribute.type}" configuration parameter (via
- * {@link org.jmxtrans.embedded.QueryResult#getType()}) to publish the metrics.<br/>
- * Supported types are {@value #METRIC_TYPE_COUNTER} and {@value #METRIC_TYPE_GAUGE}.<br/>
- * If the type is <code>null</code> or unsupported, metric is exported
- * as {@value #METRIC_TYPE_COUNTER}.
+ * This implementation uses v2 of the CopperEgg API <a href="http://dev.copperegg.com/">
  * <p/>
  * Settings:
  * <ul>
- * <li>"{@code url}": Librato server URL.
- * Optional, default value: {@value #DEFAULT_LIBRATO_API_URL}.</li>
- * <li>"{@code user}": Librato user. Mandatory</li>
- * <li>"{@code token}": Librato token. Mandatory</li>
- * <li>"{@code libratoApiTimeoutInMillis}": read timeout of the calls to Librato HTTP API.
- * Optional, default value: {@value #DEFAULT_LIBRATO_API_TIMEOUT_IN_MILLIS}.</li>
+ * <li>"{@code url}": CopperEgg API server URL.
+ * Optional, default value: {@value #DEFAULT_COPPEREGG_API_URL}.</li>
+ * <li>"{@code user}": CopperEgg user. Mandatory</li>
+ * <li>"{@code token}": CopperEgg APIKEY. Mandatory</li>
+ * <li>"{@code coppereggApiTimeoutInMillis}": read timeout of the calls to CopperEgg HTTP API.
+ * Optional, default value: {@value #DEFAULT_COPPEREGG_API_TIMEOUT_IN_MILLIS}.</li>
  * <li>"{@code enabled}": flag to enable/disable the writer. Optional, default value: <code>true</code>.</li>
- * <li>"{@code source}": Librato . Optional, default value: {@value #DEFAULT_SOURCE} (the hostname of the server).</li>
+ * <li>"{@code source}": CopperEgg . Optional, default value: {@value #DEFAULT_SOURCE} (the hostname of the server).</li>
  * </ul>
- *
+ * LibratoWriter.java author:
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
+ *
+ * CopperEggWriter.java was derived from LibratoWriter.java 
  */
 public class CopperEggWriter extends AbstractOutputWriter implements OutputWriter {
-    public static final int MUST_CREATE_METRICGROUPS = 1;
     public static final String METRIC_TYPE_GAUGE = "gauge";
     public static final String METRIC_TYPE_COUNTER = "counter";
     public static final String DEFAULT_COPPEREGG_API_URL = "https://api.copperegg.com/v2/revealmetrics";
@@ -110,7 +104,6 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
     public static final String SETTING_SOURCE = "source";
     public static final String DEFAULT_SOURCE = "#hostname#";
     private final static String DEFAULT_COPPEREGG_CONFIGURATION_PATH = "classpath:copperegg_config.json";
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final AtomicInteger exceptionCounter = new AtomicInteger();
     private JsonFactory jsonFactory = new JsonFactory();
@@ -132,9 +125,10 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
 
     private String jvm_metric_groupID = null;
     private String tomcat_metric_groupID = null;
-   
+    private String app_metric_groupID = null;
+
     /**
-     * CopperEgg API authentication username ... not used
+     * CopperEgg API authentication username
      */
     private String user;
     /**
@@ -159,23 +153,19 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
     @Override
     public void start() {
 
-        int result = 0;
         config_location = DEFAULT_COPPEREGG_CONFIGURATION_PATH;
         String path = config_location.substring("classpath:".length());
  
         long thisPID = getPID();
-        logger.warn("Arrived at start, PID is {}",thisPID);
-
         if( myPID == thisPID) {
-            logger.warn("Started from two threads with the same PID, {}",thisPID);
+            logger.info("Started from two threads with the same PID, {}",thisPID);
             return;
         }
         myPID = thisPID;
         try {
             String str = String.valueOf(myPID);
-            url = new URL(getStringSetting(SETTING_URL, DEFAULT_COPPEREGG_API_URL));
-
-            url_str = "https://api.copperegg.com/v2/revealmetrics";
+            url_str = getStringSetting(SETTING_URL, DEFAULT_COPPEREGG_API_URL);
+            url = new URL(url_str);
             user = getStringSetting(SETTING_USERNAME);
             token = getStringSetting(SETTING_TOKEN);
             user = token;
@@ -197,30 +187,32 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
                 if(in == null) {
                     logger.warn("No file found for classpath:" + config_location);
                 } else {
-                  grab_defaults(in);
+                  read_config(in);
                 }
-            }
-            catch (Exception e){
-                logger.warn("Exception occurred on grab_defaults, {}"+ e);
+            } catch (Exception e){
+                exceptionCounter.incrementAndGet();
+                logger.warn("Exception in start " + e);
             }
 
             ensure_metric_groups();
             ensure_dashboards();
 
-            logger.warn("Start CopperEgg writer on jvm '{}', connected to '{}', proxy {} with token '{}' ...", myPID_host, url, proxy, token);
+            logger.info("Started CopperEggWriter Successfully on jvm '{}', connected to '{}', proxy {}", myPID_host, url, proxy);
         } catch (MalformedURLException e) {
+            exceptionCounter.incrementAndGet();
             throw new EmbeddedJmxTransException(e);
         }
     }
 
     /**
-     * Send given metrics to CopperEgg
+     * Export collected metrics to CopperEgg
      */
     @Override
     public void write(Iterable<QueryResult> results) {
 
         List<QueryResult> jvm_counters = new ArrayList<QueryResult>();
         List<QueryResult> tomcat_counters = new ArrayList<QueryResult>();
+        List<QueryResult> app_counters = new ArrayList<QueryResult>();
 
         long epochInMillis = 0;
         String myname =  null;
@@ -277,80 +269,125 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
                         QueryResult new_result = new QueryResult(myname, fullID, myval, epochInMillis);
                         tomcat_counters.add(new_result);
                     }
+                } else if( p1.equals("website") ) {
+                    if( parts[1].equals("visitors")  ) {
+                        myname = "tomcat.website." + parts[1] + "." + parts[2];
+                        QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
+                        tomcat_counters.add(new_result);
+                    }
+                } else if( (p1.equals("sales")) || (p1.equals("cocktail")) ) {
+                    QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
+                    app_counters.add(new_result);
                 }
             } else {
                 logger.warn("parts return NULL!!!");
             }
         }
         if(jvm_counters.size() > 0) {
+            Collections.sort(jvm_counters, new Comparator<QueryResult>() {
+                public int compare(QueryResult o1, QueryResult o2) {
+                  //Sorts by 'epochInMillis' property
+                  return o1.getEpochInMillis()<o2.getEpochInMillis()?-1:o1.getEpochInMillis()>o2.getEpochInMillis()?1:0;
+                }
+            });
             send_metrics(jvm_metric_groupID, jvm_counters);
         }
         if(tomcat_counters.size() > 0) {
+            Collections.sort(tomcat_counters, new Comparator<QueryResult>() {
+                public int compare(QueryResult o1, QueryResult o2) {
+                  //Sorts by 'epochInMillis' property
+                  return o1.getEpochInMillis()<o2.getEpochInMillis()?-1:o1.getEpochInMillis()>o2.getEpochInMillis()?1:0;
+                }
+  
+            });
             send_metrics(tomcat_metric_groupID, tomcat_counters);
+        }
+        if(app_counters.size() > 0) {
+            Collections.sort(jvm_counters, new Comparator<QueryResult>() {
+                public int compare(QueryResult o1, QueryResult o2) {
+                  //Sorts by 'epochInMillis' property
+                  return o1.getEpochInMillis()<o2.getEpochInMillis()?-1:o1.getEpochInMillis()>o2.getEpochInMillis()?1:0;
+                }
+            });
+            send_metrics(app_metric_groupID, app_counters);
+        }
+    }
+    public void send_metrics(String mg_name, List<QueryResult> counters) {
+         long timeblock = counters.get(0).getEpoch(TimeUnit.SECONDS);
+        int remaining = counters.size();
+        List<QueryResult> sorted_ctrs = new ArrayList<QueryResult>();
+ 
+       for (QueryResult counter : counters) {
+            remaining = remaining - 1;
+            if( timeblock != (counter.getEpoch(TimeUnit.SECONDS)) ) {
+                one_set(mg_name, sorted_ctrs); 
+                timeblock = counter.getEpoch(TimeUnit.SECONDS);
+                sorted_ctrs.clear();
+                sorted_ctrs.add(counter);
+            } else {
+                sorted_ctrs.add(counter);
+            }
+            if( remaining == 0 ) {
+                one_set(mg_name, sorted_ctrs); 
+            }
         }
     }
 
-    public void send_metrics(String mg_name, List<QueryResult> counters) {
+    public void one_set(String mg_name, List<QueryResult> counters)  {
         HttpURLConnection urlCxn = null;
         URL newurl = null;
         try {
-            //newurl = new URL("http://requestb.in/1gt51l61");
             newurl = new URL(url_str + "/samples/" + mg_name + ".json");
             if (proxy == null) {
                 urlCxn = (HttpURLConnection) newurl.openConnection();
             } else {
                 urlCxn = (HttpURLConnection) newurl.openConnection(proxy);
             }
-
-            urlCxn.setRequestMethod("POST");
-            urlCxn.setDoInput(true);
-            urlCxn.setDoOutput(true);
-            urlCxn.setReadTimeout(coppereggApiTimeoutInMillis);
-            urlCxn.setRequestProperty("content-type", "application/json; charset=utf-8");
-            urlCxn.setRequestProperty("Authorization", "Basic " + basicAuthentication);
-
-            String json = cue_serialize(counters, urlCxn.getOutputStream());
-            int responseCode = urlCxn.getResponseCode();
-            if (responseCode != 200) {
-                logger.warn("Samples Post: Failure {}: {} to send result to CopperEgg service {}", responseCode, urlCxn.getResponseMessage(), newurl);
-                logger.warn("json post : " + json);
-            } else {
-                logger.info("Samples Post Successful!");
-            }
-
-            if (logger.isTraceEnabled()) {
-                IoUtils2.copy(urlCxn.getInputStream(), System.out);
+            if (urlCxn != null) {
+                urlCxn.setRequestMethod("POST");
+                urlCxn.setDoInput(true);
+                urlCxn.setDoOutput(true);
+                urlCxn.setReadTimeout(coppereggApiTimeoutInMillis);
+                urlCxn.setRequestProperty("content-type", "application/json; charset=utf-8");
+                urlCxn.setRequestProperty("Authorization", "Basic " + basicAuthentication);
             }
         } catch (Exception e) {
             exceptionCounter.incrementAndGet();
-            logger.warn("Samples Post: Exception: Failure to send result to CopperEgg Service '{}' with proxy {}, token {}", newurl, proxy, token, e);
-        } finally {
-            if (urlCxn != null) {
+            logger.warn("Exceptiom: one_set: failed to connect to CopperEgg Service '{}' with proxy {}", newurl, proxy, e);
+            return;
+        }
+        if( urlCxn != null ) {
+            try {     
+                cue_serialize(counters, urlCxn.getOutputStream());
+                int responseCode = urlCxn.getResponseCode();
+                if (responseCode != 200) {
+                    logger.warn("one_set: Failure {}: {} to send result to CopperEgg service {}", responseCode, urlCxn.getResponseMessage(), newurl);
+                }       
                 try {
-                    InputStream in = urlCxn.getInputStream();
-                    IoUtils2.copy(in, IoUtils2.nullOutputStream());
-                    IoUtils2.closeQuietly(in);
-                    InputStream err = urlCxn.getErrorStream();
-                    if (err != null) {
-                        IoUtils2.copy(err, IoUtils2.nullOutputStream());
-                        IoUtils2.closeQuietly(err);
-                    }
+                        InputStream in = urlCxn.getInputStream();
+                        IoUtils2.copy(in, IoUtils2.nullOutputStream());
+                        IoUtils2.closeQuietly(in);
+                        InputStream err = urlCxn.getErrorStream();
+                        if (err != null) {
+                            IoUtils2.copy(err, IoUtils2.nullOutputStream());
+                            IoUtils2.closeQuietly(err);
+                        }
                 } catch (IOException e) {
-                    logger.warn("Write-Exception flushing http connection", e);
+                        exceptionCounter.incrementAndGet();
+                        logger.warn("Execption one_set: Write-Exception flushing http connection", e);
                 }
+
+            } catch (Exception e) {
+                exceptionCounter.incrementAndGet();
+                logger.warn("Execption: one_set: Failure to send result to CopperEgg Service '{}' with proxy {}", newurl, proxy, e);
             }
         }
     }
-    public String cue_serialize(@Nonnull Iterable<QueryResult> counters, @Nonnull OutputStream out) throws IOException {
+    public void cue_serialize(@Nonnull Iterable<QueryResult> counters, @Nonnull OutputStream out) throws IOException {
         int first = 0;
         long time = 0;
         String myID = null;
         JsonGenerator g = jsonFactory.createGenerator(out, JsonEncoding.UTF8);
-
-        StringWriter strout = new StringWriter();
-        JsonFactory fac = new JsonFactory();
-        JsonGenerator gen = fac.createJsonGenerator(strout);
-
 
         for (QueryResult counter : counters) {
            if( 0 == first ) {
@@ -361,40 +398,23 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
               g.writeStringField("identifier", myID);
               g.writeNumberField("timestamp", time);
               g.writeObjectFieldStart("values");
-             
-              gen.writeStartObject();
-              gen.writeStringField("identifier", myID);
-              gen.writeNumberField("timestamp", time);
-              gen.writeObjectFieldStart("values");
            }
            if (counter.getValue() instanceof Integer) {
                 g.writeNumberField(counter.getName(), (Integer) counter.getValue());
-                gen.writeNumberField(counter.getName(), (Integer) counter.getValue());
-
             } else if (counter.getValue() instanceof Long) {
                 g.writeNumberField(counter.getName(), (Long) counter.getValue());
-                gen.writeNumberField(counter.getName(), (Long) counter.getValue());
-
             } else if (counter.getValue() instanceof Float) {
                 g.writeNumberField(counter.getName(), (Float) counter.getValue());
-                gen.writeNumberField(counter.getName(), (Long) counter.getValue());
-
             } else if (counter.getValue() instanceof Double) {
                 g.writeNumberField(counter.getName(), (Double) counter.getValue());
-                gen.writeNumberField(counter.getName(), (Double) counter.getValue());
             }
         }
         g.writeEndObject();
         g.writeEndObject();
         g.flush();
         g.close();
-
-        gen.writeEndObject();
-        gen.writeEndObject();
-        gen.flush();
-        gen.close();
-        return strout.toString();
     }
+
 
     private static long getPID() {
        String processName =
@@ -402,13 +422,13 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
        return Long.parseLong(processName.split("@")[0]);
     }
 
-
     public int cue_getExceptionCounter() {
         return exceptionCounter.get();
     }
 
     /**
      * If metric group doesn't exist, create it
+     * If it does exist, update it.
      */
 
     public void ensure_metric_groups() {
@@ -431,8 +451,8 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
                logger.warn("Bad responsecode " + String.valueOf(responseCode)+ " from metric_groups Index: " +  myurl);
            }
         } catch (Exception e) {
-            exceptionCounter.incrementAndGet();
-            logger.warn("Failure to execute metric_groups index request "+ myurl + "  "+ e);
+              exceptionCounter.incrementAndGet();
+              logger.warn("Failure to execute metric_groups index request "+ myurl + "  "+ e);
         } finally {
             if (urlConnection != null) {
                 try {
@@ -444,7 +464,7 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
                             String Rslt = groupFind(checkName, theString, 0);
                             if(Rslt != null){
                                 // Update it
-                                Rslt = Send_Commmand("/metric_groups/" + Rslt + ".json", "PUT", entry.getValue(),0);
+                                Rslt = Send_Commmand("/metric_groups/" + Rslt + ".json?show_hidden=1", "PUT", entry.getValue(),0);
                             } else {
                                 // create it
                                 Rslt = Send_Commmand("/metric_groups.json", "POST", entry.getValue(),0);
@@ -452,23 +472,19 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
                             if(Rslt != null) {
                                 if (Rslt.toLowerCase().contains("tomcat")) {
                                     tomcat_metric_groupID = Rslt;
-                                } else {
+                                } else if (Rslt.toLowerCase().contains("jvm")){
                                     jvm_metric_groupID = Rslt;
+                                } else {
+                                    app_metric_groupID = Rslt;
                                 }
                             }
                         } catch (Exception e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
+                            exceptionCounter.incrementAndGet();
+                            logger.warn("Exception in metric_group update or create: "+ myurl + "  "+ e);
                         }
                     }
-                    //  jparse(theString);
-                    // IoUtils2.closeQuietly(in);
-                    //InputStream err = urlConnection.getErrorStream();
-                    // if (err != null) {
-                    //    IoUtils2.copy(err, IoUtils2.nullOutputStream());
-                    //    IoUtils2.closeQuietly(err);
-                    // }
                 } catch (IOException e) {
+                    exceptionCounter.incrementAndGet();
                     logger.warn("Exception flushing http connection"+ e);
                 }
             }
@@ -478,6 +494,7 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
 
     /**
      * If dashboard doesn't exist, create it
+     * If it does exist, update it.
      */
 
     private void ensure_dashboards() {
@@ -501,7 +518,7 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
            }
         } catch (Exception e) {
             exceptionCounter.incrementAndGet();
-            logger.warn("Failure to execute dashboards index request "+ myurl + "  "+ e);
+            logger.warn("Exception on dashboards index request "+ myurl + "  "+ e);
         } finally {
             if (urlConnection != null) {
                 try {
@@ -519,18 +536,12 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
                                 Rslt = Send_Commmand("/dashboards.json", "POST", entry.getValue(),1);
                             }
                         } catch (Exception e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
+                            exceptionCounter.incrementAndGet();
+                            logger.warn("Exception in dashboard update or create: "+ myurl + "  "+ e);   
                         }
                     }
-                    //  jparse(theString);
-                    // IoUtils2.closeQuietly(in);
-                    //InputStream err = urlConnection.getErrorStream();
-                    // if (err != null) {
-                    //    IoUtils2.copy(err, IoUtils2.nullOutputStream());
-                    //    IoUtils2.closeQuietly(err);
-                    // }
                 } catch (IOException e) {
+                    exceptionCounter.incrementAndGet();
                     logger.warn("Exception flushing http connection"+ e);
                 }
             }
@@ -550,10 +561,13 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
                 Result = root.get("id").asText().toString();
             }
         } catch (JsonGenerationException e) {
+            exceptionCounter.incrementAndGet();
             logger.warn("JsonGenerationException "+ e);
         } catch (JsonMappingException e) {
+            exceptionCounter.incrementAndGet();
             logger.warn("JsonMappingException "+ e);
         } catch (IOException e) {
+            exceptionCounter.incrementAndGet();
             logger.warn("IOException "+ e);
         }
         return(Result);
@@ -588,7 +602,12 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
         }
     }
 
-    public void grab_defaults(InputStream in) throws Exception {
+    /**
+     * read_config()
+     * The copperegg_config.json file contains a specification for the metric groups and dashboards to be created / or updated.
+     * Mandatory
+     */
+    public void read_config(InputStream in) throws Exception {
 
         JsonFactory f = new MappingJsonFactory();
         JsonParser jp = f.createJsonParser(in);
@@ -597,15 +616,15 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
 
         current = jp.nextToken();
         if (current != JsonToken.START_OBJECT) {
-            logger.warn("Error: Looking for Start Object : quiting.");
+            logger.warn("read_config: Error:  START_OBJECT not found : quiting.");
             return;
         }
         current = jp.nextToken();
         String fieldName = jp.getCurrentName();
         current = jp.nextToken();
-        if (fieldName.equals("defaults")) {
+        if (fieldName.equals("config")) {
             if (current != JsonToken.START_OBJECT) {
-                logger.warn("Error: Looking for Start Object after defaults : quiting.");
+                logger.warn("read_config: Error:  START_OBJECT not found after config : quiting.");
                 return;
             }
             current = jp.nextToken();
@@ -613,14 +632,14 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
             if (fieldName2.equals("metric_groups")) {
                 current = jp.nextToken();
                 if (current != JsonToken.START_ARRAY) {
-                  logger.warn("Error: Looking for metric_groups Array: quiting.");
+                  logger.warn("read_config: Error:  START_ARRAY not found after metric_groups : quiting.");
                   return;
                 }
 
                 current = jp.nextToken();
                 while (current != JsonToken.END_ARRAY) {
                     if (current != JsonToken.START_OBJECT) {
-                        logger.warn("Error: Looking for Start Object : quiting.");
+                        logger.warn("read_config: Error:  START_OBJECT not found after metric_groups START_ARRAY : quiting.");
                         return;
                     }
                     current = jp.nextToken();
@@ -636,13 +655,13 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
                 if (fieldName3.equals("dashboards")) {
                     current = jp.nextToken();
                     if (current != JsonToken.START_ARRAY) {
-                      logger.warn("Error: Looking for metric_groups Array: quiting.");
-                      return;
+                        logger.warn("read_config: Error:  START_ARRAY not found after dashboards : quiting.");
+                        return;
                     }
                     current = jp.nextToken();
                     while (current != JsonToken.END_ARRAY) {
                         if (current != JsonToken.START_OBJECT) {
-                            logger.warn("Error: Looking for Start Object : quiting.");
+                            logger.warn("read_config: Error:  START_OBJECT not found after dashboards START_ARRAY : quiting.");
                             return;
                         }
                         current = jp.nextToken();
@@ -653,20 +672,20 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
 
                     }
                     if(jp.nextToken() != JsonToken.END_OBJECT) {
-                        logger.warn("Error: Expected end_object (1): quiting.");
+                        logger.warn("read_config: Error:  END_OBJECT expected, not found (1): quiting.");
                         return;
                     }
                     if(jp.nextToken() != JsonToken.END_OBJECT) {
-                        logger.warn("Error: Expected end_object (2): quiting.");
+                        logger.warn("read_config: Error:  END_OBJECT expected, not found (2): quiting.");
                         return;
                     }
                 } else {
-                     logger.warn("Error: Expected dashboards : quiting.");
-                     return;
+                    logger.warn("read_config: Error:  Expected dashboards : quiting.");
+                    return;
                 }
             } else {
-                 logger.warn("Error: Expected metric_groups : quiting.");
-                 return;
+                logger.warn("read_config: Error:  Expected metric_groups : quiting.");
+                return;
             }
         }
     }
@@ -681,13 +700,13 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
 
         JsonToken current = jp.nextToken();
         if (current != JsonToken.START_ARRAY) {
-          logger.warn("Error: Looking for Array: quiting.");
+          logger.warn("groupFind: Error: START_ARRAY expected, not found : quiting.");
           return(Result);
         }
         current = jp.nextToken();
         while (current != JsonToken.END_ARRAY) {
             if (current != JsonToken.START_OBJECT) {
-                logger.warn("Error: Looking for Start Object : quiting.");
+                logger.warn("groupFind: Error: START_OBJECT expected, not found : quiting.");
                 return(Result);
             }
             current = jp.nextToken();
@@ -722,9 +741,9 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
             gen.close();
             return out.toString();
         }
-        catch(Exception e)
-        {
-         e.printStackTrace();
+        catch(Exception e) {
+            exceptionCounter.incrementAndGet();
+            logger.warn("Exception in write_tostring: " + e); 
         }
         return(null);
     }
@@ -735,6 +754,7 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
         OutputStreamWriter wr = null;
         int responseCode = 0;
         String id = null;
+        int error = 0;
 
         try {
             myurl = new URL(url_str + command);
@@ -743,6 +763,7 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
             urlConnection.setDoInput(true);
             urlConnection.setDoOutput(true);
             urlConnection.setReadTimeout(coppereggApiTimeoutInMillis);
+            urlConnection.addRequestProperty("User-Agent", "Mozilla/4.76");
             urlConnection.setRequestProperty("content-type", "application/json; charset=utf-8");
             urlConnection.setRequestProperty("Authorization", "Basic " + basicAuthentication);
 
@@ -752,37 +773,42 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
 
             responseCode = urlConnection.getResponseCode();
             if (responseCode != 200) {
-                logger.warn("Response code " + responseCode + " received after create metricgroup call.");
+                logger.warn("Send Command: Response code " + responseCode + " url is " + myurl + " command " + msgtype);
+                error = 1;
             }
         } catch (Exception e) {
             exceptionCounter.incrementAndGet();
-            logger.warn("Failure to execute create request " +  myurl + "  " + e);
+            logger.warn("Exception in Send Command: url is " + myurl + " command " + msgtype + "; " + e);
+            error = 1;
         } finally {
             if (urlConnection != null) {
                 try {
-                    InputStream in = urlConnection.getInputStream();
-                    String theString = convertStreamToString(in);
-                    id = jparse(theString, ExpectInt);
-                    IoUtils2.closeQuietly(in);
-                    InputStream err = urlConnection.getErrorStream();
-                    if (err != null) {
-                        IoUtils2.copy(err, IoUtils2.nullOutputStream());
+                  if( error > 0 ) {
+                        InputStream err = urlConnection.getErrorStream();
+                        String errString = convertStreamToString(err);
+                        logger.warn("Reported error : " + errString); 
                         IoUtils2.closeQuietly(err);
+                    } else {
+                        InputStream in = urlConnection.getInputStream();
+                        String theString = convertStreamToString(in);
+                        id = jparse(theString, ExpectInt);
+                        IoUtils2.closeQuietly(in);
                     }
                 } catch (IOException e) {
-                    logger.warn("Exception flushing http connection " +  e);
+                    exceptionCounter.incrementAndGet();
+                    logger.warn("Exception in Send Command : flushing http connection " +  e);
                 }
             }
             if(wr != null) {
                 try {
                     wr.close();
                 } catch (IOException e) {
-                    logger.warn("Exception closing OutputWriter " +  e);
+                    exceptionCounter.incrementAndGet();
+                    logger.warn("Exception in Send Command: closing OutputWriter " +  e);
                 }
             }
         }
         return(id);
     }
-
 }
 
