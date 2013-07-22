@@ -100,7 +100,7 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
     public static final String METRIC_TYPE_COUNTER = "counter";
     public static final String DEFAULT_COPPEREGG_API_URL = "https://api.copperegg.com/v2/revealmetrics";
     public static final String SETTING_COPPEREGG_API_TIMEOUT_IN_MILLIS = "coppereggApiTimeoutInMillis";
-    public static final int DEFAULT_COPPEREGG_API_TIMEOUT_IN_MILLIS = 5000;
+    public static final int DEFAULT_COPPEREGG_API_TIMEOUT_IN_MILLIS = 10000;
     public static final String SETTING_SOURCE = "source";
     public static final String DEFAULT_SOURCE = "#hostname#";
     private final static String DEFAULT_COPPEREGG_CONFIGURATION_PATH = "classpath:copperegg_config.json";
@@ -124,8 +124,15 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
     private static Map<String, String> metricgroupMap = new HashMap<String, String>();
 
     private String jvm_metric_groupID = null;
-    private String tomcat_metric_groupID = null;
+    private String heap_metric_groupID = null;
+    private String nonheap_metric_groupID = null;
+    private String jmxtrans_metric_groupID = null;
     private String app_metric_groupID = null;
+    private String tomcat_global_groupID = null;
+    private String tomcat_servlet_groupID = null;
+    private String tomcat_manager_groupID = null;
+    private String tomcat_website_groupID = null;
+    private String tomcat_db_groupID = null;
 
     /**
      * CopperEgg API authentication username
@@ -211,9 +218,16 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
     public void write(Iterable<QueryResult> results) {
 
         List<QueryResult> jvm_counters = new ArrayList<QueryResult>();
-        List<QueryResult> tomcat_counters = new ArrayList<QueryResult>();
+        List<QueryResult> nonheap_counters = new ArrayList<QueryResult>();
+        List<QueryResult> heap_counters = new ArrayList<QueryResult>();
+        List<QueryResult> jmxtrans_counters = new ArrayList<QueryResult>();
         List<QueryResult> app_counters = new ArrayList<QueryResult>();
-
+        List<QueryResult> tomcat_global_counters = new ArrayList<QueryResult>();
+        List<QueryResult> tomcat_servlet_counters = new ArrayList<QueryResult>();
+        List<QueryResult> tomcat_manager_counters = new ArrayList<QueryResult>();
+        List<QueryResult> tomcat_website_counters = new ArrayList<QueryResult>();
+        List<QueryResult> tomcat_db_counters = new ArrayList<QueryResult>();
+ 
         long epochInMillis = 0;
         String myname =  null;
         Object myval = null;
@@ -233,33 +247,65 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
             String[] parts = myname.split(delims);
             if( parts.length > 0 ) {
                 String p1 = parts[0];
-                if( (p1.equals("jvm")) || (p1.equals("jmxtrans")) ) {
+                if( p1.equals("jmxtrans") ) {
                     QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
-                    jvm_counters.add(new_result);
+                    jmxtrans_counters.add(new_result);
+                } else if( p1.equals("jvm") ) {
+                    if( parts[1].equals("memorypool") ){
+
+                        if( ( (parts[2].equals("Perm_Gen")) ||
+                              (parts[2].equals("Code_Cache"))
+                            ) && 
+                            ( 
+                                (parts[4].equals("committed")) || 
+                                (parts[4].equals("used"))
+                            ) ) {     
+                            myname = "jvmNonHeapMemoryUsage";
+                            String fullID = pidHost + "." + parts[2] + "." + parts[4];
+                            //Float newval = (Float) myval;
+                            //newval = newval/(1024.0f*1024.0f);
+                            QueryResult new_result = new QueryResult(myname, fullID, myval, epochInMillis);
+                            nonheap_counters.add(new_result);
+                        } else if( ( (parts[2].equals("Eden_Space")) || 
+                                     (parts[2].equals("Survivor_Space")) || 
+                                     (parts[2].equals("Tenured_Gen")) 
+                                    ) && 
+                                    ( 
+                                      (parts[4].equals("committed")) || 
+                                      (parts[4].equals("used"))
+                                    ) ) {    
+                            myname = "jvmHeapMemoryUsage";
+                            String fullID = pidHost + "." + parts[2] + "." + parts[4];
+                            //Float newval = (Float) myval;
+                            //newval = newval/(1024.0f*1024.0f);
+                            QueryResult new_result = new QueryResult(myname, fullID, myval, epochInMillis);
+                            heap_counters.add(new_result);
+                        }
+                    } else if( !parts[1].equals("memory") ){
+                        QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
+                        jvm_counters.add(new_result);
+                    }
                 } else if( p1.equals("tomcat") ) {
                     if( (parts[1].equals("thread-pool")) || (parts[1].equals("global-request-processor")) ) {
                         String connector = parts[2];
                         myname = parts[0] + "." + parts[1] + "." + parts[3];
                         String fullID = pidHost + "." + connector;
                         QueryResult new_result = new QueryResult(myname, fullID, myval, epochInMillis);
-                        tomcat_counters.add(new_result);
+                        tomcat_global_counters.add(new_result);
                     } else if( parts[1].equals("manager") ) {
                         String myhost = parts[2];
                         String mycontext = parts[3];
                         myname = parts[0] + "." + parts[1] + "." + parts[4];
                         String fullID = pidHost + "." + myhost + "." + mycontext;
                         QueryResult new_result = new QueryResult(myname, fullID, myval, epochInMillis);
-                        tomcat_counters.add(new_result);
+                        tomcat_manager_counters.add(new_result);
                     } else if( parts[1].equals("servlet") ) {
                         String myWebmodule = parts[2];
                         String myServletname = parts[3];
-                        if( (parts[3].equals("default")) || (parts[3].equals("jsp")) ) {
-                            myWebmodule = myWebmodule + "ROOT";
-                        }
                         myname = parts[0] + "." + parts[1] + "." + parts[4];
                         String fullID = pidHost + "." + myWebmodule + "." + myServletname;
                         QueryResult new_result = new QueryResult(myname, fullID, myval, epochInMillis);
-                        tomcat_counters.add(new_result);
+                        tomcat_servlet_counters.add(new_result);
                     } else if( parts[1].equals("data-source") ) {
                         String myhost = parts[2];
                         String mycontext = parts[3];
@@ -267,13 +313,13 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
                         myname = parts[0] + "." + parts[1] + "." + parts[5];
                         String fullID = pidHost + "." + myhost + "." + mycontext + "." + mydbname;
                         QueryResult new_result = new QueryResult(myname, fullID, myval, epochInMillis);
-                        tomcat_counters.add(new_result);
+                        tomcat_db_counters.add(new_result);
                     }
                 } else if( p1.equals("website") ) {
                     if( parts[1].equals("visitors")  ) {
                         myname = "tomcat.website." + parts[1] + "." + parts[2];
                         QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
-                        tomcat_counters.add(new_result);
+                        tomcat_website_counters.add(new_result);
                     }
                 } else if( (p1.equals("sales")) || (p1.equals("cocktail")) ) {
                     QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
@@ -284,23 +330,31 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
             }
         }
         if(jvm_counters.size() > 0) {
-            Collections.sort(jvm_counters, new Comparator<QueryResult>() {
-                public int compare(QueryResult o1, QueryResult o2) {
-                  //Sorts by 'epochInMillis' property
-                  return o1.getEpochInMillis()<o2.getEpochInMillis()?-1:o1.getEpochInMillis()>o2.getEpochInMillis()?1:0;
-                }
-            });
-            send_metrics(jvm_metric_groupID, jvm_counters);
+            sort_n_send(jvm_metric_groupID, jvm_counters);
         }
-        if(tomcat_counters.size() > 0) {
-            Collections.sort(tomcat_counters, new Comparator<QueryResult>() {
-                public int compare(QueryResult o1, QueryResult o2) {
-                  //Sorts by 'epochInMillis' property
-                  return o1.getEpochInMillis()<o2.getEpochInMillis()?-1:o1.getEpochInMillis()>o2.getEpochInMillis()?1:0;
-                }
-  
-            });
-            send_metrics(tomcat_metric_groupID, tomcat_counters);
+        if(heap_counters.size() > 0) {
+            sort_n_send(heap_metric_groupID, heap_counters);
+        }
+        if(nonheap_counters.size() > 0) {
+            sort_n_send(nonheap_metric_groupID, nonheap_counters);
+        }
+        if(jmxtrans_counters.size() > 0) {
+            sort_n_send(jmxtrans_metric_groupID, jmxtrans_counters);
+        }
+        if(tomcat_global_counters.size() > 0) {
+            sort_n_send(tomcat_global_groupID, tomcat_global_counters);
+        }
+        if(tomcat_servlet_counters.size() > 0) {
+            sort_n_send(tomcat_servlet_groupID, tomcat_servlet_counters);
+        }
+        if(tomcat_manager_counters.size() > 0) {
+            sort_n_send(tomcat_manager_groupID, tomcat_manager_counters);
+        }
+        if(tomcat_website_counters.size() > 0) {
+            sort_n_send(tomcat_website_groupID, tomcat_website_counters);
+        }
+        if(tomcat_db_counters.size() > 0) {
+            sort_n_send(tomcat_db_groupID, tomcat_db_counters);
         }
         if(app_counters.size() > 0) {
             Collections.sort(jvm_counters, new Comparator<QueryResult>() {
@@ -312,16 +366,32 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
             send_metrics(app_metric_groupID, app_counters);
         }
     }
+    public void sort_n_send(String mg_name, List<QueryResult> mg_counters) {
+        Collections.sort(mg_counters, new Comparator<QueryResult>() {
+            public int compare(QueryResult o1, QueryResult o2) {
+                //Sorts by 'epochInMillis' property
+                Integer rslt = o1.getEpochInMillis()<o2.getEpochInMillis()?-1:o1.getEpochInMillis()>o2.getEpochInMillis()?1:0;
+                if(rslt == 0){
+                    rslt = (o1.getType()).compareTo(o2.getType());
+                }
+                return rslt;
+                //return o1.getEpochInMillis()<o2.getEpochInMillis()?-1:o1.getEpochInMillis()>o2.getEpochInMillis()?1:0;
+            }
+        });
+        send_metrics(mg_name, mg_counters);
+    }
     public void send_metrics(String mg_name, List<QueryResult> counters) {
-         long timeblock = counters.get(0).getEpoch(TimeUnit.SECONDS);
+        long timeblock = counters.get(0).getEpoch(TimeUnit.SECONDS);
+        String identifier = counters.get(0).getType();        
         int remaining = counters.size();
         List<QueryResult> sorted_ctrs = new ArrayList<QueryResult>();
- 
+   
        for (QueryResult counter : counters) {
             remaining = remaining - 1;
-            if( timeblock != (counter.getEpoch(TimeUnit.SECONDS)) ) {
+            if( (timeblock != (counter.getEpoch(TimeUnit.SECONDS))) || (!identifier.equals(counter.getType()) ) ) {
                 one_set(mg_name, sorted_ctrs); 
                 timeblock = counter.getEpoch(TimeUnit.SECONDS);
+                identifier = counter.getType();  
                 sorted_ctrs.clear();
                 sorted_ctrs.add(counter);
             } else {
@@ -414,7 +484,67 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
         g.flush();
         g.close();
     }
+    public void debug_cue_serialize(@Nonnull Iterable<QueryResult> counters, @Nonnull OutputStream out) throws IOException {
+        int first = 0;
+        long time = 0;
+        String myID = null;
+        JsonGenerator g = jsonFactory.createGenerator(out, JsonEncoding.UTF8);
 
+        StringWriter strout = new StringWriter();
+        JsonFactory fac = new JsonFactory();
+        JsonGenerator gen = fac.createJsonGenerator(strout);
+
+
+        for (QueryResult counter : counters) {
+           if( 0 == first ) {
+              time = counter.getEpoch(TimeUnit.SECONDS);
+              myID = counter.getType();
+              first = 1;
+              g.writeStartObject();
+              g.writeStringField("identifier", myID);
+              g.writeNumberField("timestamp", time);
+              g.writeObjectFieldStart("values");
+             
+              gen.writeStartObject();
+              gen.writeStringField("identifier", myID);
+              gen.writeNumberField("timestamp", time);
+              gen.writeObjectFieldStart("values");
+           }
+           if( (time != counter.getEpoch(TimeUnit.SECONDS)) || (!(myID.equals(counter.getType()))) ) {
+                logger.warn("Messed-up serialize: ");
+                logger.warn("time {} should be this time: {}; id {} should be this id: {}",
+                  counter.getEpoch(TimeUnit.SECONDS), time, counter.getType(), myID);
+           }
+
+
+           if (counter.getValue() instanceof Integer) {
+                g.writeNumberField(counter.getName(), (Integer) counter.getValue());
+                gen.writeNumberField(counter.getName(), (Integer) counter.getValue());
+
+            } else if (counter.getValue() instanceof Long) {
+                g.writeNumberField(counter.getName(), (Long) counter.getValue());
+                gen.writeNumberField(counter.getName(), (Long) counter.getValue());
+
+            } else if (counter.getValue() instanceof Float) {
+                g.writeNumberField(counter.getName(), (Float) counter.getValue());
+                gen.writeNumberField(counter.getName(), (Long) counter.getValue());
+
+            } else if (counter.getValue() instanceof Double) {
+                g.writeNumberField(counter.getName(), (Double) counter.getValue());
+                gen.writeNumberField(counter.getName(), (Double) counter.getValue());
+            }
+        }
+        g.writeEndObject();
+        g.writeEndObject();
+        g.flush();
+        g.close();
+
+        gen.writeEndObject();
+        gen.writeEndObject();
+        gen.flush();
+        gen.close();
+        logger.warn("Serialized output: " + strout.toString());
+    }
 
     private static long getPID() {
        String processName =
@@ -471,9 +601,25 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
                             }
                             if(Rslt != null) {
                                 if (Rslt.toLowerCase().contains("tomcat")) {
-                                    tomcat_metric_groupID = Rslt;
+                                    if (Rslt.toLowerCase().contains("global")) {
+                                        tomcat_global_groupID = Rslt;
+                                    } else if(Rslt.toLowerCase().contains("servlet")) { 
+                                        tomcat_servlet_groupID = Rslt;
+                                    } else if(Rslt.toLowerCase().contains("manager")) { 
+                                        tomcat_manager_groupID = Rslt;
+                                    } else if(Rslt.toLowerCase().contains("website")) { 
+                                        tomcat_website_groupID = Rslt;
+                                    } else if(Rslt.toLowerCase().contains("db")) { 
+                                        tomcat_db_groupID = Rslt;
+                                    }
+                                } else if (Rslt.toLowerCase().contains("nonheap")){
+                                    nonheap_metric_groupID = Rslt;
+                                } else if (Rslt.toLowerCase().contains("heap")){
+                                    heap_metric_groupID = Rslt;
                                 } else if (Rslt.toLowerCase().contains("jvm")){
                                     jvm_metric_groupID = Rslt;
+                                } else if (Rslt.toLowerCase().contains("jmxtrans")){
+                                    jmxtrans_metric_groupID = Rslt;
                                 } else {
                                     app_metric_groupID = Rslt;
                                 }
@@ -490,7 +636,6 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
             }
         }
     }
-
 
     /**
      * If dashboard doesn't exist, create it
