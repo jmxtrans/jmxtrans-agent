@@ -315,13 +315,12 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
                         QueryResult new_result = new QueryResult(myname, fullID, myval, epochInMillis);
                         tomcat_db_counters.add(new_result);
                     }
-                } else if( p1.equals("website") ) {
-                    if( parts[1].equals("visitors")  ) {
-                        myname = "tomcat.website." + parts[1] + "." + parts[2];
+                } else if( p1.equals("cocktail") ) {
+                    if( !(parts[1].equals("CreatedCocktailCount")) &&  !(parts[1].equals("UpdatedCocktailCount")) ) {
                         QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
-                        tomcat_website_counters.add(new_result);
+                        app_counters.add(new_result);
                     }
-                } else if( (p1.equals("sales")) || (p1.equals("cocktail")) ) {
+                } else if( p1.equals("sales") ) {
                     QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
                     app_counters.add(new_result);
                 }
@@ -423,7 +422,7 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
             }
         } catch (Exception e) {
             exceptionCounter.incrementAndGet();
-            logger.warn("Exceptiom: one_set: failed to connect to CopperEgg Service '{}' with proxy {}", newurl, proxy, e);
+            logger.warn("Exception: one_set: failed to connect to CopperEgg Service '{}' with proxy {}", newurl, proxy, e);
             return;
         }
         if( urlCxn != null ) {
