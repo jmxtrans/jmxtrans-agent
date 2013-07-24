@@ -218,7 +218,7 @@ public class StackdriverWriter extends AbstractOutputWriter implements OutputWri
 			String inputLine = null;
 			final URL metadataUrl = new URL("http://169.254.169.254/latest/meta-data/instance-id");
 			URLConnection metadataConnection = metadataUrl.openConnection();
-			BufferedReader in = new BufferedReader(new InputStreamReader(metadataConnection.getInputStream()));
+			BufferedReader in = new BufferedReader(new InputStreamReader(metadataConnection.getInputStream(), "UTF-8"));
 			while ((inputLine = in.readLine()) != null) {
 				detectedInstanceId = inputLine;
 			}
