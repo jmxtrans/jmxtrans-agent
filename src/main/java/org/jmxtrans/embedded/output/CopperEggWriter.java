@@ -123,16 +123,21 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
     private static Map<String, String> dashMap = new HashMap<String, String>();
     private static Map<String, String> metricgroupMap = new HashMap<String, String>();
 
-    private String jvm_metric_groupID = null;
+    private String jvm_os_groupID = null;
+    private String jvm_gc_groupID = null;
+    private String jvm_runtime_groupID = null;
+    private String jvm_class_groupID = null;
+    private String jvm_thread_groupID = null;
     private String heap_metric_groupID = null;
     private String nonheap_metric_groupID = null;
-    private String jmxtrans_metric_groupID = null;
-    private String app_metric_groupID = null;
-    private String tomcat_global_groupID = null;
-    private String tomcat_servlet_groupID = null;
+    private String tomcat_thread_pool_groupID = null;
+    private String tomcat_grp_groupID = null;
     private String tomcat_manager_groupID = null;
-    private String tomcat_website_groupID = null;
+    private String tomcat_servlet_groupID = null;
     private String tomcat_db_groupID = null;
+    private String jmxtrans_metric_groupID = null;
+    private String app_groupID = null;
+    private String app_sales_groupID = null;
 
     /**
      * CopperEgg API authentication username
@@ -204,6 +209,25 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
             ensure_metric_groups();
             ensure_dashboards();
 
+
+            logger.info("jvm_os_groupID : {}", jvm_os_groupID);
+            logger.info("jvm_gc_groupID : {}", jvm_gc_groupID);
+            logger.info("jvm_runtime_groupID : {}", jvm_runtime_groupID);
+            logger.info("jvm_class_groupID : {}", jvm_class_groupID);
+            logger.info("jvm_thread_groupID : {}", jvm_thread_groupID);
+            logger.info("heap_metric_groupID : {}", heap_metric_groupID);
+            logger.info("nonheap_metric_groupID : {}", nonheap_metric_groupID ); 
+            logger.info("tomcat_thread_pool_groupID : {}",tomcat_thread_pool_groupID);
+            logger.info("tomcat_grp_groupID : {}",tomcat_grp_groupID);
+            logger.info("tomcat_servlet_groupID : {}", tomcat_servlet_groupID );
+            logger.info("tomcat_manager_groupID : {}",tomcat_manager_groupID );
+            logger.info("tomcat_db_groupID  : {}", tomcat_db_groupID);       
+            logger.info("jmxtrans_metric_groupID : {}", jmxtrans_metric_groupID);
+            logger.info("app_groupID : {}", app_groupID );
+            logger.info("app_sales_groupID : {}", app_sales_groupID );
+ 
+
+
             logger.info("Started CopperEggWriter Successfully on jvm '{}', connected to '{}', proxy {}", myPID_host, url, proxy);
         } catch (MalformedURLException e) {
             exceptionCounter.incrementAndGet();
@@ -217,17 +241,22 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
     @Override
     public void write(Iterable<QueryResult> results) {
 
-        List<QueryResult> jvm_counters = new ArrayList<QueryResult>();
-        List<QueryResult> nonheap_counters = new ArrayList<QueryResult>();
+        List<QueryResult> jvm_os_counters = new ArrayList<QueryResult>();
+        List<QueryResult> jvm_gc_counters = new ArrayList<QueryResult>();
+        List<QueryResult> jvm_runtime_counters = new ArrayList<QueryResult>();
+        List<QueryResult> jvm_class_counters = new ArrayList<QueryResult>();
+        List<QueryResult> jvm_thread_counters = new ArrayList<QueryResult>();
         List<QueryResult> heap_counters = new ArrayList<QueryResult>();
+        List<QueryResult> nonheap_counters = new ArrayList<QueryResult>();
+        List<QueryResult> tomcat_thread_pool_counters = new ArrayList<QueryResult>();
+        List<QueryResult> tomcat_grp_counters = new ArrayList<QueryResult>();
+        List<QueryResult> tomcat_manager_counters = new ArrayList<QueryResult>();
+        List<QueryResult> tomcat_servlet_counters = new ArrayList<QueryResult>();
+        List<QueryResult> tomcat_db_counters = new ArrayList<QueryResult>();
         List<QueryResult> jmxtrans_counters = new ArrayList<QueryResult>();
         List<QueryResult> app_counters = new ArrayList<QueryResult>();
-        List<QueryResult> tomcat_global_counters = new ArrayList<QueryResult>();
-        List<QueryResult> tomcat_servlet_counters = new ArrayList<QueryResult>();
-        List<QueryResult> tomcat_manager_counters = new ArrayList<QueryResult>();
-        List<QueryResult> tomcat_website_counters = new ArrayList<QueryResult>();
-        List<QueryResult> tomcat_db_counters = new ArrayList<QueryResult>();
- 
+        List<QueryResult> app_sales_counters = new ArrayList<QueryResult>();
+
         long epochInMillis = 0;
         String myname =  null;
         Object myval = null;
@@ -240,6 +269,7 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
             epochInMillis = result.getEpochInMillis();
             myname =  result.getName();
             myval = result.getValue();
+            String valstr = myval.toString();
             thisPID = getPID();
             tmp = String.valueOf(thisPID);
             pidHost = source + "." + tmp;
@@ -247,66 +277,138 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
             String[] parts = myname.split(delims);
             if( parts.length > 0 ) {
                 String p1 = parts[0];
-                if( p1.equals("jmxtrans") ) {
+                if( (jmxtrans_metric_groupID != null) && (p1.equals("jmxtrans")) )  {
                     QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
                     jmxtrans_counters.add(new_result);
                 } else if( p1.equals("jvm") ) {
-                    if( parts[1].equals("memorypool") ){
-
-                        if( ( (parts[2].equals("Perm_Gen")) ||
-                              (parts[2].equals("Code_Cache"))
-                            ) && 
-                            ( 
-                                (parts[4].equals("committed")) || 
-                                (parts[4].equals("used"))
-                            ) ) {     
+                    if( parts[1].equals("os")) {
+                        if (parts[2].equals("OpenFileDescriptorCount")) {
+                            QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
+                            jvm_os_counters.add(new_result);
+                        } else if (parts[2].equals("CommittedVirtualMemorySize")){
+                            float fval = Float.parseFloat(valstr);
+                            try {
+                                fval = fval/(1024.0f*1024.0f);  
+                            } catch (Exception e) {
+                                exceptionCounter.incrementAndGet();
+                                logger.info("Exception doing Float: ", e);
+                            }
+                            QueryResult new_result = new QueryResult(myname, pidHost, fval, epochInMillis);
+                            jvm_os_counters.add(new_result);
+                        } else if (parts[2].equals("ProcessCpuTime")) { 
+                            float fval = Float.parseFloat(valstr);
+                            try {
+                                fval = fval/(1000.0f*1000.0f*1000.0f);  
+                            } catch (Exception e) {
+                                exceptionCounter.incrementAndGet();
+                                logger.warn("Exception doing Float: ", e);
+                            }
+                            QueryResult new_result = new QueryResult(myname, pidHost, fval, epochInMillis);
+                            jvm_os_counters.add(new_result);
+                        }
+                    } else if( (parts[1].equals("runtime")) && (parts[2].equals("Uptime")) ) { 
+                        float fval = Float.parseFloat(valstr);
+                        try {
+                            fval = fval/(1000.0f*60.0f);  
+                        } catch (Exception e) {
+                            exceptionCounter.incrementAndGet();
+                            logger.warn("Exception doing Float: ", e);
+                        }
+                        QueryResult new_result = new QueryResult(myname, pidHost, fval, epochInMillis);
+                        jvm_runtime_counters.add(new_result); 
+                    } else if( (parts[1].equals("loadedClasses")) && (parts[2].equals("LoadedClassCount")) ) {
+                        // jvm.loadedClasses.LoadedClassCount 5099 1374549969
+                        QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
+                        jvm_class_counters.add(new_result); 
+                    } else if( (parts[1].equals("thread")) && (parts[2].equals("ThreadCount")) ){
+                        // jvm.thread.ThreadCount 13 1374549940
+                        QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
+                        jvm_thread_counters.add(new_result);
+                    } else if( (parts[1].equals("gc")) &&
+                        ( (parts[2].equals("Copy")) ||  (parts[2].equals("MarkSweepCompact")) ) &&
+                        ( (parts[3].equals("CollectionCount")) ||  (parts[3].equals("CollectionTime")) ) ) {
+                        // jvm.gc.Copy.CollectionCount 68 1374549940
+                        QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
+                        jvm_gc_counters.add(new_result);
+                    } else if( parts[1].equals("memorypool") ){ 
+                        if( ( (parts[2].equals("Perm_Gen")) || (parts[2].equals("Code_Cache")) ) && 
+                            ( (parts[4].equals("committed")) || (parts[4].equals("used"))  ) ) {     
                             myname = "jvmNonHeapMemoryUsage";
                             String fullID = pidHost + "." + parts[2] + "." + parts[4];
-                            //Float newval = (Float) myval;
-                            //newval = newval/(1024.0f*1024.0f);
-                            QueryResult new_result = new QueryResult(myname, fullID, myval, epochInMillis);
+                            float fval = Float.parseFloat(valstr);
+                            try {
+                                fval = fval/(1024.0f*1024.0f);
+                            } catch (Exception e) {
+                                exceptionCounter.incrementAndGet();
+                                logger.warn("Exception doing Float: ", e);
+                            }
+                            QueryResult new_result = new QueryResult(myname, fullID, fval, epochInMillis);
                             nonheap_counters.add(new_result);
                         } else if( ( (parts[2].equals("Eden_Space")) || 
                                      (parts[2].equals("Survivor_Space")) || 
                                      (parts[2].equals("Tenured_Gen")) 
-                                    ) && 
-                                    ( 
-                                      (parts[4].equals("committed")) || 
-                                      (parts[4].equals("used"))
-                                    ) ) {    
+                                    ) && (  (parts[4].equals("committed")) ||  (parts[4].equals("used"))  ) ) {    
                             myname = "jvmHeapMemoryUsage";
                             String fullID = pidHost + "." + parts[2] + "." + parts[4];
-                            //Float newval = (Float) myval;
-                            //newval = newval/(1024.0f*1024.0f);
-                            QueryResult new_result = new QueryResult(myname, fullID, myval, epochInMillis);
+                            float fval = Float.parseFloat(valstr);
+                            try {
+                                fval = fval/(1024.0f*1024.0f);
+                            } catch (Exception e) {
+                                exceptionCounter.incrementAndGet();
+                                logger.warn("Exception doingFloat: ", e);
+                            }
+                            QueryResult new_result = new QueryResult(myname, fullID, fval, epochInMillis);
                             heap_counters.add(new_result);
                         }
-                    } else if( !parts[1].equals("memory") ){
-                        QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
-                        jvm_counters.add(new_result);
-                    }
+                    } 
                 } else if( p1.equals("tomcat") ) {
-                    if( (parts[1].equals("thread-pool")) || (parts[1].equals("global-request-processor")) ) {
+                    if( (parts[1].equals("thread-pool")) &&  
+                         ( (parts[3].equals("currentThreadsBusy")) || (parts[3].equals("currentThreadCount")) ) ){
+                        // tomcat.thread_pool.http-bio-8080.currentThreadCount 0 1374549955
                         String connector = parts[2];
                         myname = parts[0] + "." + parts[1] + "." + parts[3];
                         String fullID = pidHost + "." + connector;
                         QueryResult new_result = new QueryResult(myname, fullID, myval, epochInMillis);
-                        tomcat_global_counters.add(new_result);
-                    } else if( parts[1].equals("manager") ) {
+                        tomcat_thread_pool_counters.add(new_result);
+                   } else if( (parts[1].equals("global-request-processor")) ) {
+                        // tomcat.global-request-processor.http-bio-8080.bytesSent
+                        String connector = parts[2];
+                        myname = parts[0] + "." + parts[1] + "." + parts[3];
+                        String fullID = pidHost + "." + connector;
+                        if( parts[3].equals("processingTime")) {
+                            float fval = Float.parseFloat(valstr);
+                            try {
+                                fval = fval/(1024.0f);
+                            } catch (Exception e) {
+                                exceptionCounter.incrementAndGet();
+                                logger.warn("Exception doingFloat: ", e);
+                            }
+                            QueryResult new_result = new QueryResult(myname, fullID, fval, epochInMillis);
+                            tomcat_grp_counters.add(new_result);
+                        } else {
+                            QueryResult new_result = new QueryResult(myname, fullID, myval, epochInMillis);
+                            tomcat_grp_counters.add(new_result);
+                        }
+                    } else if( (parts[1].equals("manager"))  && (parts[4].equals("activeSessions")) ){
+                        //  tomcat.manager.localhost._docs.activeSessions 0 1374549955
                         String myhost = parts[2];
                         String mycontext = parts[3];
                         myname = parts[0] + "." + parts[1] + "." + parts[4];
                         String fullID = pidHost + "." + myhost + "." + mycontext;
                         QueryResult new_result = new QueryResult(myname, fullID, myval, epochInMillis);
                         tomcat_manager_counters.add(new_result);
-                    } else if( parts[1].equals("servlet") ) {
+                    } else if( (parts[1].equals("servlet")) && 
+                          ( (parts[4].equals("processingTime")) || 
+                            (parts[4].equals("errorCount")) || 
+                            (parts[4].equals("requestCount")) ) ){
+                        // tomcat.servlet.__localhost_cocktail-app-1_0_9-SNAPSHOT.spring-mvc.processingTime
                         String myWebmodule = parts[2];
                         String myServletname = parts[3];
                         myname = parts[0] + "." + parts[1] + "." + parts[4];
                         String fullID = pidHost + "." + myWebmodule + "." + myServletname;
                         QueryResult new_result = new QueryResult(myname, fullID, myval, epochInMillis);
                         tomcat_servlet_counters.add(new_result);
-                    } else if( parts[1].equals("data-source") ) {
+                    } else if( (tomcat_db_groupID != null) && (parts[1].equals("data-source")) ) {                   
                         String myhost = parts[2];
                         String mycontext = parts[3];
                         String mydbname = parts[4];
@@ -315,21 +417,36 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
                         QueryResult new_result = new QueryResult(myname, fullID, myval, epochInMillis);
                         tomcat_db_counters.add(new_result);
                     }
-                } else if( p1.equals("cocktail") ) {
+                } else if( (app_groupID != null) && (p1.equals("cocktail")) ) {
                     if( !(parts[1].equals("CreatedCocktailCount")) &&  !(parts[1].equals("UpdatedCocktailCount")) ) {
                         QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
                         app_counters.add(new_result);
                     }
-                } else if( p1.equals("sales") ) {
-                    QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
-                    app_counters.add(new_result);
+                } else if( ( (app_sales_groupID != null) && (p1.equals("sales")) ) &&
+                      ( (parts[1].equals("ordersCounter")) || 
+                        (parts[1].equals("itemsCounter")) || 
+                        (parts[1].equals("revenueInCentsCounter")) ) ){
+                        QueryResult new_result = new QueryResult(myname, pidHost, myval, epochInMillis);
+                        app_sales_counters.add(new_result);
                 }
             } else {
                 logger.warn("parts return NULL!!!");
             }
         }
-        if(jvm_counters.size() > 0) {
-            sort_n_send(jvm_metric_groupID, jvm_counters);
+        if(jvm_os_counters.size() > 0) {
+            sort_n_send(jvm_os_groupID, jvm_os_counters);
+        }
+        if(jvm_gc_counters.size() > 0) {
+            sort_n_send(jvm_gc_groupID, jvm_gc_counters);
+        }
+        if(jvm_runtime_counters.size() > 0) {
+            sort_n_send(jvm_runtime_groupID, jvm_runtime_counters);
+        }
+        if(jvm_class_counters.size() > 0) {
+            sort_n_send(jvm_class_groupID, jvm_class_counters);
+        }
+        if(jvm_thread_counters.size() > 0) {
+            sort_n_send(jvm_thread_groupID, jvm_thread_counters);
         }
         if(heap_counters.size() > 0) {
             sort_n_send(heap_metric_groupID, heap_counters);
@@ -337,11 +454,11 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
         if(nonheap_counters.size() > 0) {
             sort_n_send(nonheap_metric_groupID, nonheap_counters);
         }
-        if(jmxtrans_counters.size() > 0) {
-            sort_n_send(jmxtrans_metric_groupID, jmxtrans_counters);
+        if(tomcat_thread_pool_counters.size() > 0) {
+            sort_n_send(tomcat_thread_pool_groupID, tomcat_thread_pool_counters);
         }
-        if(tomcat_global_counters.size() > 0) {
-            sort_n_send(tomcat_global_groupID, tomcat_global_counters);
+        if(tomcat_grp_counters.size() > 0) {
+            sort_n_send(tomcat_grp_groupID,tomcat_grp_counters);
         }
         if(tomcat_servlet_counters.size() > 0) {
             sort_n_send(tomcat_servlet_groupID, tomcat_servlet_counters);
@@ -349,20 +466,17 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
         if(tomcat_manager_counters.size() > 0) {
             sort_n_send(tomcat_manager_groupID, tomcat_manager_counters);
         }
-        if(tomcat_website_counters.size() > 0) {
-            sort_n_send(tomcat_website_groupID, tomcat_website_counters);
-        }
         if(tomcat_db_counters.size() > 0) {
             sort_n_send(tomcat_db_groupID, tomcat_db_counters);
         }
+        if(jmxtrans_counters.size() > 0) {
+            sort_n_send(jmxtrans_metric_groupID, jmxtrans_counters);
+        }
         if(app_counters.size() > 0) {
-            Collections.sort(jvm_counters, new Comparator<QueryResult>() {
-                public int compare(QueryResult o1, QueryResult o2) {
-                  //Sorts by 'epochInMillis' property
-                  return o1.getEpochInMillis()<o2.getEpochInMillis()?-1:o1.getEpochInMillis()>o2.getEpochInMillis()?1:0;
-                }
-            });
-            send_metrics(app_metric_groupID, app_counters);
+            sort_n_send(app_groupID, app_counters);
+        }
+        if(app_sales_counters.size() > 0) {
+            sort_n_send(app_sales_groupID, app_sales_counters);
         }
     }
     public void sort_n_send(String mg_name, List<QueryResult> mg_counters) {
@@ -374,7 +488,6 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
                     rslt = (o1.getType()).compareTo(o2.getType());
                 }
                 return rslt;
-                //return o1.getEpochInMillis()<o2.getEpochInMillis()?-1:o1.getEpochInMillis()>o2.getEpochInMillis()?1:0;
             }
         });
         send_metrics(mg_name, mg_counters);
@@ -483,67 +596,6 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
         g.flush();
         g.close();
     }
-    public void debug_cue_serialize(@Nonnull Iterable<QueryResult> counters, @Nonnull OutputStream out) throws IOException {
-        int first = 0;
-        long time = 0;
-        String myID = null;
-        JsonGenerator g = jsonFactory.createGenerator(out, JsonEncoding.UTF8);
-
-        StringWriter strout = new StringWriter();
-        JsonFactory fac = new JsonFactory();
-        JsonGenerator gen = fac.createJsonGenerator(strout);
-
-
-        for (QueryResult counter : counters) {
-           if( 0 == first ) {
-              time = counter.getEpoch(TimeUnit.SECONDS);
-              myID = counter.getType();
-              first = 1;
-              g.writeStartObject();
-              g.writeStringField("identifier", myID);
-              g.writeNumberField("timestamp", time);
-              g.writeObjectFieldStart("values");
-             
-              gen.writeStartObject();
-              gen.writeStringField("identifier", myID);
-              gen.writeNumberField("timestamp", time);
-              gen.writeObjectFieldStart("values");
-           }
-           if( (time != counter.getEpoch(TimeUnit.SECONDS)) || (!(myID.equals(counter.getType()))) ) {
-                logger.warn("Messed-up serialize: ");
-                logger.warn("time {} should be this time: {}; id {} should be this id: {}",
-                  counter.getEpoch(TimeUnit.SECONDS), time, counter.getType(), myID);
-           }
-
-
-           if (counter.getValue() instanceof Integer) {
-                g.writeNumberField(counter.getName(), (Integer) counter.getValue());
-                gen.writeNumberField(counter.getName(), (Integer) counter.getValue());
-
-            } else if (counter.getValue() instanceof Long) {
-                g.writeNumberField(counter.getName(), (Long) counter.getValue());
-                gen.writeNumberField(counter.getName(), (Long) counter.getValue());
-
-            } else if (counter.getValue() instanceof Float) {
-                g.writeNumberField(counter.getName(), (Float) counter.getValue());
-                gen.writeNumberField(counter.getName(), (Long) counter.getValue());
-
-            } else if (counter.getValue() instanceof Double) {
-                g.writeNumberField(counter.getName(), (Double) counter.getValue());
-                gen.writeNumberField(counter.getName(), (Double) counter.getValue());
-            }
-        }
-        g.writeEndObject();
-        g.writeEndObject();
-        g.flush();
-        g.close();
-
-        gen.writeEndObject();
-        gen.writeEndObject();
-        gen.flush();
-        gen.close();
-        logger.warn("Serialized output: " + strout.toString());
-    }
 
     private static long getPID() {
        String processName =
@@ -600,28 +652,40 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
                             }
                             if(Rslt != null) {
                                 if (Rslt.toLowerCase().contains("tomcat")) {
-                                    if (Rslt.toLowerCase().contains("global")) {
-                                        tomcat_global_groupID = Rslt;
+                                    if (Rslt.toLowerCase().contains("thread_pool")) {
+                                       tomcat_thread_pool_groupID = Rslt;
+                                    } else if(Rslt.toLowerCase().contains("grp")) { 
+                                        tomcat_grp_groupID = Rslt;
                                     } else if(Rslt.toLowerCase().contains("servlet")) { 
                                         tomcat_servlet_groupID = Rslt;
                                     } else if(Rslt.toLowerCase().contains("manager")) { 
                                         tomcat_manager_groupID = Rslt;
-                                    } else if(Rslt.toLowerCase().contains("website")) { 
-                                        tomcat_website_groupID = Rslt;
                                     } else if(Rslt.toLowerCase().contains("db")) { 
                                         tomcat_db_groupID = Rslt;
                                     }
-                                } else if (Rslt.toLowerCase().contains("nonheap")){
-                                    nonheap_metric_groupID = Rslt;
-                                } else if (Rslt.toLowerCase().contains("heap")){
-                                    heap_metric_groupID = Rslt;
-                                } else if (Rslt.toLowerCase().contains("jvm")){
-                                    jvm_metric_groupID = Rslt;
                                 } else if (Rslt.toLowerCase().contains("jmxtrans")){
                                     jmxtrans_metric_groupID = Rslt;
-                                } else {
-                                    app_metric_groupID = Rslt;
-                                }
+                                } else if (Rslt.toLowerCase().contains("sales")){
+                                    app_sales_groupID = Rslt;
+                                } else if (Rslt.toLowerCase().contains("cocktail")){
+                                    app_groupID = Rslt;
+                                } else if (Rslt.toLowerCase().contains("jvm")){
+                                    if (Rslt.toLowerCase().contains("os")) {
+                                        jvm_os_groupID = Rslt;
+                                    } else if (Rslt.toLowerCase().contains("gc")) {
+                                        jvm_gc_groupID = Rslt;
+                                    } else if (Rslt.toLowerCase().contains("runtime")) {
+                                        jvm_runtime_groupID = Rslt;
+                                    } else if (Rslt.toLowerCase().contains("class")) {
+                                        jvm_class_groupID = Rslt;
+                                    } else if (Rslt.toLowerCase().contains("thread")) {
+                                        jvm_thread_groupID = Rslt;
+                                    }
+                                } else if (Rslt.toLowerCase().contains("nonheap")) {
+                                    nonheap_metric_groupID = Rslt;
+                                } else if (Rslt.toLowerCase().contains("heap")) {
+                                    heap_metric_groupID = Rslt;
+                                } 
                             }
                         } catch (Exception e) {
                             exceptionCounter.incrementAndGet();
@@ -635,7 +699,6 @@ public class CopperEggWriter extends AbstractOutputWriter implements OutputWrite
             }
         }
     }
-
     /**
      * If dashboard doesn't exist, create it
      * If it does exist, update it.
