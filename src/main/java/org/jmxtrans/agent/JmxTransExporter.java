@@ -67,11 +67,11 @@ public class JmxTransExporter {
     private ScheduledFuture scheduledFuture;
 
     public JmxTransExporter withQuery(String objectName, String attribute, String resultAlias) {
-        return withQuery(objectName, attribute, null, resultAlias);
+        return withQuery(objectName, attribute, null, null, resultAlias);
     }
 
-    public JmxTransExporter withQuery(String objectName, String attribute, String key, String resultAlias) {
-        queries.add(new Query(objectName, attribute, key, resultAlias));
+    public JmxTransExporter withQuery(String objectName, String attribute, String key, Integer position, String resultAlias) {
+        queries.add(new Query(objectName, attribute, key, position, resultAlias));
         return this;
     }
     public JmxTransExporter withInvocation(String objectName, String operation,String resultAlias) {
