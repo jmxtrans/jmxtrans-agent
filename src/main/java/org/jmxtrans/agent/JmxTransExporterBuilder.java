@@ -122,8 +122,16 @@ public class JmxTransExporterBuilder {
             String attribute = queryElement.getAttribute("attribute");
             String key = queryElement.hasAttribute("key") ? queryElement.getAttribute("key") : null;
             String resultAlias = queryElement.getAttribute("resultAlias");
+            Integer position;
+            try {
+                position = queryElement.hasAttribute("position") ? Integer.parseInt(queryElement.getAttribute("position")) : null;
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid 'position' attribute for query objectName=" + objectName +
+                        ", attribute=" + attribute + ", resultAlias=" + resultAlias);
 
-            jmxTransExporter.withQuery(objectName, attribute, key, resultAlias);
+            }
+
+            jmxTransExporter.withQuery(objectName, attribute, key, position, resultAlias);
         }
     }
 

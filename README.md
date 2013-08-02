@@ -14,11 +14,46 @@ Sample `setenv.sh` for Apache Tomcat
 
 ```
 export JAVA_OPTS="$JAVA_OPTS 
-  -javaagent:/path/to/jmxtrans-agent-1.0.0.jar=jmxtrans-agent.xml"
+  -javaagent:/path/to/jmxtrans-agent-1.0.2.jar=jmxtrans-agent.xml"
 ```
 
 * java agent jar path can be relative to the working dir
 * `jmxtrans-agent.xml` is the configuration file, can be classpath relative (`classpath:…`), http(s) (`http(s)://...`) or file system system based (relative to the working dir)
+
+## Query configuration
+
+### Simple mono-valued attribute
+
+Use `attribute` to specify the value to lookup. See `javax.management.MBeanServer.getAttribute(objectName, attribute)`.
+
+```xml
+<query objectName="java.lang:type=Threading" attribute="ThreadCount"
+   resultAlias="jvm.thread"/>
+```
+
+### MBean Composite Data attribute
+
+Use `key` to specify the key of the CompositeData. See `javax.management.openmbean.CompositeData#get(key)`.
+
+```xml
+ <query objectName="java.lang:type=Memory" attribute="HeapMemoryUsage" key="used"
+    resultAlias="jvm.heapMemoryUsage.used"/>
+}
+```
+
+### Multi-valued attribute (Iterable or array)
+
+Use `position` to specify the value to lookup. Position is `0 based.
+
+```xml
+ <query objectName="MyApp:type=MyMBean" attribute="MyMultiValuedAttribute" position="2"
+    resultAlias="myMBean.myMultiValuedAttributeValue"/>
+}
+```
+
+If `position` is not specified, all the values of the attribute are outputted with the name `${resultAlias}_${position}`.
+
+Sample: `myMBean.myMultiValuedAttributeValue_0`, `myMBean.myMultiValuedAttributeValue_1`, ...
 
 
 ## Sample configuration file
@@ -70,6 +105,7 @@ Sample `jmxtrans-agent.xml` configuration file for Tomcat:
 ```
 
 **Note** why xml and not json ? because XML parsing is out of the box in the JVM when json requires additional libraries.
+
 
 
 ## OutputWriters
