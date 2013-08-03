@@ -116,7 +116,6 @@ public class Query {
                         continue;
                     } else {
                         value = compositeData.get(key);
-                        outputWriter.writeQueryResult(resultAlias, value);
                     }
                 } else {
                     if (key == null) {
