@@ -23,6 +23,8 @@
  */
 package org.jmxtrans.agent;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Map;
@@ -79,12 +81,12 @@ public class OutputWriterCircuitBreakerDecorator implements OutputWriter {
     }
 
     @Override
-    public void writeQueryResult(String metricName, Object value) throws IOException {
+    public void writeQueryResult(@Nonnull String metricName, @Nullable String metricType, @Nullable Object value) throws IOException {
         if (isDisabled()) {
             return;
         }
         try {
-            delegate.writeQueryResult(metricName, value);
+            delegate.writeQueryResult(metricName, metricType, value);
             incrementOutputWriterSuccess();
         } catch (RuntimeException e) {
             incrementOutputWriterFailures();
