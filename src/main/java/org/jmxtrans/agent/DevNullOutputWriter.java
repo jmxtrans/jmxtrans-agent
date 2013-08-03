@@ -23,6 +23,8 @@
  */
 package org.jmxtrans.agent;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 
 /**
@@ -30,6 +32,10 @@ import java.io.IOException;
  */
 public class DevNullOutputWriter extends AbstractOutputWriter {
     @Override
-    protected void writeResult(String name, Object value) throws IOException {
+    public void writeQueryResult(@Nonnull String name, @Nullable String type, @Nullable Object value) {
+    }
+
+    @Override
+    public void writeInvocationResult(@Nonnull String invocationName, @Nullable Object value) throws IOException {
     }
 }

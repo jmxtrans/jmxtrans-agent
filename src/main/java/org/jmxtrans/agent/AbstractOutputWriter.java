@@ -23,6 +23,8 @@
  */
 package org.jmxtrans.agent;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -35,7 +37,7 @@ public abstract class AbstractOutputWriter implements OutputWriter {
     protected final Logger logger = Logger.getLogger(getClass().getName());
 
     @Override
-    public void postConstruct(Map<String, String> settings) {
+    public void postConstruct(@Nonnull Map<String, String> settings) {
     }
 
     @Override
@@ -51,14 +53,8 @@ public abstract class AbstractOutputWriter implements OutputWriter {
     }
 
     @Override
-    public void writeQueryResult(String metricName, Object value) throws IOException {
-        writeResult(metricName, value);
-    }
+    public abstract void writeInvocationResult(@Nonnull String invocationName, @Nullable Object value) throws IOException;
 
     @Override
-    public void writeInvocationResult(String invocationName, Object value) throws IOException {
-        writeResult(invocationName, value);
-    }
-
-    protected abstract void writeResult(String name, Object value) throws IOException;
+    public abstract void writeQueryResult(@Nonnull String metricName, @Nullable String metricType, @Nullable Object value) throws IOException;
 }

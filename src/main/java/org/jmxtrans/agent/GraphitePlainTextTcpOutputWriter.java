@@ -25,6 +25,8 @@ package org.jmxtrans.agent;
 
 import org.jmxtrans.agent.util.net.HostAndPort;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -94,7 +96,12 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
     }
 
     @Override
-    public void writeResult(String metricName, Object value) throws IOException {
+    public void writeInvocationResult(@Nonnull String invocationName, @Nullable Object value) throws IOException {
+        writeQueryResult(invocationName, null, value);
+    }
+
+    @Override
+    public void writeQueryResult(@Nonnull String metricName, @Nullable String type, @Nullable Object value) throws IOException {
         String msg = buildMetricPathPrefix() + metricName + " " + value + " " + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         try {
             ensureGraphiteConnection();
