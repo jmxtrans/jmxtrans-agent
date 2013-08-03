@@ -45,17 +45,31 @@ import java.util.logging.Logger;
  */
 public class Query {
 
+    private final Logger logger = Logger.getLogger(getClass().getName());
     @Nonnull
     protected final ObjectName objectName;
     @Nonnull
     protected final String resultAlias;
+    /**
+     * The attribute to retrieve ({@link MBeanServer#getAttribute(javax.management.ObjectName, String)})
+     */
     @Nonnull
     protected final String attribute;
+    /**
+     * If the MBean attribute value is a {@link CompositeData}, the key to lookup.
+     */
     @Nullable
     protected final String key;
+    /**
+     * If the returned value is a {@link java.util.Collection}or an array, the position of the entry to lookup.
+     */
     @Nullable
     protected final Integer position;
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    /**
+     * Attribute type like '{@code gauge}' or '{@code counter}'. Used by monitoring systems like Librato who require this information.
+     */
+    @Nullable
+    private String type;
 
     /**
      * @see #Query(String, String, String, Integer, String)
@@ -84,7 +98,7 @@ public class Query {
      *                    can contain wildcards and return several entries.
      * @param attribute   The attribute to retrieve ({@link MBeanServer#getAttribute(javax.management.ObjectName, String)})
      * @param key         if the MBean attribute value is a {@link CompositeData}, the key to lookup.
-     * @param position    if the returned value is a {@link java.util.Collection}, the position of the entry to lookup.
+     * @param position    if the returned value is a {@link java.util.Collection}or an array, the position of the entry to lookup.
      * @param resultAlias
      */
     public Query(@Nonnull String objectName, @Nonnull String attribute, @Nullable String key, @Nullable Integer position, @Nonnull String resultAlias) {
@@ -137,14 +151,14 @@ public class Query {
                     if (position == null) {
                         int idx = 0;
                         for (Object entry : iterable) {
-                            outputWriter.writeQueryResult(resultAlias + "_" + idx++, entry);
+                            outputWriter.writeQueryResult(resultAlias + "_" + idx++, type, entry);
                         }
                     } else {
                         value = Iterables2.get((Iterable) value, position);
-                        outputWriter.writeQueryResult(resultAlias, value);
+                        outputWriter.writeQueryResult(resultAlias, type, value);
                     }
                 } else {
-                    outputWriter.writeQueryResult(resultAlias, value);
+                    outputWriter.writeQueryResult(resultAlias, type, value);
                 }
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Exception collecting " + on + "#" + attribute + (key == null ? "" : "#" + key), e);

@@ -23,6 +23,8 @@
  */
 package org.jmxtrans.agent;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.util.Map;
@@ -67,16 +69,11 @@ public class FileOverwriterOutputWriter extends AbstractOutputWriter {
     }
 
     @Override
-    public synchronized void writeQueryResult(String metricName, Object value) throws IOException {
-        writeResult(metricName, value);
-    }
-
-    @Override
     public void writeInvocationResult(String invocationName, Object value) throws IOException {
-        writeResult(invocationName, value);
+        writeQueryResult(invocationName, null, value);
     }
 
-    protected void writeResult(String name, Object value) throws IOException {
+    public void writeQueryResult(@Nonnull String name, @Nullable String type, @Nullable Object value) throws IOException {
         try {
             getTemporaryFileWriter().write(name + " " + value + "\n");
         } catch (IOException e) {
@@ -92,7 +89,7 @@ public class FileOverwriterOutputWriter extends AbstractOutputWriter {
             // silently skip
         }
         if (temporaryFile != null) {
-           temporaryFile.delete();
+            temporaryFile.delete();
         }
         temporaryFile = null;
 

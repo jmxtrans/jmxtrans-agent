@@ -23,6 +23,8 @@
  */
 package org.jmxtrans.agent;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Map;
 
@@ -30,7 +32,7 @@ import java.util.Map;
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public interface OutputWriter {
-    void postConstruct(Map<String, String> settings);
+    void postConstruct(@Nonnull Map<String, String> settings);
 
     void preDestroy();
 
@@ -39,7 +41,13 @@ public interface OutputWriter {
      */
     void preCollect() throws IOException;
 
-    void writeQueryResult(String metricName, Object value) throws IOException;
+    /**
+     * @param metricName
+     * @param metricType see {@link Query#type}
+     * @param value
+     * @throws IOException
+     */
+    void writeQueryResult(@Nonnull String metricName, @Nullable String metricType, @Nullable Object value) throws IOException;
 
     /**
      * <p>called after a serie of writes, typically at the end of a collection.</p>
@@ -47,5 +55,5 @@ public interface OutputWriter {
      */
     void postCollect() throws IOException;
 
-    void writeInvocationResult(String invocationName, Object value) throws IOException;
+    void writeInvocationResult(@Nonnull String invocationName, @Nullable Object value) throws IOException;
 }

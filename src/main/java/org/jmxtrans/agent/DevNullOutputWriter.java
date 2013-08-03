@@ -23,13 +23,14 @@
  */
 package org.jmxtrans.agent;
 
-import java.io.IOException;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public class DevNullOutputWriter extends AbstractOutputWriter {
     @Override
-    protected void writeResult(String name, Object value) throws IOException {
+    public void writeQueryResult(@Nonnull String name, @Nullable String type, @Nullable Object value) {
     }
 }

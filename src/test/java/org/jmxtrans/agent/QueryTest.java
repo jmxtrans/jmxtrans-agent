@@ -25,6 +25,8 @@ package org.jmxtrans.agent;
 
 import org.junit.*;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.io.IOException;
@@ -129,7 +131,7 @@ public class QueryTest {
         }
 
         @Override
-        protected void writeResult(String name, Object value) throws IOException {
+        public void writeQueryResult(@Nonnull String name, @Nullable String type, @Nullable Object value) throws IOException {
             if (failOnDuplicateResult && resultsByName.containsKey(name)) {
                 fail("Result '" + name + "' already written");
             }
