@@ -53,9 +53,7 @@ public abstract class AbstractOutputWriter implements OutputWriter {
     }
 
     @Override
-    public void writeInvocationResult(@Nonnull String invocationName, @Nullable Object value) throws IOException {
-        writeQueryResult(invocationName, null, value);
-    }
+    public abstract void writeInvocationResult(@Nonnull String invocationName, @Nullable Object value) throws IOException;
 
     @Override
     public abstract void writeQueryResult(@Nonnull String metricName, @Nullable String metricType, @Nullable Object value) throws IOException;

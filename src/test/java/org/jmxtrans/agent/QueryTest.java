@@ -138,5 +138,9 @@ public class QueryTest {
             resultsByName.put(name, value);
         }
 
+        @Override
+        public void writeInvocationResult(@Nonnull String invocationName, @Nullable Object value) throws IOException {
+            writeQueryResult(invocationName, null, value);
+        }
     }
 }

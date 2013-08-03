@@ -96,6 +96,11 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
     }
 
     @Override
+    public void writeInvocationResult(@Nonnull String invocationName, @Nullable Object value) throws IOException {
+        writeQueryResult(invocationName, null, value);
+    }
+
+    @Override
     public void writeQueryResult(@Nonnull String metricName, @Nullable String type, @Nullable Object value) throws IOException {
         String msg = buildMetricPathPrefix() + metricName + " " + value + " " + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         try {
