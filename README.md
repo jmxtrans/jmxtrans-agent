@@ -99,6 +99,7 @@ Sample `jmxtrans-agent.xml` configuration file for Tomcat:
         <namePrefix>app_123456.servers.i876543.</namePrefix>
     </outputWriter>
     <outputWriter class="org.jmxtrans.agent.ConsoleOutputWriter"/>
+    <collectIntervalInSeconds>20</collectIntervalInSeconds>
 </jmxtrans-agent>
 ```
 
@@ -154,9 +155,7 @@ tomcat.bytesReceived 0 1366199958
 application.activeSessions 0 1366199958
 ```
 
-## Sample of FileOverwriterOutputWriter jmxtrans-agent.data
-
-Content of `$ cat jmxtrans-agent.data`
+## Sample of FileOverwriterOutputWriter
 
 ```
 os.systemLoadAverage 1.27734375
