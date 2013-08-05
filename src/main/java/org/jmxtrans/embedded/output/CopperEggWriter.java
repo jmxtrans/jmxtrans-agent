@@ -94,13 +94,14 @@ import java.lang.management.ManagementFactory;
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  *
  * CopperEggWriter.java was derived from LibratoWriter.java 
+ * @author <a href="mailto:sjohnson@copperegg.com">Scott Johnson</a>
  */
 public class CopperEggWriter extends AbstractOutputWriter implements OutputWriter {
     public static final String METRIC_TYPE_GAUGE = "gauge";
     public static final String METRIC_TYPE_COUNTER = "counter";
     public static final String DEFAULT_COPPEREGG_API_URL = "https://api.copperegg.com/v2/revealmetrics";
     public static final String SETTING_COPPEREGG_API_TIMEOUT_IN_MILLIS = "coppereggApiTimeoutInMillis";
-    public static final int DEFAULT_COPPEREGG_API_TIMEOUT_IN_MILLIS = 10000;
+    public static final int DEFAULT_COPPEREGG_API_TIMEOUT_IN_MILLIS = 20000;
     public static final String SETTING_SOURCE = "source";
     public static final String DEFAULT_SOURCE = "#hostname#";
     private final static String DEFAULT_COPPEREGG_CONFIGURATION_PATH = "classpath:copperegg_config.json";
