@@ -38,7 +38,6 @@ Use `key` to specify the key of the CompositeData. See `javax.management.openmbe
 ```xml
  <query objectName="java.lang:type=Memory" attribute="HeapMemoryUsage" key="used"
     resultAlias="jvm.heapMemoryUsage.used"/>
-}
 ```
 
 ### Multi-valued attribute (Iterable or array)
@@ -48,7 +47,6 @@ Use `position` to specify the value to lookup. Position is `0 based.
 ```xml
  <query objectName="MyApp:type=MyMBean" attribute="MyMultiValuedAttribute" position="2"
     resultAlias="myMBean.myMultiValuedAttributeValue"/>
-}
 ```
 
 If `position` is not specified, all the values of the attribute are outputted with the name `${resultAlias}_${position}`.
@@ -101,6 +99,7 @@ Sample `jmxtrans-agent.xml` configuration file for Tomcat:
         <namePrefix>app_123456.servers.i876543.</namePrefix>
     </outputWriter>
     <outputWriter class="org.jmxtrans.agent.ConsoleOutputWriter"/>
+    <collectIntervalInSeconds>20</collectIntervalInSeconds>
 </jmxtrans-agent>
 ```
 
@@ -156,9 +155,7 @@ tomcat.bytesReceived 0 1366199958
 application.activeSessions 0 1366199958
 ```
 
-## Sample of FileOverwriterOutputWriter jmxtrans-agent.data
-
-Content of `$ cat jmxtrans-agent.data`
+## Sample of FileOverwriterOutputWriter
 
 ```
 os.systemLoadAverage 1.27734375
