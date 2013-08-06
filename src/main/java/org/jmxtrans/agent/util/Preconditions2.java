@@ -23,6 +23,8 @@
  */
 package org.jmxtrans.agent.util;
 
+import javax.annotation.Nullable;
+
 /**
  * Inspired by <code>com.google.common.base.Preconditions</code>
  *
@@ -33,5 +35,42 @@ public class Preconditions2 {
         if (t == null)
             throw new NullPointerException();
         return t;
+    }
+
+    public static String checkNotEmpty(String str) {
+        if (str == null)
+            throw new NullPointerException();
+        if (str.isEmpty())
+            throw new IllegalArgumentException("Can not be empty");
+        return str;
+    }
+
+    public static void checkArgument(boolean expression) throws IllegalArgumentException {
+        if (!expression) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    public static void checkArgument(boolean expression, @Nullable String msg) throws IllegalArgumentException {
+        if (!expression) {
+            throw new IllegalArgumentException(msg);
+        }
+    }
+
+    /**
+     * @param expression
+     * @param msgFormat
+     * @param msgArgs
+     * @throws IllegalArgumentException
+     * @see String#format(String, Object...)
+     */
+    public static void checkArgument(boolean expression, @Nullable String msgFormat, Object... msgArgs) throws IllegalArgumentException {
+        if (!expression) {
+            if (msgFormat == null) {
+                throw new IllegalArgumentException();
+            } else {
+                throw new IllegalArgumentException(String.format(msgFormat, msgArgs));
+            }
+        }
     }
 }
