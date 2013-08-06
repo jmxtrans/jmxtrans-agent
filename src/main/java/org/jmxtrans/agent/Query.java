@@ -75,21 +75,21 @@ public class Query {
      * @see #Query(String, String, String, Integer, String)
      */
     public Query(@Nonnull String objectName, @Nonnull String attribute) {
-        this(objectName, attribute, null, null, attribute);
+        this(objectName, attribute, null, null, null, attribute);
     }
 
     /**
      * @see #Query(String, String, String, Integer, String)
      */
     public Query(@Nonnull String objectName, @Nonnull String attribute, int position) {
-        this(objectName, attribute, null, position, attribute);
+        this(objectName, attribute, null, position, null, attribute);
     }
 
     /**
      * @see #Query(String, String, String, Integer, String)
      */
     public Query(@Nonnull String objectName, @Nonnull String attribute, @Nonnull String resultAlias) {
-        this(objectName, attribute, null, null, resultAlias);
+        this(objectName, attribute, null, null, null, resultAlias);
     }
 
     /**
@@ -98,10 +98,12 @@ public class Query {
      *                    can contain wildcards and return several entries.
      * @param attribute   The attribute to retrieve ({@link MBeanServer#getAttribute(javax.management.ObjectName, String)})
      * @param key         if the MBean attribute value is a {@link CompositeData}, the key to lookup.
-     * @param position    if the returned value is a {@link java.util.Collection}or an array, the position of the entry to lookup.
+     * @param position    if the returned value is a {@link java.util.Collection} or an array, the position of the entry to lookup.
+     * @param type        type of the metric ('counter', 'gauge', ...)
      * @param resultAlias
      */
-    public Query(@Nonnull String objectName, @Nonnull String attribute, @Nullable String key, @Nullable Integer position, @Nonnull String resultAlias) {
+    public Query(@Nonnull String objectName, @Nonnull String attribute, @Nullable String key, @Nullable Integer position,
+                 @Nullable String type, @Nonnull String resultAlias) {
         try {
             this.objectName = new ObjectName(Preconditions2.checkNotNull(objectName));
         } catch (MalformedObjectNameException e) {
@@ -111,6 +113,7 @@ public class Query {
         this.key = key;
         this.resultAlias = Preconditions2.checkNotNull(resultAlias);
         this.position = position;
+        this.type = type;
     }
 
     public void collectAndExport(@Nonnull MBeanServer mbeanServer, @Nonnull OutputWriter outputWriter) {

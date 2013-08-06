@@ -23,6 +23,8 @@
  */
 package org.jmxtrans.agent;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
@@ -66,15 +68,16 @@ public class JmxTransExporter {
     private MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
     private ScheduledFuture scheduledFuture;
 
-    public JmxTransExporter withQuery(String objectName, String attribute, String resultAlias) {
-        return withQuery(objectName, attribute, null, null, resultAlias);
+    public JmxTransExporter withQuery(@Nonnull String objectName, @Nonnull String attribute, @Nullable String resultAlias) {
+        return withQuery(objectName, attribute, null, null, null, resultAlias);
     }
 
-    public JmxTransExporter withQuery(String objectName, String attribute, String key, Integer position, String resultAlias) {
-        queries.add(new Query(objectName, attribute, key, position, resultAlias));
+    public JmxTransExporter withQuery(@Nonnull String objectName, @Nonnull String attribute, @Nullable String key,
+                                      @Nullable Integer position, @Nullable String type, @Nullable String resultAlias) {
+        queries.add(new Query(objectName, attribute, key, position, type, resultAlias));
         return this;
     }
-    public JmxTransExporter withInvocation(String objectName, String operation,String resultAlias) {
+    public JmxTransExporter withInvocation(@Nonnull String objectName, @Nonnull String operation, @Nullable String resultAlias) {
         invocations.add(new Invocation(objectName, operation, new Object[0], new String[0], resultAlias));
         return this;
     }
@@ -83,7 +86,7 @@ public class JmxTransExporter {
         return this;
     }
 
-    public JmxTransExporter withCollectInterval(int collectInterval, TimeUnit collectIntervalTimeUnit) {
+    public JmxTransExporter withCollectInterval(int collectInterval, @Nonnull TimeUnit collectIntervalTimeUnit) {
         this.collectInterval = collectInterval;
         this.collectIntervalTimeUnit = collectIntervalTimeUnit;
         return this;

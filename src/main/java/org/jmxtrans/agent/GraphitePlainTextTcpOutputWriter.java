@@ -35,7 +35,6 @@ import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static org.jmxtrans.agent.util.ConfigurationUtils.getInt;
 import static org.jmxtrans.agent.util.ConfigurationUtils.getString;
@@ -53,7 +52,6 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
     public final static int SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS_DEFAULT_VALUE = 500;
 
     private final static Charset UTF_8 = Charset.forName("UTF-8");
-    private final Logger logger = Logger.getLogger(getClass().getName());
     protected String metricPathPrefix;
     protected HostAndPort graphiteServerHostAndPort;
     private Socket socket;
@@ -72,7 +70,7 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
                 SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS,
                 SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS_DEFAULT_VALUE);
 
-        logger.info("GraphitePlainTextTcpOutputWriter is configured with " + graphiteServerHostAndPort + ", metricPathPrefix=" + metricPathPrefix +
+        logger.log(getInfoLevel(), "GraphitePlainTextTcpOutputWriter is configured with " + graphiteServerHostAndPort + ", metricPathPrefix=" + metricPathPrefix +
                 ", socketConnectTimeoutInMillis=" + socketConnectTimeoutInMillis);
     }
 
@@ -105,8 +103,8 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
         String msg = buildMetricPathPrefix() + metricName + " " + value + " " + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         try {
             ensureGraphiteConnection();
-            if (logger.isLoggable(Level.FINEST)) {
-                logger.finest("Send '" + msg + "' to " + graphiteServerHostAndPort);
+            if (logger.isLoggable(getTraceLevel())) {
+                logger.log(getTraceLevel(), "Send '" + msg + "' to " + graphiteServerHostAndPort);
             }
             writer.write(msg + "\n");
         } catch (IOException e) {

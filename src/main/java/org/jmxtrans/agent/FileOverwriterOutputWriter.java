@@ -40,7 +40,6 @@ public class FileOverwriterOutputWriter extends AbstractOutputWriter {
 
     public final static String SETTING_FILE_NAME = "fileName";
     public final static String SETTING_FILE_NAME_DEFAULT_VALUE = "jmxtrans-agent.data";
-    private final Logger logger = Logger.getLogger(getClass().getName());
     protected Writer temporaryFileWriter;
     protected File temporaryFile;
     protected File file = new File(SETTING_FILE_NAME_DEFAULT_VALUE);
@@ -49,15 +48,15 @@ public class FileOverwriterOutputWriter extends AbstractOutputWriter {
     public synchronized void postConstruct(Map<String, String> settings) {
         super.postConstruct(settings);
         file = new File(getString(settings, SETTING_FILE_NAME, SETTING_FILE_NAME_DEFAULT_VALUE));
-        logger.info("FileOverwriterOutputWriter configured with file " + file.getAbsolutePath());
+        logger.log(getInfoLevel(), "FileOverwriterOutputWriter configured with file " + file.getAbsolutePath());
     }
 
     protected Writer getTemporaryFileWriter() throws IOException {
         if (temporaryFile == null) {
             temporaryFile = File.createTempFile("jmxtrans-agent-", ".data");
             temporaryFile.deleteOnExit();
-            if (logger.isLoggable(Level.FINE))
-                logger.fine("Created temporary file " + temporaryFile.getAbsolutePath());
+            if (logger.isLoggable(getDebugLevel()))
+                logger.log(getDebugLevel(), "Created temporary file " + temporaryFile.getAbsolutePath());
 
             temporaryFileWriter = null;
         }
@@ -99,8 +98,8 @@ public class FileOverwriterOutputWriter extends AbstractOutputWriter {
     public synchronized void postCollect() throws IOException {
         try {
             getTemporaryFileWriter().close();
-            if (logger.isLoggable(Level.FINE))
-                logger.fine("Overwrite " + file.getAbsolutePath() + " by " + temporaryFile.getAbsolutePath());
+            if (logger.isLoggable(getDebugLevel()))
+                logger.log(getDebugLevel(), "Overwrite " + file.getAbsolutePath() + " by " + temporaryFile.getAbsolutePath());
             IoUtils.replaceFile(temporaryFile, file);
         } finally {
             temporaryFileWriter = null;

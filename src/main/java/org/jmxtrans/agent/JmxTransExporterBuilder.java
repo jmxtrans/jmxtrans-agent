@@ -122,6 +122,7 @@ public class JmxTransExporterBuilder {
             String attribute = queryElement.getAttribute("attribute");
             String key = queryElement.hasAttribute("key") ? queryElement.getAttribute("key") : null;
             String resultAlias = queryElement.getAttribute("resultAlias");
+            String type = queryElement.getAttribute("type");
             Integer position;
             try {
                 position = queryElement.hasAttribute("position") ? Integer.parseInt(queryElement.getAttribute("position")) : null;
@@ -131,7 +132,7 @@ public class JmxTransExporterBuilder {
 
             }
 
-            jmxTransExporter.withQuery(objectName, attribute, key, position, resultAlias);
+            jmxTransExporter.withQuery(objectName, attribute, key, position, type, resultAlias);
         }
     }
 
