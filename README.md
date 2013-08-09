@@ -8,13 +8,13 @@ jmxtrans-agent is a version of [jmxtrans](http://jmxtrans.org/) intended to be u
 
 ## Java Agent Declaration
 
-Download [jmxtrans-agent-1.0.3.jar](http://repo1.maven.org/maven2/org/jmxtrans/agent/jmxtrans-agent/1.0.3/jmxtrans-agent-1.0.3.jar)
+Download [jmxtrans-agent-1.0.4.jar](http://repo1.maven.org/maven2/org/jmxtrans/agent/jmxtrans-agent/1.0.4/jmxtrans-agent-1.0.4.jar)
 
 Sample `setenv.sh` for Apache Tomcat
 
 ```
 export JAVA_OPTS="$JAVA_OPTS 
-  -javaagent:/path/to/jmxtrans-agent-1.0.3.jar=jmxtrans-agent.xml"
+  -javaagent:/path/to/jmxtrans-agent-1.0.4.jar=jmxtrans-agent.xml"
 ```
 
 * java agent jar path can be relative to the working dir
