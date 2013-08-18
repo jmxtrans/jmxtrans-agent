@@ -31,6 +31,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryType;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -72,6 +73,25 @@ public class QueryTest {
         Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold");
         query.collectAndExport(mbeanServer, mockOutputWriter);
         Object actual = mockOutputWriter.resultsByName.get("CollectionUsageThreshold");
+        assertThat(actual, notNullValue());
+        assertThat(actual, instanceOf(Number.class));
+    }
+
+    @Test
+    public void expression_language_substitutes_object_name_key() throws Exception {
+        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", "test_%type%_%name%.CollectionUsageThreshold");
+        query.collectAndExport(mbeanServer, mockOutputWriter);
+        Object actual = mockOutputWriter.resultsByName.get("test_Mock_mock.CollectionUsageThreshold");
+        assertThat(actual, notNullValue());
+        assertThat(actual, instanceOf(Number.class));
+    }
+
+    @Test
+    public void expression_language_substitutes_function() throws Exception {
+        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", "#hostname#.mock.CollectionUsageThreshold");
+        query.resultNameStrategy.registerExpressionEvaluator("hostname", "my-hostname");
+        query.collectAndExport(mbeanServer, mockOutputWriter);
+        Object actual = mockOutputWriter.resultsByName.get("my-hostname.mock.CollectionUsageThreshold");
         assertThat(actual, notNullValue());
         assertThat(actual, instanceOf(Number.class));
     }
