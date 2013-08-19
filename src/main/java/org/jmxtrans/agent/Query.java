@@ -46,6 +46,10 @@ import java.util.logging.Logger;
 public class Query {
 
     private final Logger logger = Logger.getLogger(getClass().getName());
+
+    @Nonnull
+    protected ResultNameStrategy resultNameStrategy = new ResultNameStrategy();
+
     @Nonnull
     protected final ObjectName objectName;
     @Nonnull
@@ -72,21 +76,21 @@ public class Query {
     private String type;
 
     /**
-     * @see #Query(String, String, String, Integer, String)
+     * @see #Query(String, String, String, Integer, String, String)
      */
     public Query(@Nonnull String objectName, @Nonnull String attribute) {
         this(objectName, attribute, null, null, null, attribute);
     }
 
     /**
-     * @see #Query(String, String, String, Integer, String)
+     * @see #Query(String, String, String, Integer, String, String)
      */
     public Query(@Nonnull String objectName, @Nonnull String attribute, int position) {
         this(objectName, attribute, null, position, null, attribute);
     }
 
     /**
-     * @see #Query(String, String, String, Integer, String)
+     * @see #Query(String, String, String, Integer, String, String)
      */
     public Query(@Nonnull String objectName, @Nonnull String attribute, @Nonnull String resultAlias) {
         this(objectName, attribute, null, null, null, resultAlias);
@@ -149,19 +153,21 @@ public class Query {
                     }
                     value = valueAsList;
                 }
+
+                String resultName = this.resultNameStrategy.getResultName(this, on, key);
                 if (value instanceof Iterable) {
                     Iterable iterable = (Iterable) value;
                     if (position == null) {
                         int idx = 0;
                         for (Object entry : iterable) {
-                            outputWriter.writeQueryResult(resultAlias + "_" + idx++, type, entry);
+                            outputWriter.writeQueryResult(resultName + "_" + idx++, type, entry);
                         }
                     } else {
                         value = Iterables2.get((Iterable) value, position);
-                        outputWriter.writeQueryResult(resultAlias, type, value);
+                        outputWriter.writeQueryResult(resultName, type, value);
                     }
                 } else {
-                    outputWriter.writeQueryResult(resultAlias, type, value);
+                    outputWriter.writeQueryResult(resultName, type, value);
                 }
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Exception collecting " + on + "#" + attribute + (key == null ? "" : "#" + key), e);
@@ -177,5 +183,35 @@ public class Query {
                 ", attribute='" + attribute + '\'' +
                 ", key='" + key + '\'' +
                 '}';
+    }
+
+    @Nonnull
+    public ObjectName getObjectName() {
+        return objectName;
+    }
+
+    @Nonnull
+    public String getResultAlias() {
+        return resultAlias;
+    }
+
+    @Nonnull
+    public String getAttribute() {
+        return attribute;
+    }
+
+    @Nullable
+    public String getKey() {
+        return key;
+    }
+
+    @Nullable
+    public Integer getPosition() {
+        return position;
+    }
+
+    @Nullable
+    public String getType() {
+        return type;
     }
 }
