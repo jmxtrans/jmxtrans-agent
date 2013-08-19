@@ -31,10 +31,26 @@ import javax.annotation.Nullable;
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public class Preconditions2 {
+
     public static <T> T checkNotNull(T t) {
         if (t == null)
             throw new NullPointerException();
         return t;
+    }
+
+    /**
+     * Check the nullity of the given <code>reference</code>.
+     *
+     * @param reference reference to check
+     * @param message   exception message, can be <code>null</code>
+     * @return the given <code>reference</code>
+     * @throws NullPointerException if the given <code>reference</code> is <code>null</code>
+     */
+    public static <T> T checkNotNull(T reference, @Nullable String message) throws NullPointerException {
+        if (reference == null) {
+            throw new NullPointerException(message == null ? "" : message);
+        }
+        return reference;
     }
 
     public static String checkNotEmpty(String str) {
