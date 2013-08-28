@@ -131,25 +131,17 @@ public class ResultNameStrategy {
 
     @Nonnull
     public String getResultName(@Nonnull Query query, @Nonnull ObjectName objectName, @Nullable String key) {
-        StringBuilder result = _getResultName(query, objectName);
-        if (key != null) {
-            result.append(".");
-            result.append(key);
-        }
-        return result.toString();
-    }
-
-    @Nonnull
-    protected StringBuilder _getResultName(@Nonnull Query query, @Nonnull ObjectName objectName) {
-
         String result;
         if (query.getResultAlias() == null) {
-            result = escapeObjectName(objectName) + "." + query.getAttribute();
+            if(key == null) {
+                result = escapeObjectName(objectName) + "." + query.getAttribute();
+            } else {
+                result = escapeObjectName(objectName) + "." + query.getAttribute() + "." + key;
+            }
         } else {
             result = resolveExpression(query.getResultAlias(), objectName);
         }
-
-        return new StringBuilder(result);
+        return result;
     }
 
     /**
