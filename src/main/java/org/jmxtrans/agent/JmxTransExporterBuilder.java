@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.jmxtrans.agent.util.InstanceFactory;
 import org.jmxtrans.agent.util.PropertyPlaceholderResolver;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -152,29 +153,24 @@ public class JmxTransExporterBuilder {
     private void buildOutputWriters(Element rootElement, JmxTransExporter jmxTransExporter) {
         NodeList outputWriterNodeList = rootElement.getElementsByTagName("outputWriter");
         List<OutputWriter> outputWriters = new ArrayList<OutputWriter>();
-
+        InstanceFactory<OutputWriter> outputWriterInstanceFactory = new InstanceFactory<OutputWriter>();
+        
         for (int i = 0; i < outputWriterNodeList.getLength(); i++) {
             Element outputWriterElement = (Element) outputWriterNodeList.item(i);
             String outputWriterClass = outputWriterElement.getAttribute("class");
             if (outputWriterClass.isEmpty()) {
                 throw new IllegalArgumentException("<outputWriter> element must contain a 'class' attribute");
             }
-            OutputWriter outputWriter;
-            try {
-                outputWriter = (OutputWriter) Class.forName(outputWriterClass).newInstance();
-                Map<String, String> settings = new HashMap<String, String>();
-                NodeList settingsNodeList = outputWriterElement.getElementsByTagName("*");
-                for (int j = 0; j < settingsNodeList.getLength(); j++) {
-                    Element settingElement = (Element) settingsNodeList.item(j);
-                    settings.put(settingElement.getNodeName(), placeholderResolver.resolveString(settingElement.getTextContent()));
-                }
-                outputWriter = new OutputWriterCircuitBreakerDecorator(outputWriter);
-                outputWriter.postConstruct(settings);
-                outputWriters.add(outputWriter);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Exception instantiating " + outputWriterClass, e);
+            OutputWriter outputWriter = outputWriterInstanceFactory.newInstanceOf(outputWriterClass);
+            Map<String, String> settings = new HashMap<String, String>();
+            NodeList settingsNodeList = outputWriterElement.getElementsByTagName("*");
+            for (int j = 0; j < settingsNodeList.getLength(); j++) {
+                Element settingElement = (Element) settingsNodeList.item(j);
+                settings.put(settingElement.getNodeName(), placeholderResolver.resolveString(settingElement.getTextContent()));
             }
-
+            outputWriter = new OutputWriterCircuitBreakerDecorator(outputWriter);
+            outputWriter.postConstruct(settings);
+            outputWriters.add(outputWriter);
         }
 
         switch (outputWriters.size()) {
