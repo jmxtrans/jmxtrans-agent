@@ -148,7 +148,7 @@ public class ResultNameStrategy {
     public String getResultName(@Nonnull Query query, @Nonnull ObjectName objectName, @Nullable String key) {
     	String resultAlias = query.getResultAlias();
         if (resultAlias == null || resultAlias.isEmpty()) {
-        	return queryAliasFactory.valueOf(query, objectName, key);
+        	return resolveExpression(queryAliasFactory.valueOf(query, objectName, key));
         }
         return resolveExpression(query.getResultAlias(), objectName);
     }
