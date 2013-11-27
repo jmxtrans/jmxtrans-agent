@@ -23,16 +23,20 @@
  */
 package org.jmxtrans.agent;
 
-import org.jmxtrans.agent.util.StringUtils2;
+import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.management.ObjectName;
-import java.net.InetAddress;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.jmxtrans.agent.aliasing.DefaultQueryAliasFactory;
+import org.jmxtrans.agent.aliasing.QueryAliasFactory;
+import org.jmxtrans.agent.util.StringUtils2;
 
 /**
  * Build a {@linkplain QueryResult#name} from a collected metric ({@linkplain Query}).
@@ -100,10 +104,21 @@ public class ResultNameStrategy {
      * Function based evaluators for expressions like '#hostname#' or '#hostname_canonical#'
      */
     @Nonnull
-    private Map<String, Callable<String>> expressionEvaluators = new HashMap<String, Callable<String>>();
-
+    private final Map<String, Callable<String>> expressionEvaluators = new HashMap<String, Callable<String>>();
+    @Nonnull
+    private final QueryAliasFactory queryAliasFactory;
+    
     public ResultNameStrategy() {
-        try {
+    	this(DefaultQueryAliasFactory.INSTANCE);
+    }
+    
+    public ResultNameStrategy(QueryAliasFactory queryAliasFactory) {
+    	this.queryAliasFactory = queryAliasFactory;
+		registerExpressionEvaluators();
+    }
+
+	private void registerExpressionEvaluators() {
+		try {
             InetAddress localHost = InetAddress.getLocalHost();
             String hostName = localHost.getHostName();
             String reversedHostName = StringUtils2.reverseTokens(hostName, ".");
@@ -122,7 +137,7 @@ public class ResultNameStrategy {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Exception resolving localhost, expressions like #hostname#, #canonical_hostname# or #hostaddress# will not be available", e);
         }
-    }
+	}
 
     @Nonnull
     public String getResultName(@Nonnull Query query, @Nonnull ObjectName objectName) {
@@ -131,17 +146,11 @@ public class ResultNameStrategy {
 
     @Nonnull
     public String getResultName(@Nonnull Query query, @Nonnull ObjectName objectName, @Nullable String key) {
-        String result;
-        if (query.getResultAlias() == null) {
-            if(key == null) {
-                result = escapeObjectName(objectName) + "." + query.getAttribute();
-            } else {
-                result = escapeObjectName(objectName) + "." + query.getAttribute() + "." + key;
-            }
-        } else {
-            result = resolveExpression(query.getResultAlias(), objectName);
+    	String resultAlias = query.getResultAlias();
+        if (resultAlias == null || resultAlias.isEmpty()) {
+        	return queryAliasFactory.valueOf(query, objectName, key);
         }
-        return result;
+        return resolveExpression(query.getResultAlias(), objectName);
     }
 
     /**
@@ -177,7 +186,7 @@ public class ResultNameStrategy {
                         logger.log(Level.WARNING, "Error evaluating expression '" + key + "'", e);
                     }
                 }
-                appendEscapedNonAlphaNumericChars(value, false, result);
+                StringUtils2.appendEscapedNonAlphaNumericChars(value, false, result);
                 position = endingSeparatorPosition + 1;
 
             } else {
@@ -209,7 +218,7 @@ public class ResultNameStrategy {
                 if (value == null) {
                     value = "null";
                 }
-                appendEscapedNonAlphaNumericChars(value, result);
+                StringUtils2.appendEscapedNonAlphaNumericChars(value, result);
                 position = endingSeparatorPosition + 1;
             } else if (c == '#') {
                 int beginningSeparatorPosition = position;
@@ -231,7 +240,7 @@ public class ResultNameStrategy {
                         logger.log(Level.WARNING, "Error evaluating expression '" + key + "'", e);
                     }
                 }
-                appendEscapedNonAlphaNumericChars(value, false, result);
+                StringUtils2.appendEscapedNonAlphaNumericChars(value, false, result);
                 position = endingSeparatorPosition + 1;
 
             } else {
@@ -243,66 +252,6 @@ public class ResultNameStrategy {
             logger.log(Level.FINEST, "resolveExpression(" + expression + ", " + exactObjectName + "): " + result);
 
         return result.toString();
-    }
-
-    /**
-     * Transforms an {@linkplain javax.management.ObjectName} into a plain {@linkplain String} only composed of (a->Z, A-Z, '_').
-     * <p/>
-     * '_' is the escape char for not compliant chars.
-     */
-    protected String escapeObjectName(@Nonnull ObjectName objectName) {
-        StringBuilder result = new StringBuilder();
-        appendEscapedNonAlphaNumericChars(objectName.getDomain(), result);
-        result.append('.');
-        List<String> keys = Collections.list(objectName.getKeyPropertyList().keys());
-        Collections.sort(keys);
-        for (Iterator<String> it = keys.iterator(); it.hasNext(); ) {
-            String key = it.next();
-            appendEscapedNonAlphaNumericChars(key, result);
-            result.append("__");
-            appendEscapedNonAlphaNumericChars(objectName.getKeyProperty(key), result);
-            if (it.hasNext()) {
-                result.append('.');
-            }
-        }
-        if (logger.isLoggable(Level.FINEST))
-            logger.log(Level.FINEST, "escapeObjectName(" + objectName + "): " + result);
-        return result.toString();
-    }
-
-    /**
-     * Escape all non a->z,A->Z, 0->9 and '-' with a '_'.
-     *
-     * @param str    the string to escape
-     * @param result the {@linkplain StringBuilder} in which the escaped string is appended
-     */
-    private void appendEscapedNonAlphaNumericChars(String str, StringBuilder result) {
-        appendEscapedNonAlphaNumericChars(str, true, result);
-    }
-
-    /**
-     * Escape all non a->z,A->Z, 0->9 and '-' with a '_'.
-     * <p/>
-     * '.' is escaped with a '_' if {@code escapeDot} is <code>true</code>.
-     *
-     * @param str       the string to escape
-     * @param escapeDot indicates whether '.' should be escaped into '_' or not.
-     * @param result    the {@linkplain StringBuilder} in which the escaped string is appended
-     */
-    private void appendEscapedNonAlphaNumericChars(@Nonnull String str, boolean escapeDot, @Nonnull StringBuilder result) {
-        char[] chars = str.toCharArray();
-        for (int i = 0; i < chars.length; i++) {
-            char ch = chars[i];
-            if (Character.isLetter(ch) || Character.isDigit(ch) || ch == '-') {
-                result.append(ch);
-            } else if (ch == '.') {
-                result.append(escapeDot ? '_' : ch);
-            } else if (ch == '"' && ((i == 0) || (i == chars.length - 1))) {
-                // ignore starting and ending '"' that are used to quote() objectname's values (see ObjectName.value())
-            } else {
-                result.append('_');
-            }
-        }
     }
 
     /**
