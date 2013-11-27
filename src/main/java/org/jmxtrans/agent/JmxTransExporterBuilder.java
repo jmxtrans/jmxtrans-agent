@@ -36,6 +36,8 @@ import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.jmxtrans.agent.aliasing.DefaultQueryAliasFactory;
+import org.jmxtrans.agent.aliasing.QueryAliasFactory;
 import org.jmxtrans.agent.util.InstanceFactory;
 import org.jmxtrans.agent.util.PropertyPlaceholderResolver;
 import org.w3c.dom.Document;
@@ -51,6 +53,7 @@ public class JmxTransExporterBuilder {
 
     private Logger logger = Logger.getLogger(getClass().getName());
     private PropertyPlaceholderResolver placeholderResolver = new PropertyPlaceholderResolver();
+	private ResultNameStrategy resultNameStrategy;
 
     public JmxTransExporter build(String configurationFilePath) throws Exception {
         if (configurationFilePath == null) {
@@ -108,6 +111,9 @@ public class JmxTransExporterBuilder {
 
         }
 
+        QueryAliasFactory queryAliasFactory = loadCustomQueryAliasFactoryIfSet(rootElement);
+        createResultNameStrategy(queryAliasFactory);
+        
         buildInvocations(rootElement, jmxTransExporter);
         buildQueries(rootElement, jmxTransExporter);
 
@@ -116,7 +122,36 @@ public class JmxTransExporterBuilder {
         return jmxTransExporter;
     }
 
-    private void buildQueries(Element rootElement, JmxTransExporter jmxTransExporter) {
+    private QueryAliasFactory loadCustomQueryAliasFactoryIfSet(Element rootElement) {
+    	NodeList queryAliasFactoryNodeList = rootElement.getElementsByTagName("queryAliasFactory");
+        if (queryAliasFactoryNodeList.getLength() == 0) {
+        	return null;
+        } else if (queryAliasFactoryNodeList.getLength() == 1) {
+        	return loadQueryAliasFactory(queryAliasFactoryNodeList);
+        } 
+        logger.warning("More than 1 <queryAliasFactory> element found (" + queryAliasFactoryNodeList.getLength() + "), use latest");
+        return loadQueryAliasFactory(queryAliasFactoryNodeList);
+	}
+
+	private QueryAliasFactory loadQueryAliasFactory(NodeList queryAliasFactoryNodeList) {
+		Element lastQueryAliasFactoryElement = (Element) queryAliasFactoryNodeList.item(queryAliasFactoryNodeList.getLength() - 1);
+		String resultAliasFactoryClassName = lastQueryAliasFactoryElement.getAttribute("class");
+        if (resultAliasFactoryClassName.isEmpty()) {
+            throw new IllegalArgumentException("<queryAliasFactory> element must contain a 'class' attribute");
+        }
+		InstanceFactory<QueryAliasFactory> resultAliasFactoryInstanceFactory = new InstanceFactory<QueryAliasFactory>();
+		return resultAliasFactoryInstanceFactory.newInstanceOf(resultAliasFactoryClassName);
+	}
+
+    private void createResultNameStrategy(QueryAliasFactory queryAliasFactory) {
+    	if (queryAliasFactory == null) {
+    		resultNameStrategy = new ResultNameStrategy(DefaultQueryAliasFactory.INSTANCE);
+    	} else {
+    		resultNameStrategy = new ResultNameStrategy(queryAliasFactory);
+    	}
+    }
+
+	private void buildQueries(Element rootElement, JmxTransExporter jmxTransExporter) {
         NodeList queries = rootElement.getElementsByTagName("query");
         for (int i = 0; i < queries.getLength(); i++) {
             Element queryElement = (Element) queries.item(i);
@@ -134,7 +169,7 @@ public class JmxTransExporterBuilder {
 
             }
 
-            jmxTransExporter.withQuery(objectName, attribute, key, position, type, resultAlias);
+            jmxTransExporter.withQuery(objectName, attribute, key, position, type, resultAlias, resultNameStrategy);
         }
     }
 

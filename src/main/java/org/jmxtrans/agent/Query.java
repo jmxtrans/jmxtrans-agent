@@ -48,7 +48,7 @@ public class Query {
     private final Logger logger = Logger.getLogger(getClass().getName());
 
     @Nonnull
-    protected ResultNameStrategy resultNameStrategy = new ResultNameStrategy();
+    private final ResultNameStrategy resultNameStrategy;
 
     @Nonnull
     protected final ObjectName objectName;
@@ -75,25 +75,21 @@ public class Query {
     @Nullable
     private String type;
 
-    /**
-     * @see #Query(String, String, String, Integer, String, String)
-     */
-    public Query(@Nonnull String objectName, @Nonnull String attribute) {
-        this(objectName, attribute, null, null, null, attribute);
+    /** ONLY USED FOR TESTING **/
+    Query(@Nonnull String objectName, @Nonnull String attribute, @Nonnull ResultNameStrategy resultNameStrategy) {
+        this(objectName, attribute, null, null, null, attribute, resultNameStrategy);
     }
 
-    /**
-     * @see #Query(String, String, String, Integer, String, String)
-     */
-    public Query(@Nonnull String objectName, @Nonnull String attribute, int position) {
-        this(objectName, attribute, null, position, null, attribute);
+    /** ONLY USED FOR TESTING **/
+    Query(@Nonnull String objectName, @Nonnull String attribute, int position, 
+    		@Nonnull ResultNameStrategy resultNameStrategy) {
+        this(objectName, attribute, null, position, null, attribute, resultNameStrategy);
     }
 
-    /**
-     * @see #Query(String, String, String, Integer, String, String)
-     */
-    public Query(@Nonnull String objectName, @Nonnull String attribute, @Nullable String resultAlias) {
-        this(objectName, attribute, null, null, null, resultAlias);
+    /** ONLY USED FOR TESTING **/
+    Query(@Nonnull String objectName, @Nonnull String attribute, @Nullable String resultAlias, 
+    		@Nonnull ResultNameStrategy resultNameStrategy) {
+        this(objectName, attribute, null, null, null, resultAlias, resultNameStrategy);
     }
 
     /**
@@ -105,9 +101,10 @@ public class Query {
      * @param position    if the returned value is a {@link java.util.Collection} or an array, the position of the entry to lookup.
      * @param type        type of the metric ('counter', 'gauge', ...)
      * @param resultAlias
+     * @param resultNameStrategy The {@link ResultNameStrategy}} to be (re)used for naming results.
      */
     public Query(@Nonnull String objectName, @Nonnull String attribute, @Nullable String key, @Nullable Integer position,
-                 @Nullable String type, @Nullable String resultAlias) {
+                 @Nullable String type, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
         try {
             this.objectName = new ObjectName(Preconditions2.checkNotNull(objectName));
         } catch (MalformedObjectNameException e) {
@@ -118,6 +115,7 @@ public class Query {
         this.resultAlias = resultAlias;
         this.position = position;
         this.type = type;
+        this.resultNameStrategy = resultNameStrategy;
     }
 
     public void collectAndExport(@Nonnull MBeanServer mbeanServer, @Nonnull OutputWriter outputWriter) {
