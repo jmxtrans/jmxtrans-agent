@@ -23,13 +23,6 @@
  */
 package org.jmxtrans.agent;
 
-import org.jmxtrans.agent.util.PropertyPlaceholderResolver;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
@@ -39,6 +32,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.jmxtrans.agent.util.PropertyPlaceholderResolver;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 /**
  * XML configuration parser.
@@ -121,7 +122,7 @@ public class JmxTransExporterBuilder {
             String objectName = queryElement.getAttribute("objectName");
             String attribute = queryElement.getAttribute("attribute");
             String key = queryElement.hasAttribute("key") ? queryElement.getAttribute("key") : null;
-            String resultAlias = queryElement.getAttribute("resultAlias");
+            String resultAlias = queryElement.hasAttribute("resultAlias") ? queryElement.getAttribute("resultAlias") : null;
             String type = queryElement.getAttribute("type");
             Integer position;
             try {

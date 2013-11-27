@@ -23,8 +23,12 @@
  */
 package org.jmxtrans.agent;
 
-import org.jmxtrans.agent.util.Preconditions2;
-import org.jmxtrans.agent.util.collect.Iterables2;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -32,13 +36,9 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.jmxtrans.agent.util.Preconditions2;
+import org.jmxtrans.agent.util.collect.Iterables2;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
@@ -52,7 +52,7 @@ public class Query {
 
     @Nonnull
     protected final ObjectName objectName;
-    @Nonnull
+    @Nullable
     protected final String resultAlias;
     /**
      * The attribute to retrieve ({@link MBeanServer#getAttribute(javax.management.ObjectName, String)})
@@ -92,7 +92,7 @@ public class Query {
     /**
      * @see #Query(String, String, String, Integer, String, String)
      */
-    public Query(@Nonnull String objectName, @Nonnull String attribute, @Nonnull String resultAlias) {
+    public Query(@Nonnull String objectName, @Nonnull String attribute, @Nullable String resultAlias) {
         this(objectName, attribute, null, null, null, resultAlias);
     }
 
@@ -107,7 +107,7 @@ public class Query {
      * @param resultAlias
      */
     public Query(@Nonnull String objectName, @Nonnull String attribute, @Nullable String key, @Nullable Integer position,
-                 @Nullable String type, @Nonnull String resultAlias) {
+                 @Nullable String type, @Nullable String resultAlias) {
         try {
             this.objectName = new ObjectName(Preconditions2.checkNotNull(objectName));
         } catch (MalformedObjectNameException e) {
@@ -115,7 +115,7 @@ public class Query {
         }
         this.attribute = Preconditions2.checkNotNull(attribute);
         this.key = key;
-        this.resultAlias = Preconditions2.checkNotNull(resultAlias);
+        this.resultAlias = resultAlias;
         this.position = position;
         this.type = type;
     }
@@ -190,7 +190,7 @@ public class Query {
         return objectName;
     }
 
-    @Nonnull
+    @Nullable
     public String getResultAlias() {
         return resultAlias;
     }
