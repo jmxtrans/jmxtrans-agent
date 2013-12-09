@@ -1,0 +1,64 @@
+<!--
+ ~ Copyright (c) 2010-2013 the original author or authors
+ ~
+ ~ Permission is hereby granted, free of charge, to any person obtaining
+ ~ a copy of this software and associated documentation files (the
+ ~ "Software"), to deal in the Software without restriction, including
+ ~ without limitation the rights to use, copy, modify, merge, publish,
+ ~ distribute, sublicense, and/or sell copies of the Software, and to
+ ~ permit persons to whom the Software is furnished to do so, subject to
+ ~ the following conditions:
+ ~
+ ~ The above copyright notice and this permission notice shall be
+ ~ included in all copies or substantial portions of the Software.
+ ~
+ ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ ~ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ ~ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ ~ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ ~ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ ~ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ ~ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ ~
+-->
+<jmxtrans-agent>
+    <queries>
+        <!-- OS -->
+        <query objectName="java.lang:type=OperatingSystem" attribute="SystemLoadAverage"
+               resultAlias="os.systemLoadAverage"/>
+
+        <!-- JVM -->
+        <query objectName="java.lang:type=Memory" attribute="HeapMemoryUsage" key="used"
+               resultAlias="jvm.heapMemoryUsage.used"/>
+        <query objectName="java.lang:type=Memory" attribute="HeapMemoryUsage" key="committed"
+               resultAlias="jvm.heapMemoryUsage.committed"/>
+        <query objectName="java.lang:type=Memory" attribute="NonHeapMemoryUsage" key="used"
+               resultAlias="jvm.nonHeapMemoryUsage.used"/>
+        <query objectName="java.lang:type=Memory" attribute="NonHeapMemoryUsage" key="committed"
+               resultAlias="jvm.nonHeapMemoryUsage.committed"/>
+        <query objectName="java.lang:type=ClassLoading" attribute="LoadedClassCount" resultAlias="jvm.loadedClasses"/>
+
+        <query objectName="java.lang:type=Threading" attribute="ThreadCount" resultAlias="jvm.thread"/>
+
+        <!-- ACTIVE MQ -->
+        <query objectName="org.apache.activemq:type=Broker,brokerName=*,destinationType=Queue,destinationName=*"
+               attribute="QueueSize" resultAlias="activemq.%brokerName%.queue.%destinationName%.QueueSize"/>
+        <query objectName="org.apache.activemq:type=Broker,brokerName=*,destinationType=Queue,destinationName=*"
+               attribute="EnqueueCount" resultAlias="activemq.%brokerName%.queue.%destinationName%.EnqueueCount"/>
+        <query objectName="org.apache.activemq:type=Broker,brokerName=*,destinationType=Queue,destinationName=*"
+               attribute="ExpiredCount" resultAlias="activemq.%brokerName%.queue.%destinationName%.ExpiredCount"/>
+        <query objectName="org.apache.activemq:type=Broker,brokerName=*,destinationType=Queue,destinationName=*"
+               attribute="DequeueCount" resultAlias="activemq.%brokerName%.queue.%destinationName%.DequeueCount"/>
+
+        <query objectName="org.apache.activemq:type=Broker,brokerName=*,destinationType=Topic,destinationName=*"
+               attribute="EnqueueCount" resultAlias="activemq.%brokerName%.topic.%destinationName%.EnqueueCount"/>
+    </queries>
+    <outputWriter class="org.jmxtrans.agent.GraphitePlainTextTcpOutputWriter">
+        <host>localhost</host>
+        <port>2203</port>
+        <namePrefix>app_123456.server.i876543.</namePrefix>
+    </outputWriter>
+    <outputWriter class="org.jmxtrans.agent.ConsoleOutputWriter">
+        <enabled>true</enabled>
+    </outputWriter>
+</jmxtrans-agent>
