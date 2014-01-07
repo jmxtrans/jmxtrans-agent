@@ -233,3 +233,7 @@ ACTIVEMQ_OPTS="$ACTIVEMQ_OPTS $JMXTRANS_AGENT"
     </outputWriter>
 </jmxtrans-agent>
 ```
+
+# Release Notes
+
+See https://github.com/jmxtrans/jmxtrans-agent/releases
