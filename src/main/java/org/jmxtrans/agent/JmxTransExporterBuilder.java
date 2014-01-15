@@ -46,14 +46,14 @@ import org.w3c.dom.NodeList;
 
 /**
  * XML configuration parser.
- *
+ * 
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public class JmxTransExporterBuilder {
 
     private Logger logger = Logger.getLogger(getClass().getName());
     private PropertyPlaceholderResolver placeholderResolver = new PropertyPlaceholderResolver();
-	private ResultNameStrategy resultNameStrategy;
+    private ResultNameStrategy resultNameStrategy;
 
     public JmxTransExporter build(String configurationFilePath) throws Exception {
         if (configurationFilePath == null) {
@@ -66,10 +66,8 @@ public class JmxTransExporterBuilder {
             String classpathResourcePath = configurationFilePath.substring("classpath:".length());
             InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(classpathResourcePath);
             document = dBuilder.parse(in);
-        } else if (configurationFilePath.toLowerCase().startsWith("file://") ||
-                configurationFilePath.toLowerCase().startsWith("http://") ||
-                configurationFilePath.toLowerCase().startsWith("https://")
-                ) {
+        } else if (configurationFilePath.toLowerCase().startsWith("file://") || configurationFilePath.toLowerCase().startsWith("http://")
+                || configurationFilePath.toLowerCase().startsWith("https://")) {
             URL url = new URL(configurationFilePath);
             document = dBuilder.parse(url.openStream());
         } else {
@@ -113,7 +111,7 @@ public class JmxTransExporterBuilder {
 
         QueryAliasFactory queryAliasFactory = loadCustomQueryAliasFactoryIfSet(rootElement);
         createResultNameStrategy(queryAliasFactory);
-        
+
         buildInvocations(rootElement, jmxTransExporter);
         buildQueries(rootElement, jmxTransExporter);
 
@@ -123,35 +121,44 @@ public class JmxTransExporterBuilder {
     }
 
     private QueryAliasFactory loadCustomQueryAliasFactoryIfSet(Element rootElement) {
-    	NodeList queryAliasFactoryNodeList = rootElement.getElementsByTagName("queryAliasFactory");
+        NodeList queryAliasFactoryNodeList = rootElement.getElementsByTagName("queryAliasFactory");
         if (queryAliasFactoryNodeList.getLength() == 0) {
-        	return null;
+            return null;
         } else if (queryAliasFactoryNodeList.getLength() == 1) {
-        	return loadQueryAliasFactory(queryAliasFactoryNodeList);
-        } 
+            return loadQueryAliasFactory(queryAliasFactoryNodeList);
+        }
         logger.warning("More than 1 <queryAliasFactory> element found (" + queryAliasFactoryNodeList.getLength() + "), use latest");
         return loadQueryAliasFactory(queryAliasFactoryNodeList);
-	}
+    }
 
-	private QueryAliasFactory loadQueryAliasFactory(NodeList queryAliasFactoryNodeList) {
-		Element lastQueryAliasFactoryElement = (Element) queryAliasFactoryNodeList.item(queryAliasFactoryNodeList.getLength() - 1);
-		String resultAliasFactoryClassName = lastQueryAliasFactoryElement.getAttribute("class");
+    private QueryAliasFactory loadQueryAliasFactory(NodeList queryAliasFactoryNodeList) {
+        Element lastQueryAliasFactoryElement = (Element) queryAliasFactoryNodeList.item(queryAliasFactoryNodeList.getLength() - 1);
+        String resultAliasFactoryClassName = lastQueryAliasFactoryElement.getAttribute("class");
         if (resultAliasFactoryClassName.isEmpty()) {
             throw new IllegalArgumentException("<queryAliasFactory> element must contain a 'class' attribute");
         }
-		InstanceFactory<QueryAliasFactory> resultAliasFactoryInstanceFactory = new InstanceFactory<QueryAliasFactory>();
-		return resultAliasFactoryInstanceFactory.newInstanceOf(resultAliasFactoryClassName);
-	}
+        InstanceFactory<QueryAliasFactory> resultAliasFactoryInstanceFactory = new InstanceFactory<QueryAliasFactory>();
+        QueryAliasFactory queryAliasFactory = resultAliasFactoryInstanceFactory.newInstanceOf(resultAliasFactoryClassName);
 
-    private void createResultNameStrategy(QueryAliasFactory queryAliasFactory) {
-    	if (queryAliasFactory == null) {
-    		resultNameStrategy = new ResultNameStrategy(DefaultQueryAliasFactory.INSTANCE);
-    	} else {
-    		resultNameStrategy = new ResultNameStrategy(queryAliasFactory);
-    	}
+        Map<String, String> settings = new HashMap<String, String>();
+        NodeList settingsNodeList = lastQueryAliasFactoryElement.getElementsByTagName("*");
+        for (int j = 0; j < settingsNodeList.getLength(); j++) {
+            Element settingElement = (Element) settingsNodeList.item(j);
+            settings.put(settingElement.getNodeName(), placeholderResolver.resolveString(settingElement.getTextContent()));
+        }
+        queryAliasFactory.postConstruct(settings);
+        return queryAliasFactory;
     }
 
-	private void buildQueries(Element rootElement, JmxTransExporter jmxTransExporter) {
+    private void createResultNameStrategy(QueryAliasFactory queryAliasFactory) {
+        if (queryAliasFactory == null) {
+            resultNameStrategy = new ResultNameStrategy(DefaultQueryAliasFactory.INSTANCE);
+        } else {
+            resultNameStrategy = new ResultNameStrategy(queryAliasFactory);
+        }
+    }
+
+    private void buildQueries(Element rootElement, JmxTransExporter jmxTransExporter) {
         NodeList queries = rootElement.getElementsByTagName("query");
         for (int i = 0; i < queries.getLength(); i++) {
             Element queryElement = (Element) queries.item(i);
@@ -164,8 +171,8 @@ public class JmxTransExporterBuilder {
             try {
                 position = queryElement.hasAttribute("position") ? Integer.parseInt(queryElement.getAttribute("position")) : null;
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Invalid 'position' attribute for query objectName=" + objectName +
-                        ", attribute=" + attribute + ", resultAlias=" + resultAlias);
+                throw new IllegalArgumentException("Invalid 'position' attribute for query objectName=" + objectName + ", attribute=" + attribute + ", resultAlias="
+                        + resultAlias);
 
             }
 
@@ -189,7 +196,7 @@ public class JmxTransExporterBuilder {
         NodeList outputWriterNodeList = rootElement.getElementsByTagName("outputWriter");
         List<OutputWriter> outputWriters = new ArrayList<OutputWriter>();
         InstanceFactory<OutputWriter> outputWriterInstanceFactory = new InstanceFactory<OutputWriter>();
-        
+
         for (int i = 0; i < outputWriterNodeList.getLength(); i++) {
             Element outputWriterElement = (Element) outputWriterNodeList.item(i);
             String outputWriterClass = outputWriterElement.getAttribute("class");
