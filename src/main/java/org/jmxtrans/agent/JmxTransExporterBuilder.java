@@ -140,14 +140,19 @@ public class JmxTransExporterBuilder {
         InstanceFactory<QueryAliasFactory> resultAliasFactoryInstanceFactory = new InstanceFactory<QueryAliasFactory>();
         QueryAliasFactory queryAliasFactory = resultAliasFactoryInstanceFactory.newInstanceOf(resultAliasFactoryClassName);
 
+        Map<String, String> settings = getSettingsFrom(lastQueryAliasFactoryElement);
+        queryAliasFactory.postConstruct(settings);
+        return queryAliasFactory;
+    }
+
+    private Map<String, String> getSettingsFrom(Element element) {
         Map<String, String> settings = new HashMap<String, String>();
-        NodeList settingsNodeList = lastQueryAliasFactoryElement.getElementsByTagName("*");
+        NodeList settingsNodeList = element.getElementsByTagName("*");
         for (int j = 0; j < settingsNodeList.getLength(); j++) {
             Element settingElement = (Element) settingsNodeList.item(j);
             settings.put(settingElement.getNodeName(), placeholderResolver.resolveString(settingElement.getTextContent()));
         }
-        queryAliasFactory.postConstruct(settings);
-        return queryAliasFactory;
+        return settings;
     }
 
     private void createResultNameStrategy(QueryAliasFactory queryAliasFactory) {
@@ -204,13 +209,9 @@ public class JmxTransExporterBuilder {
                 throw new IllegalArgumentException("<outputWriter> element must contain a 'class' attribute");
             }
             OutputWriter outputWriter = outputWriterInstanceFactory.newInstanceOf(outputWriterClass);
-            Map<String, String> settings = new HashMap<String, String>();
-            NodeList settingsNodeList = outputWriterElement.getElementsByTagName("*");
-            for (int j = 0; j < settingsNodeList.getLength(); j++) {
-                Element settingElement = (Element) settingsNodeList.item(j);
-                settings.put(settingElement.getNodeName(), placeholderResolver.resolveString(settingElement.getTextContent()));
-            }
             outputWriter = new OutputWriterCircuitBreakerDecorator(outputWriter);
+
+            Map<String, String> settings = getSettingsFrom(outputWriterElement);
             outputWriter.postConstruct(settings);
             outputWriters.add(outputWriter);
         }
