@@ -159,7 +159,7 @@ public class QueryAttribute {
                 String resultName = resultNameStrategy.getResultName(getQuery(), objectName, this, key);
                 Object compositeValue = compositeData.get(key);
                 if (compositeValue instanceof Number || compositeValue instanceof String || compositeValue instanceof Date) {
-                    QueryResult result = new QueryResult(resultName, compositeValue, epochInMillis);
+                    QueryResult result = new QueryResult(resultName, getType(), compositeValue, epochInMillis);
                     logger.debug("Collect {}", result);
                     results.add(result);
                     metricsCounter++;
@@ -172,7 +172,7 @@ public class QueryAttribute {
                 logger.info("Ignore keys configured for 'simple' jmx attribute. {}:{}:{}", getQuery(), objectName, this);
             }
             String resultName = resultNameStrategy.getResultName(getQuery(), objectName, this);
-            QueryResult result = new QueryResult(resultName, value, epochInMillis);
+            QueryResult result = new QueryResult(resultName, getType(), value, epochInMillis);
             logger.debug("Collect {}", result);
             results.add(result);
             metricsCounter++;
