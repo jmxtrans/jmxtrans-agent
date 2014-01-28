@@ -23,8 +23,12 @@
  */
 package org.jmxtrans.agent;
 
-import org.jmxtrans.agent.util.Preconditions2;
-import org.jmxtrans.agent.util.collect.Iterables2;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -32,13 +36,9 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.jmxtrans.agent.util.Preconditions2;
+import org.jmxtrans.agent.util.collect.Iterables2;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
@@ -48,11 +48,11 @@ public class Query {
     private final Logger logger = Logger.getLogger(getClass().getName());
 
     @Nonnull
-    protected ResultNameStrategy resultNameStrategy = new ResultNameStrategy();
+    private final ResultNameStrategy resultNameStrategy;
 
     @Nonnull
     protected final ObjectName objectName;
-    @Nonnull
+    @Nullable
     protected final String resultAlias;
     /**
      * The attribute to retrieve ({@link MBeanServer#getAttribute(javax.management.ObjectName, String)})
@@ -75,25 +75,21 @@ public class Query {
     @Nullable
     private String type;
 
-    /**
-     * @see #Query(String, String, String, Integer, String, String)
-     */
-    public Query(@Nonnull String objectName, @Nonnull String attribute) {
-        this(objectName, attribute, null, null, null, attribute);
+    /** ONLY USED FOR TESTING **/
+    Query(@Nonnull String objectName, @Nonnull String attribute, @Nonnull ResultNameStrategy resultNameStrategy) {
+        this(objectName, attribute, null, null, null, attribute, resultNameStrategy);
     }
 
-    /**
-     * @see #Query(String, String, String, Integer, String, String)
-     */
-    public Query(@Nonnull String objectName, @Nonnull String attribute, int position) {
-        this(objectName, attribute, null, position, null, attribute);
+    /** ONLY USED FOR TESTING **/
+    Query(@Nonnull String objectName, @Nonnull String attribute, int position, 
+    		@Nonnull ResultNameStrategy resultNameStrategy) {
+        this(objectName, attribute, null, position, null, attribute, resultNameStrategy);
     }
 
-    /**
-     * @see #Query(String, String, String, Integer, String, String)
-     */
-    public Query(@Nonnull String objectName, @Nonnull String attribute, @Nonnull String resultAlias) {
-        this(objectName, attribute, null, null, null, resultAlias);
+    /** ONLY USED FOR TESTING **/
+    Query(@Nonnull String objectName, @Nonnull String attribute, @Nullable String resultAlias, 
+    		@Nonnull ResultNameStrategy resultNameStrategy) {
+        this(objectName, attribute, null, null, null, resultAlias, resultNameStrategy);
     }
 
     /**
@@ -105,9 +101,10 @@ public class Query {
      * @param position    if the returned value is a {@link java.util.Collection} or an array, the position of the entry to lookup.
      * @param type        type of the metric ('counter', 'gauge', ...)
      * @param resultAlias
+     * @param resultNameStrategy The {@link ResultNameStrategy}} to be (re)used for naming results.
      */
     public Query(@Nonnull String objectName, @Nonnull String attribute, @Nullable String key, @Nullable Integer position,
-                 @Nullable String type, @Nonnull String resultAlias) {
+                 @Nullable String type, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
         try {
             this.objectName = new ObjectName(Preconditions2.checkNotNull(objectName));
         } catch (MalformedObjectNameException e) {
@@ -115,9 +112,10 @@ public class Query {
         }
         this.attribute = Preconditions2.checkNotNull(attribute);
         this.key = key;
-        this.resultAlias = Preconditions2.checkNotNull(resultAlias);
+        this.resultAlias = resultAlias;
         this.position = position;
         this.type = type;
+        this.resultNameStrategy = resultNameStrategy;
     }
 
     public void collectAndExport(@Nonnull MBeanServer mbeanServer, @Nonnull OutputWriter outputWriter) {
@@ -190,7 +188,7 @@ public class Query {
         return objectName;
     }
 
-    @Nonnull
+    @Nullable
     public String getResultAlias() {
         return resultAlias;
     }

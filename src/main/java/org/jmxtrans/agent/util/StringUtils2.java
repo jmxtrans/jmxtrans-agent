@@ -23,9 +23,14 @@
  */
 package org.jmxtrans.agent.util;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.StringTokenizer;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
 
 /**
  * Yet another {@code StringUtils} class.
@@ -112,5 +117,40 @@ public class StringUtils2 {
         Collections.reverse(tokens);
 
         return join(tokens, delimiter);
+    }
+    
+    /**
+     * Escape all non a->z,A->Z, 0->9 and '-' with a '_'.
+     *
+     * @param str    the string to escape
+     * @param result the {@linkplain StringBuilder} in which the escaped string is appended
+     */
+    public static void appendEscapedNonAlphaNumericChars(String str, StringBuilder result) {
+        appendEscapedNonAlphaNumericChars(str, true, result);
+    }
+
+    /**
+     * Escape all non a->z,A->Z, 0->9 and '-' with a '_'.
+     * <p/>
+     * '.' is escaped with a '_' if {@code escapeDot} is <code>true</code>.
+     *
+     * @param str       the string to escape
+     * @param escapeDot indicates whether '.' should be escaped into '_' or not.
+     * @param result    the {@linkplain StringBuilder} in which the escaped string is appended
+     */
+    public static void appendEscapedNonAlphaNumericChars(@Nonnull String str, boolean escapeDot, @Nonnull StringBuilder result) {
+        char[] chars = str.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            char ch = chars[i];
+            if (Character.isLetter(ch) || Character.isDigit(ch) || ch == '-') {
+                result.append(ch);
+            } else if (ch == '.') {
+                result.append(escapeDot ? '_' : ch);
+            } else if (ch == '"' && ((i == 0) || (i == chars.length - 1))) {
+                // ignore starting and ending '"' that are used to quote() objectname's values (see ObjectName.value())
+            } else {
+                result.append('_');
+            }
+        }
     }
 }

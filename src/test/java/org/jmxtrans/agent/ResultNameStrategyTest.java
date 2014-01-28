@@ -23,13 +23,20 @@
  */
 package org.jmxtrans.agent;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 import javax.management.ObjectName;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import org.jmxtrans.agent.aliasing.QueryAliasFactory;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
@@ -40,16 +47,17 @@ public class ResultNameStrategyTest {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        strategy.registerExpressionEvaluator("hostname","tomcat1");
-        strategy.registerExpressionEvaluator("canonical_hostname","tomcat1.www.private.mycompany.com");
-        strategy.registerExpressionEvaluator("escaped_canonical_hostname","tomcat1_www_private_mycompany_com");
-        strategy.registerExpressionEvaluator("hostaddress","10.0.0.81");
-        strategy.registerExpressionEvaluator("escaped_hostaddress","10_0_0_81");
+        strategy.registerExpressionEvaluator("hostname", "tomcat1");
+        strategy.registerExpressionEvaluator("canonical_hostname", "tomcat1.www.private.mycompany.com");
+        strategy.registerExpressionEvaluator("escaped_canonical_hostname", "tomcat1_www_private_mycompany_com");
+        strategy.registerExpressionEvaluator("hostaddress", "10.0.0.81");
+        strategy.registerExpressionEvaluator("escaped_hostaddress", "10_0_0_81");
     }
 
-
     /**
-     * Test an expression with '#' based keywords (#hostname#) and with '%' based variables mapped to objectname properties.
+     * Test an expression with '#' based keywords (#hostname#) and with '%'
+     * based variables mapped to objectname properties.
+     * 
      * @throws Exception
      */
     @Test
@@ -66,24 +74,79 @@ public class ResultNameStrategyTest {
     }
 
     @Test
-    public void testEscapeObjectName1() throws Exception {
-        String objectName = "java.lang:type=GarbageCollector,name=PS Scavenge";
-        String actual = strategy.escapeObjectName(new ObjectName(objectName));
-        assertThat(actual, is("java_lang.name__PS_Scavenge.type__GarbageCollector"));
-    }
-
-    @Test
-    public void testEscapeObjectName2() throws Exception {
-        String objectName = "Catalina:type=Resource,resourcetype=Context,path=/,host=localhost,class=javax.sql.DataSource,name=\"jdbc/my-datasource\"";
-        String actual = strategy.escapeObjectName(new ObjectName(objectName));
-        assertThat(actual, is("Catalina.class__javax_sql_DataSource.host__localhost.name__jdbc_my-datasource.path___.resourcetype__Context.type__Resource"));
-    }
-
-    @Test
     public void testCanonicalHostNameDotsAreNotEscaped() throws Exception {
         ResultNameStrategy resultNameStrategy = new ResultNameStrategy();
         resultNameStrategy.registerExpressionEvaluator("canonical_hostname", "server1.mycompany.com");
         String actual = resultNameStrategy.resolveExpression("#canonical_hostname#");
         assertThat(actual, is("server1.mycompany.com"));
+    }
+
+    @Test
+    public void queryAliasFactoryIsUsedWhenResultAliasIsNull() {
+        QueryAliasFactory queryAliasFactory = mock(QueryAliasFactory.class);
+        when(queryAliasFactory.valueOf(any(Query.class), any(ObjectName.class), any(String.class))).thenReturn("");
+        ObjectName objectName = mock(ObjectName.class);
+        Query query = mock(Query.class);
+        when(query.getResultAlias()).thenReturn(null);
+
+        ResultNameStrategy strategyWithQueryAliasFactory = new ResultNameStrategy(queryAliasFactory);
+
+        strategyWithQueryAliasFactory.getResultName(query, objectName);
+        verify(queryAliasFactory, times(1)).valueOf(query, objectName, null);
+
+        strategyWithQueryAliasFactory.getResultName(query, objectName, "key");
+        verify(queryAliasFactory, times(1)).valueOf(query, objectName, "key");
+    }
+
+    @Test
+    public void queryAliasFactoryIsUsedWhenNotResultAliasIsEmpty() {
+        QueryAliasFactory queryAliasFactory = mock(QueryAliasFactory.class);
+        when(queryAliasFactory.valueOf(any(Query.class), any(ObjectName.class), any(String.class))).thenReturn("");
+        ObjectName objectName = mock(ObjectName.class);
+        Query query = mock(Query.class);
+        when(query.getResultAlias()).thenReturn("");
+
+        ResultNameStrategy strategyWithQueryAliasFactory = new ResultNameStrategy(queryAliasFactory);
+
+        strategyWithQueryAliasFactory.getResultName(query, objectName);
+        verify(queryAliasFactory, times(1)).valueOf(query, objectName, null);
+
+        strategyWithQueryAliasFactory.getResultName(query, objectName, "key");
+        verify(queryAliasFactory, times(1)).valueOf(query, objectName, "key");
+    }
+
+    @Test
+    public void queryAliasFactoryIsNotUsedWhenResultAliasIsSet() {
+        QueryAliasFactory queryAliasFactory = mock(QueryAliasFactory.class);
+        when(queryAliasFactory.valueOf(any(Query.class), any(ObjectName.class), any(String.class))).thenReturn("");
+        ObjectName objectName = mock(ObjectName.class);
+        Query query = mock(Query.class);
+        when(query.getResultAlias()).thenReturn("resultAlias");
+
+        ResultNameStrategy strategyWithQueryAliasFactory = new ResultNameStrategy(queryAliasFactory);
+
+        strategyWithQueryAliasFactory.getResultName(query, objectName);
+        strategyWithQueryAliasFactory.getResultName(query, objectName, "key");
+
+        verifyZeroInteractions(queryAliasFactory);
+    }
+
+    @Test
+    public void wildcardExpressionsAreResolvedWhenResultAliasIsAutoGenerated() {
+        QueryAliasFactory queryAliasFactory = mock(QueryAliasFactory.class);
+        when(queryAliasFactory.valueOf(any(Query.class), any(ObjectName.class), any(String.class))).thenReturn("");
+        ObjectName objectName = mock(ObjectName.class);
+        Query query = mock(Query.class);
+
+        when(queryAliasFactory.valueOf(query, objectName, null)).thenReturn("#wildcardA#.fromQueryAliasFactory.#wildcardB#");
+        when(queryAliasFactory.valueOf(query, objectName, "key")).thenReturn("#wildcardA#.fromQueryAliasFactory.#wildcardB#");
+
+        ResultNameStrategy strategyWithQueryAliasFactory = new ResultNameStrategy(queryAliasFactory);
+        strategyWithQueryAliasFactory.registerExpressionEvaluator("wildcardA", "start");
+        strategyWithQueryAliasFactory.registerExpressionEvaluator("wildcardB", "end");
+
+        assertThat(strategyWithQueryAliasFactory.getResultName(query, objectName), is("start.fromQueryAliasFactory.end"));
+        assertThat(strategyWithQueryAliasFactory.getResultName(query, objectName, null), is("start.fromQueryAliasFactory.end"));
+        assertThat(strategyWithQueryAliasFactory.getResultName(query, objectName, "key"), is("start.fromQueryAliasFactory.end"));
     }
 }

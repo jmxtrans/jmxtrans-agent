@@ -23,16 +23,21 @@
  */
 package org.jmxtrans.agent;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.management.MBeanServer;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
@@ -68,13 +73,15 @@ public class JmxTransExporter {
     private MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
     private ScheduledFuture scheduledFuture;
 
-    public JmxTransExporter withQuery(@Nonnull String objectName, @Nonnull String attribute, @Nullable String resultAlias) {
-        return withQuery(objectName, attribute, null, null, null, resultAlias);
+    public JmxTransExporter withQuery(@Nonnull String objectName, @Nonnull String attribute, @Nullable String resultAlias, 
+    		@Nonnull ResultNameStrategy resultNameStrategy) {
+        return withQuery(objectName, attribute, null, null, null, resultAlias, resultNameStrategy);
     }
 
     public JmxTransExporter withQuery(@Nonnull String objectName, @Nonnull String attribute, @Nullable String key,
-                                      @Nullable Integer position, @Nullable String type, @Nullable String resultAlias) {
-        queries.add(new Query(objectName, attribute, key, position, type, resultAlias));
+                                      @Nullable Integer position, @Nullable String type, @Nullable String resultAlias,
+                                      @Nonnull ResultNameStrategy resultNameStrategy) {
+        queries.add(new Query(objectName, attribute, key, position, type, resultAlias, resultNameStrategy));
         return this;
     }
     public JmxTransExporter withInvocation(@Nonnull String objectName, @Nonnull String operation, @Nullable String resultAlias) {

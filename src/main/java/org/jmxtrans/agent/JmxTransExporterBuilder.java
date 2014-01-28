@@ -23,13 +23,6 @@
  */
 package org.jmxtrans.agent;
 
-import org.jmxtrans.agent.util.PropertyPlaceholderResolver;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
@@ -40,15 +33,27 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.jmxtrans.agent.aliasing.DefaultQueryAliasFactory;
+import org.jmxtrans.agent.aliasing.QueryAliasFactory;
+import org.jmxtrans.agent.util.InstanceFactory;
+import org.jmxtrans.agent.util.PropertyPlaceholderResolver;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
 /**
  * XML configuration parser.
- *
+ * 
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public class JmxTransExporterBuilder {
 
     private Logger logger = Logger.getLogger(getClass().getName());
     private PropertyPlaceholderResolver placeholderResolver = new PropertyPlaceholderResolver();
+    private ResultNameStrategy resultNameStrategy;
 
     public JmxTransExporter build(String configurationFilePath) throws Exception {
         if (configurationFilePath == null) {
@@ -61,10 +66,8 @@ public class JmxTransExporterBuilder {
             String classpathResourcePath = configurationFilePath.substring("classpath:".length());
             InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(classpathResourcePath);
             document = dBuilder.parse(in);
-        } else if (configurationFilePath.toLowerCase().startsWith("file://") ||
-                configurationFilePath.toLowerCase().startsWith("http://") ||
-                configurationFilePath.toLowerCase().startsWith("https://")
-                ) {
+        } else if (configurationFilePath.toLowerCase().startsWith("file://") || configurationFilePath.toLowerCase().startsWith("http://")
+                || configurationFilePath.toLowerCase().startsWith("https://")) {
             URL url = new URL(configurationFilePath);
             document = dBuilder.parse(url.openStream());
         } else {
@@ -106,12 +109,58 @@ public class JmxTransExporterBuilder {
 
         }
 
+        QueryAliasFactory queryAliasFactory = loadCustomQueryAliasFactoryIfSet(rootElement);
+        createResultNameStrategy(queryAliasFactory);
+
         buildInvocations(rootElement, jmxTransExporter);
         buildQueries(rootElement, jmxTransExporter);
 
         buildOutputWriters(rootElement, jmxTransExporter);
 
         return jmxTransExporter;
+    }
+
+    private QueryAliasFactory loadCustomQueryAliasFactoryIfSet(Element rootElement) {
+        NodeList queryAliasFactoryNodeList = rootElement.getElementsByTagName("queryAliasFactory");
+        if (queryAliasFactoryNodeList.getLength() == 0) {
+            return null;
+        } else if (queryAliasFactoryNodeList.getLength() == 1) {
+            return loadQueryAliasFactory(queryAliasFactoryNodeList);
+        }
+        logger.warning("More than 1 <queryAliasFactory> element found (" + queryAliasFactoryNodeList.getLength() + "), use latest");
+        return loadQueryAliasFactory(queryAliasFactoryNodeList);
+    }
+
+    private QueryAliasFactory loadQueryAliasFactory(NodeList queryAliasFactoryNodeList) {
+        Element lastQueryAliasFactoryElement = (Element) queryAliasFactoryNodeList.item(queryAliasFactoryNodeList.getLength() - 1);
+        String resultAliasFactoryClassName = lastQueryAliasFactoryElement.getAttribute("class");
+        if (resultAliasFactoryClassName.isEmpty()) {
+            throw new IllegalArgumentException("<queryAliasFactory> element must contain a 'class' attribute");
+        }
+        InstanceFactory<QueryAliasFactory> resultAliasFactoryInstanceFactory = new InstanceFactory<QueryAliasFactory>();
+        QueryAliasFactory queryAliasFactory = resultAliasFactoryInstanceFactory.newInstanceOf(resultAliasFactoryClassName);
+
+        Map<String, String> settings = getSettingsFrom(lastQueryAliasFactoryElement);
+        queryAliasFactory.postConstruct(settings);
+        return queryAliasFactory;
+    }
+
+    private Map<String, String> getSettingsFrom(Element element) {
+        Map<String, String> settings = new HashMap<String, String>();
+        NodeList settingsNodeList = element.getElementsByTagName("*");
+        for (int j = 0; j < settingsNodeList.getLength(); j++) {
+            Element settingElement = (Element) settingsNodeList.item(j);
+            settings.put(settingElement.getNodeName(), placeholderResolver.resolveString(settingElement.getTextContent()));
+        }
+        return settings;
+    }
+
+    private void createResultNameStrategy(QueryAliasFactory queryAliasFactory) {
+        if (queryAliasFactory == null) {
+            resultNameStrategy = new ResultNameStrategy(DefaultQueryAliasFactory.INSTANCE);
+        } else {
+            resultNameStrategy = new ResultNameStrategy(queryAliasFactory);
+        }
     }
 
     private void buildQueries(Element rootElement, JmxTransExporter jmxTransExporter) {
@@ -121,18 +170,18 @@ public class JmxTransExporterBuilder {
             String objectName = queryElement.getAttribute("objectName");
             String attribute = queryElement.getAttribute("attribute");
             String key = queryElement.hasAttribute("key") ? queryElement.getAttribute("key") : null;
-            String resultAlias = queryElement.getAttribute("resultAlias");
+            String resultAlias = queryElement.hasAttribute("resultAlias") ? queryElement.getAttribute("resultAlias") : null;
             String type = queryElement.getAttribute("type");
             Integer position;
             try {
                 position = queryElement.hasAttribute("position") ? Integer.parseInt(queryElement.getAttribute("position")) : null;
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Invalid 'position' attribute for query objectName=" + objectName +
-                        ", attribute=" + attribute + ", resultAlias=" + resultAlias);
+                throw new IllegalArgumentException("Invalid 'position' attribute for query objectName=" + objectName + ", attribute=" + attribute + ", resultAlias="
+                        + resultAlias);
 
             }
 
-            jmxTransExporter.withQuery(objectName, attribute, key, position, type, resultAlias);
+            jmxTransExporter.withQuery(objectName, attribute, key, position, type, resultAlias, resultNameStrategy);
         }
     }
 
@@ -151,6 +200,7 @@ public class JmxTransExporterBuilder {
     private void buildOutputWriters(Element rootElement, JmxTransExporter jmxTransExporter) {
         NodeList outputWriterNodeList = rootElement.getElementsByTagName("outputWriter");
         List<OutputWriter> outputWriters = new ArrayList<OutputWriter>();
+        InstanceFactory<OutputWriter> outputWriterInstanceFactory = new InstanceFactory<OutputWriter>();
 
         for (int i = 0; i < outputWriterNodeList.getLength(); i++) {
             Element outputWriterElement = (Element) outputWriterNodeList.item(i);
@@ -158,22 +208,12 @@ public class JmxTransExporterBuilder {
             if (outputWriterClass.isEmpty()) {
                 throw new IllegalArgumentException("<outputWriter> element must contain a 'class' attribute");
             }
-            OutputWriter outputWriter;
-            try {
-                outputWriter = (OutputWriter) Class.forName(outputWriterClass).newInstance();
-                Map<String, String> settings = new HashMap<String, String>();
-                NodeList settingsNodeList = outputWriterElement.getElementsByTagName("*");
-                for (int j = 0; j < settingsNodeList.getLength(); j++) {
-                    Element settingElement = (Element) settingsNodeList.item(j);
-                    settings.put(settingElement.getNodeName(), placeholderResolver.resolveString(settingElement.getTextContent()));
-                }
-                outputWriter = new OutputWriterCircuitBreakerDecorator(outputWriter);
-                outputWriter.postConstruct(settings);
-                outputWriters.add(outputWriter);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Exception instantiating " + outputWriterClass, e);
-            }
+            OutputWriter outputWriter = outputWriterInstanceFactory.newInstanceOf(outputWriterClass);
+            outputWriter = new OutputWriterCircuitBreakerDecorator(outputWriter);
 
+            Map<String, String> settings = getSettingsFrom(outputWriterElement);
+            outputWriter.postConstruct(settings);
+            outputWriters.add(outputWriter);
         }
 
         switch (outputWriters.size()) {
