@@ -48,7 +48,7 @@ public class Query {
     private final Logger logger = Logger.getLogger(getClass().getName());
 
     @Nonnull
-    protected ResultNameStrategy resultNameStrategy = new ResultNameStrategy();
+    protected ResultNameStrategy resultNameStrategy = new ResultNameStrategyImpl();
 
     @Nonnull
     protected final ObjectName objectName;

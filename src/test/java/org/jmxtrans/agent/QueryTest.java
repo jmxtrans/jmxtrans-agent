@@ -89,7 +89,7 @@ public class QueryTest {
     @Test
     public void expression_language_substitutes_function() throws Exception {
         Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", "#hostname#.mock.CollectionUsageThreshold");
-        query.resultNameStrategy.registerExpressionEvaluator("hostname", "my-hostname");
+        ((ResultNameStrategyImpl)query.resultNameStrategy).registerExpressionEvaluator("hostname", "my-hostname");
         query.collectAndExport(mbeanServer, mockOutputWriter);
         Object actual = mockOutputWriter.resultsByName.get("my-hostname.mock.CollectionUsageThreshold");
         assertThat(actual, notNullValue());

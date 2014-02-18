@@ -36,7 +36,7 @@ import static org.junit.Assert.assertThat;
  */
 public class ResultNameStrategyTest {
 
-    static ResultNameStrategy strategy = new ResultNameStrategy();
+    static ResultNameStrategyImpl strategy = new ResultNameStrategyImpl();
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -81,7 +81,7 @@ public class ResultNameStrategyTest {
 
     @Test
     public void testCanonicalHostNameDotsAreNotEscaped() throws Exception {
-        ResultNameStrategy resultNameStrategy = new ResultNameStrategy();
+        ResultNameStrategyImpl resultNameStrategy = new ResultNameStrategyImpl();
         resultNameStrategy.registerExpressionEvaluator("canonical_hostname", "server1.mycompany.com");
         String actual = resultNameStrategy.resolveExpression("#canonical_hostname#");
         assertThat(actual, is("server1.mycompany.com"));
