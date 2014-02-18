@@ -30,7 +30,6 @@ import javax.annotation.Nullable;
 import javax.management.ObjectName;
 import java.net.InetAddress;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -95,34 +94,9 @@ import java.util.logging.Logger;
  */
 public class ResultNameStrategyImpl implements ResultNameStrategy {
 
-    private final Logger logger = Logger.getLogger(getClass().getName());
-    /**
-     * Function based evaluators for expressions like '#hostname#' or '#hostname_canonical#'
-     */
-    @Nonnull
-    private Map<String, Callable<String>> expressionEvaluators = new HashMap<String, Callable<String>>();
+    protected final Logger logger = Logger.getLogger(getClass().getName());
 
-    public ResultNameStrategyImpl() {
-        try {
-            InetAddress localHost = InetAddress.getLocalHost();
-            String hostName = localHost.getHostName();
-            String reversedHostName = StringUtils2.reverseTokens(hostName, ".");
-            String canonicalHostName = localHost.getCanonicalHostName();
-            String reversedCanonicalHostName = StringUtils2.reverseTokens(canonicalHostName, ".");
-            String hostAddress = localHost.getHostAddress();
-
-            registerExpressionEvaluator("hostname", hostName);
-            registerExpressionEvaluator("reversed_hostname", reversedHostName);
-            registerExpressionEvaluator("escaped_hostname", hostName.replaceAll("\\.", "_"));
-            registerExpressionEvaluator("canonical_hostname", canonicalHostName);
-            registerExpressionEvaluator("reversed_canonical_hostname", reversedCanonicalHostName);
-            registerExpressionEvaluator("escaped_canonical_hostname", canonicalHostName.replaceAll("\\.", "_"));
-            registerExpressionEvaluator("hostaddress", hostAddress);
-            registerExpressionEvaluator("escaped_hostaddress", hostAddress.replaceAll("\\.", "_"));
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Exception resolving localhost, expressions like #hostname#, #canonical_hostname# or #hostaddress# will not be available", e);
-        }
-    }
+    private ExpressionLanguageEngine expressionLanguageEngine = new ExpressionLanguageEngineImpl();
 
     @Nonnull
     @Override
@@ -141,113 +115,9 @@ public class ResultNameStrategyImpl implements ResultNameStrategy {
                 result = escapeObjectName(objectName) + "." + query.getAttribute() + "." + key;
             }
         } else {
-            result = resolveExpression(query.getResultAlias(), objectName);
+            result = expressionLanguageEngine.resolveExpression(query.getResultAlias(), objectName);
         }
         return result;
-    }
-
-    /**
-     * Replace all the '#' based keywords (e.g. <code>#hostname#</code>) by their value.
-     *
-     * @param expression the expression to resolve (e.g. <code>"servers.#hostname#."</code>)
-     * @return the resolved expression (e.g. <code>"servers.tomcat5"</code>)
-     */
-    @Override
-    @Nonnull
-    public String resolveExpression(@Nonnull String expression) {
-        StringBuilder result = new StringBuilder(expression.length());
-
-        int position = 0;
-        while (position < expression.length()) {
-            char c = expression.charAt(position);
-            if (c == '#') {
-                int beginningSeparatorPosition = position;
-                int endingSeparatorPosition = expression.indexOf('#', beginningSeparatorPosition + 1);
-                if (endingSeparatorPosition == -1) {
-                    throw new IllegalStateException("Invalid expression '" + expression + "', no ending '#' after beginning '#' at position " + beginningSeparatorPosition);
-                }
-                String key = expression.substring(beginningSeparatorPosition + 1, endingSeparatorPosition);
-                Callable<String> expressionProcessor = expressionEvaluators.get(key);
-                String value;
-                if (expressionProcessor == null) {
-                    value = "#unsupported_expression#";
-                    logger.info("Unsupported expression '" + key + "'");
-                } else {
-                    try {
-                        value = expressionProcessor.call();
-                    } catch (Exception e) {
-                        value = "#expression_error#";
-                        logger.log(Level.WARNING, "Error evaluating expression '" + key + "'", e);
-                    }
-                }
-                appendEscapedNonAlphaNumericChars(value, false, result);
-                position = endingSeparatorPosition + 1;
-
-            } else {
-                result.append(c);
-                position++;
-            }
-        }
-        if (logger.isLoggable(Level.FINEST))
-            logger.log(Level.FINEST, "resolveExpression(" + expression + "): " + result);
-        return result.toString();
-
-    }
-
-    @Override
-    @Nonnull
-    public String resolveExpression(@Nonnull String expression, @Nonnull ObjectName exactObjectName) {
-
-        StringBuilder result = new StringBuilder(expression.length());
-
-        int position = 0;
-        while (position < expression.length()) {
-            char c = expression.charAt(position);
-            if (c == '%') {
-                int beginningSeparatorPosition = position;
-                int endingSeparatorPosition = expression.indexOf('%', beginningSeparatorPosition + 1);
-                if (endingSeparatorPosition == -1) {
-                    throw new IllegalStateException("Invalid expression '" + expression + "', no ending '%' after beginning '%' at position " + beginningSeparatorPosition);
-                }
-                String key = expression.substring(beginningSeparatorPosition + 1, endingSeparatorPosition);
-                String value = exactObjectName.getKeyProperty(key);
-                if (value == null) {
-                    value = "null";
-                }
-                appendEscapedNonAlphaNumericChars(value, result);
-                position = endingSeparatorPosition + 1;
-            } else if (c == '#') {
-                int beginningSeparatorPosition = position;
-                int endingSeparatorPosition = expression.indexOf('#', beginningSeparatorPosition + 1);
-                if (endingSeparatorPosition == -1) {
-                    throw new IllegalStateException("Invalid expression '" + expression + "', no ending '#' after beginning '#' at position " + beginningSeparatorPosition);
-                }
-                String key = expression.substring(beginningSeparatorPosition + 1, endingSeparatorPosition);
-                Callable<String> expressionProcessor = expressionEvaluators.get(key);
-                String value;
-                if (expressionProcessor == null) {
-                    value = "#unsupported_expression#";
-                    logger.info("Unsupported expression '" + key + "'");
-                } else {
-                    try {
-                        value = expressionProcessor.call();
-                    } catch (Exception e) {
-                        value = "#expression_error#";
-                        logger.log(Level.WARNING, "Error evaluating expression '" + key + "'", e);
-                    }
-                }
-                appendEscapedNonAlphaNumericChars(value, false, result);
-                position = endingSeparatorPosition + 1;
-
-            } else {
-                result.append(c);
-                position++;
-            }
-        }
-        if (logger.isLoggable(Level.FINEST))
-            logger.log(Level.FINEST, "resolveExpression(" + expression + ", " + exactObjectName + "): " + result);
-
-        return result.toString();
     }
 
     /**
@@ -257,15 +127,15 @@ public class ResultNameStrategyImpl implements ResultNameStrategy {
      */
     protected String escapeObjectName(@Nonnull ObjectName objectName) {
         StringBuilder result = new StringBuilder();
-        appendEscapedNonAlphaNumericChars(objectName.getDomain(), result);
+        StringUtils2.appendEscapedNonAlphaNumericChars(objectName.getDomain(), result);
         result.append('.');
         List<String> keys = Collections.list(objectName.getKeyPropertyList().keys());
         Collections.sort(keys);
         for (Iterator<String> it = keys.iterator(); it.hasNext(); ) {
             String key = it.next();
-            appendEscapedNonAlphaNumericChars(key, result);
+            StringUtils2.appendEscapedNonAlphaNumericChars(key, result);
             result.append("__");
-            appendEscapedNonAlphaNumericChars(objectName.getKeyProperty(key), result);
+            StringUtils2.appendEscapedNonAlphaNumericChars(objectName.getKeyProperty(key), result);
             if (it.hasNext()) {
                 result.append('.');
             }
@@ -275,77 +145,11 @@ public class ResultNameStrategyImpl implements ResultNameStrategy {
         return result.toString();
     }
 
-    /**
-     * Escape all non a->z,A->Z, 0->9 and '-' with a '_'.
-     *
-     * @param str    the string to escape
-     * @param result the {@linkplain StringBuilder} in which the escaped string is appended
-     */
-    private void appendEscapedNonAlphaNumericChars(String str, StringBuilder result) {
-        appendEscapedNonAlphaNumericChars(str, true, result);
+    public ExpressionLanguageEngine getExpressionLanguageEngine() {
+        return expressionLanguageEngine;
     }
 
-    /**
-     * Escape all non a->z,A->Z, 0->9 and '-' with a '_'.
-     * <p/>
-     * '.' is escaped with a '_' if {@code escapeDot} is <code>true</code>.
-     *
-     * @param str       the string to escape
-     * @param escapeDot indicates whether '.' should be escaped into '_' or not.
-     * @param result    the {@linkplain StringBuilder} in which the escaped string is appended
-     */
-    private void appendEscapedNonAlphaNumericChars(@Nonnull String str, boolean escapeDot, @Nonnull StringBuilder result) {
-        char[] chars = str.toCharArray();
-        for (int i = 0; i < chars.length; i++) {
-            char ch = chars[i];
-            if (Character.isLetter(ch) || Character.isDigit(ch) || ch == '-') {
-                result.append(ch);
-            } else if (ch == '.') {
-                result.append(escapeDot ? '_' : ch);
-            } else if (ch == '"' && ((i == 0) || (i == chars.length - 1))) {
-                // ignore starting and ending '"' that are used to quote() objectname's values (see ObjectName.value())
-            } else {
-                result.append('_');
-            }
-        }
-    }
-
-    /**
-     * Registers an expression evaluator with a static value.
-     */
-    public void registerExpressionEvaluator(String expression, Callable<String> evaluator) {
-        expressionEvaluators.put(expression, evaluator);
-    }
-
-    /**
-     * Registers an expression evaluator with a static value.
-     */
-    public void registerExpressionEvaluator(String expression, String value) {
-        expressionEvaluators.put(expression, new StaticEvaluator(value));
-    }
-
-    @Nonnull
-    public Map<String, Callable<String>> getExpressionEvaluators() {
-        return expressionEvaluators;
-    }
-
-    public static class StaticEvaluator implements Callable<String> {
-        final String value;
-
-        public StaticEvaluator(String value) {
-            this.value = value;
-        }
-
-        @Override
-        public String call() throws Exception {
-            return value;
-        }
-
-        @Override
-        public String toString() {
-            return "StaticStringCallable{" +
-                    "value='" + value + '\'' +
-                    '}';
-        }
+    public void setExpressionLanguageEngine(ExpressionLanguageEngine expressionLanguageEngine) {
+        this.expressionLanguageEngine = expressionLanguageEngine;
     }
 }

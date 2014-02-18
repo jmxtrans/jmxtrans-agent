@@ -100,13 +100,4 @@ public interface ResultNameStrategy {
     @Nonnull
     String getResultName(@Nonnull Query query, @Nonnull ObjectName objectName, @Nullable String key);
 
-    /**
-     * Replace all the '#' based keywords (e.g. <code>#hostname#</code>) by their value.
-     *
-     * @param expression the expression to resolve (e.g. <code>"servers.#hostname#."</code>)
-     * @return the resolved expression (e.g. <code>"servers.tomcat5"</code>)
-     */
-    @Nonnull
-    String resolveExpression(@Nonnull String expression);
-    String resolveExpression(@Nonnull String expression, @Nonnull ObjectName exactObjectName);
 }

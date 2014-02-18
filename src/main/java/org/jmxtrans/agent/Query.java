@@ -154,7 +154,7 @@ public class Query {
                     value = valueAsList;
                 }
 
-                String resultName = this.resultNameStrategy.getResultName(this, on, key);
+                String resultName = resultNameStrategy.getResultName(this, on, key);
                 if (value instanceof Iterable) {
                     Iterable iterable = (Iterable) value;
                     if (position == null) {
@@ -213,5 +213,14 @@ public class Query {
     @Nullable
     public String getType() {
         return type;
+    }
+
+    @Nonnull
+    public ResultNameStrategy getResultNameStrategy() {
+        return resultNameStrategy;
+    }
+
+    public void setResultNameStrategy(@Nonnull ResultNameStrategy resultNameStrategy) {
+        this.resultNameStrategy = resultNameStrategy;
     }
 }
