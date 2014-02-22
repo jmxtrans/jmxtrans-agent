@@ -50,6 +50,8 @@ public class JmxTransExporter {
      * visible for test
      */
     protected OutputWriter outputWriter = new DevNullOutputWriter();
+
+    protected ResultNameStrategy resultNameStrategy;
     protected int collectInterval = 10;
     protected TimeUnit collectIntervalTimeUnit = TimeUnit.SECONDS;
     private Logger logger = Logger.getLogger(getClass().getName());
@@ -74,7 +76,8 @@ public class JmxTransExporter {
 
     public JmxTransExporter withQuery(@Nonnull String objectName, @Nonnull String attribute, @Nullable String key,
                                       @Nullable Integer position, @Nullable String type, @Nullable String resultAlias) {
-        queries.add(new Query(objectName, attribute, key, position, type, resultAlias));
+        Query query = new Query(objectName, attribute, key, position, type, resultAlias, this.resultNameStrategy);
+        queries.add(query);
         return this;
     }
     public JmxTransExporter withInvocation(@Nonnull String objectName, @Nonnull String operation, @Nullable String resultAlias) {
@@ -102,6 +105,10 @@ public class JmxTransExporter {
         if (scheduledFuture != null) {
             throw new IllegalArgumentException("Exporter is already started");
         }
+
+        if (resultNameStrategy == null)
+            throw new IllegalStateException("resultNameStrategy is not defined, jmxTransExporter is not properly initialised");
+
         scheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {

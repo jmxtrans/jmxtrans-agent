@@ -23,16 +23,10 @@
  */
 package org.jmxtrans.agent;
 
-import org.jmxtrans.agent.util.StringUtils2;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.management.ObjectName;
-import java.net.InetAddress;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Map;
 
 /**
  * Build a {@linkplain QueryResult#name} from a collected metric ({@linkplain Query}).
@@ -100,4 +94,5 @@ public interface ResultNameStrategy {
     @Nonnull
     String getResultName(@Nonnull Query query, @Nonnull ObjectName objectName, @Nullable String key);
 
+    void postConstruct(@Nonnull Map<String, String> settings);
 }

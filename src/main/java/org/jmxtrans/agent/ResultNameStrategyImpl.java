@@ -152,4 +152,8 @@ public class ResultNameStrategyImpl implements ResultNameStrategy {
     public void setExpressionLanguageEngine(ExpressionLanguageEngine expressionLanguageEngine) {
         this.expressionLanguageEngine = expressionLanguageEngine;
     }
+
+    public void postConstruct(@Nonnull Map<String, String> settings) {
+
+    }
 }

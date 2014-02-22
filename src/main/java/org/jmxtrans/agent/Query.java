@@ -34,7 +34,6 @@ import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -48,7 +47,7 @@ public class Query {
     private final Logger logger = Logger.getLogger(getClass().getName());
 
     @Nonnull
-    protected ResultNameStrategy resultNameStrategy = new ResultNameStrategyImpl();
+    protected ResultNameStrategy resultNameStrategy;
 
     @Nonnull
     protected final ObjectName objectName;
@@ -76,38 +75,40 @@ public class Query {
     private String type;
 
     /**
-     * @see #Query(String, String, String, Integer, String, String)
+     * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
      */
-    public Query(@Nonnull String objectName, @Nonnull String attribute) {
-        this(objectName, attribute, null, null, null, attribute);
+    public Query(@Nonnull String objectName, @Nonnull String attribute, @Nonnull ResultNameStrategy resultNameStrategy) {
+        this(objectName, attribute, null, null, null, attribute, resultNameStrategy);
     }
 
     /**
-     * @see #Query(String, String, String, Integer, String, String)
+     * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
      */
-    public Query(@Nonnull String objectName, @Nonnull String attribute, int position) {
-        this(objectName, attribute, null, position, null, attribute);
+    public Query(@Nonnull String objectName, @Nonnull String attribute, int position, @Nonnull ResultNameStrategy resultNameStrategy) {
+        this(objectName, attribute, null, position, null, attribute, resultNameStrategy);
     }
 
     /**
-     * @see #Query(String, String, String, Integer, String, String)
+     * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
      */
-    public Query(@Nonnull String objectName, @Nonnull String attribute, @Nonnull String resultAlias) {
-        this(objectName, attribute, null, null, null, resultAlias);
+    public Query(@Nonnull String objectName, @Nonnull String attribute, @Nonnull String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
+        this(objectName, attribute, null, null, null, resultAlias, resultNameStrategy);
     }
 
     /**
-     * @param objectName  The {@link ObjectName} to search for
-     *                    ({@link MBeanServer#queryMBeans(javax.management.ObjectName, javax.management.QueryExp)}),
-     *                    can contain wildcards and return several entries.
-     * @param attribute   The attribute to retrieve ({@link MBeanServer#getAttribute(javax.management.ObjectName, String)})
-     * @param key         if the MBean attribute value is a {@link CompositeData}, the key to lookup.
-     * @param position    if the returned value is a {@link java.util.Collection} or an array, the position of the entry to lookup.
-     * @param type        type of the metric ('counter', 'gauge', ...)
+     * @param objectName         The {@link ObjectName} to search for
+     *                           ({@link MBeanServer#queryMBeans(javax.management.ObjectName, javax.management.QueryExp)}),
+     *                           can contain wildcards and return several entries.
+     * @param attribute          The attribute to retrieve ({@link MBeanServer#getAttribute(javax.management.ObjectName, String)})
+     * @param key                if the MBean attribute value is a {@link CompositeData}, the key to lookup.
+     * @param position           if the returned value is a {@link java.util.Collection} or an array, the position of the entry to lookup.
+     * @param type               type of the metric ('counter', 'gauge', ...)
      * @param resultAlias
+     * @param resultNameStrategy the {@link org.jmxtrans.agent.ResultNameStrategy} used during the
+     *                           {@link #collectAndExport(javax.management.MBeanServer, OutputWriter)} phase.
      */
     public Query(@Nonnull String objectName, @Nonnull String attribute, @Nullable String key, @Nullable Integer position,
-                 @Nullable String type, @Nonnull String resultAlias) {
+                 @Nullable String type, @Nonnull String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
         try {
             this.objectName = new ObjectName(Preconditions2.checkNotNull(objectName));
         } catch (MalformedObjectNameException e) {
@@ -118,9 +119,12 @@ public class Query {
         this.resultAlias = Preconditions2.checkNotNull(resultAlias);
         this.position = position;
         this.type = type;
+        this.resultNameStrategy = Preconditions2.checkNotNull(resultNameStrategy, "resultNameStrategy");
     }
 
     public void collectAndExport(@Nonnull MBeanServer mbeanServer, @Nonnull OutputWriter outputWriter) {
+        if (resultNameStrategy == null)
+            throw new IllegalStateException("resultNameStrategy is not defined, query object is not properly initialized");
 
         Set<ObjectName> objectNames = mbeanServer.queryNames(objectName, null);
 
@@ -213,14 +217,5 @@ public class Query {
     @Nullable
     public String getType() {
         return type;
-    }
-
-    @Nonnull
-    public ResultNameStrategy getResultNameStrategy() {
-        return resultNameStrategy;
-    }
-
-    public void setResultNameStrategy(@Nonnull ResultNameStrategy resultNameStrategy) {
-        this.resultNameStrategy = resultNameStrategy;
     }
 }

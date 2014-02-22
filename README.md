@@ -131,7 +131,7 @@ Environment variables are looked-up in the following order:
 1. JVM environment variables (```System.getenv("graphite.host")```)
 1. JVM environment variables after a "to-upper-case + dot-to-underscore" transformation (```System.getenv("GRAPHITE_HOST")```)
 
-## Sample of ConsoleOutputWriter
+### Sample of ConsoleOutputWriter
 
 ```
 os.systemLoadAverage 1.80419921875 1366199958
@@ -154,7 +154,7 @@ tomcat.bytesReceived 0 1366199958
 application.activeSessions 0 1366199958
 ```
 
-## Sample of FileOverwriterOutputWriter
+### Sample of FileOverwriterOutputWriter
 
 ```
 os.systemLoadAverage 1.27734375
@@ -177,9 +177,26 @@ tomcat.bytesReceived 0
 application.activeSessions 0
 ```
 
+## ResultNameStrategy
+
+The `ResultNameStrategy` is the component in charge of building the metric name. The default implementation uses the `resultAlias`  if provided
+and otherwise will build the metric name using the `ObjectName`.
+
+You can use your own implementation for the `ResultNameStrategy`
+
+```xml
+<resultNameStrategy class="com.mycompany.jmxtrans.agent.MyResultNameStrategyImpl">
+   <attrA>valA</attrA>
+   <atttrB>valB</atttrB>
+</resultNameStrategy>
+```
+
+You then have to make this implementation available in the classpath (adding it the the jmxtrans-agent jar, adding it to the boot classpath ...)
+
 # Relase Notes
 
-See GitHub [milestones history](https://github.com/jmxtrans/jmxtrans-agent/issues/milestones?state=closed)
+* [Milestones history](https://github.com/jmxtrans/jmxtrans-agent/issues/milestones?state=closed)
+* [Releases](https://github.com/jmxtrans/jmxtrans-agent/releases)
 
 # Sample ActiveMQ Configuration
 

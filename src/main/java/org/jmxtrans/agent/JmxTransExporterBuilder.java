@@ -106,6 +106,7 @@ public class JmxTransExporterBuilder {
 
         }
 
+        buildResultNameStrategy(rootElement, jmxTransExporter);
         buildInvocations(rootElement, jmxTransExporter);
         buildQueries(rootElement, jmxTransExporter);
 
@@ -146,6 +147,41 @@ public class JmxTransExporterBuilder {
 
             jmxTransExporter.withInvocation(objectName, operation, resultAlias);
         }
+    }
+
+    private void buildResultNameStrategy(Element rootElement, JmxTransExporter jmxTransExporter) {
+        NodeList resultNameStrategyNodeList = rootElement.getElementsByTagName("resultNameStrategy");
+
+        ResultNameStrategy resultNameStrategy;
+        switch (resultNameStrategyNodeList.getLength()) {
+            case 0:
+                // nothing to do, use default value
+                resultNameStrategy = new ResultNameStrategyImpl();
+                break;
+            case 1:
+                Element resultNameStrategyElement = (Element) resultNameStrategyNodeList.item(0);
+                String outputWriterClass = resultNameStrategyElement.getAttribute("class");
+                if (outputWriterClass.isEmpty())
+                    throw new IllegalArgumentException("<resultNameStrategy> element must contain a 'class' attribute");
+
+                try {
+                    resultNameStrategy = (ResultNameStrategy) Class.forName(outputWriterClass).newInstance();
+                    Map<String, String> settings = new HashMap<String, String>();
+                    NodeList settingsNodeList = resultNameStrategyElement.getElementsByTagName("*");
+                    for (int j = 0; j < settingsNodeList.getLength(); j++) {
+                        Element settingElement = (Element) settingsNodeList.item(j);
+                        settings.put(settingElement.getNodeName(), placeholderResolver.resolveString(settingElement.getTextContent()));
+                    }
+                    resultNameStrategy.postConstruct(settings);
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("Exception instantiating " + outputWriterClass, e);
+                }
+
+                break;
+            default:
+                throw new IllegalStateException("More than 1 <resultNameStrategy> element found (" + resultNameStrategyNodeList.getLength() + ")");
+        }
+        jmxTransExporter.resultNameStrategy = resultNameStrategy;
     }
 
     private void buildOutputWriters(Element rootElement, JmxTransExporter jmxTransExporter) {
