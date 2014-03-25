@@ -86,6 +86,7 @@ public class ConfigurationParser {
     protected void mergeEmbeddedJmxTransConfiguration(@Nonnull String configurationUrl, @Nonnull EmbeddedJmxTrans embeddedJmxTrans) throws EmbeddedJmxTransException {
         try {
             if (configurationUrl.startsWith("classpath:")) {
+                logger.debug("mergeEmbeddedJmxTransConfiguration({})", configurationUrl);
                 String path = configurationUrl.substring("classpath:".length());
                 InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
                 Preconditions.checkNotNull(in, "No file found for '" + configurationUrl + "'");
@@ -125,6 +126,7 @@ public class ConfigurationParser {
     }
 
     protected void mergeEmbeddedJmxTransConfiguration(@Nonnull URL configurationUrl, EmbeddedJmxTrans embeddedJmxTrans) throws IOException {
+        logger.debug("mergeEmbeddedJmxTransConfiguration({})", configurationUrl);
         JsonNode configurationRootNode = mapper.readValue(configurationUrl, JsonNode.class);
         mergeEmbeddedJmxTransConfiguration(configurationRootNode, embeddedJmxTrans);
     }
