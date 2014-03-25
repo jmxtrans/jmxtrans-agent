@@ -161,10 +161,12 @@ public class ConfigurationParser {
             parseQueryAttributeNode(query, attributeNode);
             List<OutputWriter> outputWriters = parseOutputWritersNode(queryNode);
             query.getOutputWriters().addAll(outputWriters);
+            logger.trace("Add {}", query);
         }
 
         List<OutputWriter> outputWriters = parseOutputWritersNode(configurationRootNode);
         embeddedJmxTrans.getOutputWriters().addAll(outputWriters);
+        logger.trace("Add global output writers: {}", outputWriters);
 
         JsonNode queryIntervalInSecondsNode = configurationRootNode.path("queryIntervalInSeconds");
         if (!queryIntervalInSecondsNode.isMissingNode()) {
