@@ -223,6 +223,7 @@ public class ConfigurationParser {
                     } else {
                         logger.warn("Ignore invalid node {}", outputWriterNode);
                     }
+                    logger.trace("Add {}", outputWriter);
                     outputWriters.add(outputWriter);
                 } catch (Exception e) {
                     throw new EmbeddedJmxTransException("Exception converting settings " + outputWritersNode, e);
