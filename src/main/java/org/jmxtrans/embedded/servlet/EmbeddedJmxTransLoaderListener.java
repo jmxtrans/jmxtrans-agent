@@ -51,7 +51,7 @@ import java.util.List;
  *     &lt;param-name&gt;jmxtrans.config&lt;/param-name&gt;
  *     &lt;param-value&gt;
  *       classpath:jmxtrans.json
- *       classpath:org/jmxtrans/embedded/config/jmxtrans-internals.json
+ *       classpath:org/jmxtrans/embedded/config/jmxtrans-internals-servlet-container.json
  *       classpath:org/jmxtrans/embedded/config/tomcat-7.json
  *       classpath:org/jmxtrans/embedded/config/jvm-sun-hotspot.json
  *     &lt;/param-value&gt;
@@ -89,7 +89,7 @@ public class EmbeddedJmxTransLoaderListener implements ServletContextListener {
         if (configuration == null || configuration.isEmpty()){
             configuration = configureFromWebXmlParam(sce);
             if (configuration == null || configuration.isEmpty()){
-                configuration = "classpath:jmxtrans.json, classpath:org/jmxtrans/embedded/config/jmxtrans-internals.json";
+                configuration = "classpath:jmxtrans.json, classpath:org/jmxtrans/embedded/config/jmxtrans-internals-servlet-container.json";
             }
         }
 

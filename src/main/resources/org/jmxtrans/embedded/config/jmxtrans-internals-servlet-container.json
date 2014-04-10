@@ -1,0 +1,17 @@
+{
+    "queries": [
+        {
+            "objectName": "org.jmxtrans.embedded:name=*,type=EmbeddedJmxTrans,path=*",
+            "resultAlias": "jmxtrans.%name%.%path%",
+            "attributes": [
+                "CollectedMetricsCount",
+                "CollectionCount",
+                "CollectionDurationInNanos",
+                "ExportCount",
+                "ExportDurationInNanos",
+                "ExportedMetricsCount"
+            ]
+
+        }
+    ]
+}
