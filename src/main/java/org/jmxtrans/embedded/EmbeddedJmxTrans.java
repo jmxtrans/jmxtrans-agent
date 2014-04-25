@@ -73,7 +73,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class EmbeddedJmxTrans implements EmbeddedJmxTransMBean {
 
-    /**
+	public EmbeddedJmxTrans() {
+		super();
+	}
+	
+    public EmbeddedJmxTrans(MBeanServer mbeanServer) {
+		super();
+		this.mbeanServer = mbeanServer;
+	}
+
+	/**
      * Shutdown hook to collect and export metrics a last time if {@link EmbeddedJmxTrans#stop()} was not called.
      */
     private class EmbeddedJmxTransShutdownHook extends Thread {
