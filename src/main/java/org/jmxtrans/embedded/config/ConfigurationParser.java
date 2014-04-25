@@ -23,21 +23,30 @@
  */
 package org.jmxtrans.embedded.config;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jmxtrans.embedded.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Nonnull;
+import javax.management.MBeanServer;
+
+import org.jmxtrans.embedded.EmbeddedJmxTrans;
+import org.jmxtrans.embedded.EmbeddedJmxTransException;
+import org.jmxtrans.embedded.Query;
+import org.jmxtrans.embedded.QueryAttribute;
 import org.jmxtrans.embedded.output.OutputWriter;
 import org.jmxtrans.embedded.util.Preconditions;
 import org.jmxtrans.embedded.util.json.PlaceholderEnabledJsonNodeFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * JSON Configuration parser to build {@link org.jmxtrans.embedded.EmbeddedJmxTrans}.
@@ -66,6 +75,15 @@ public class ConfigurationParser {
 
     public EmbeddedJmxTrans newEmbeddedJmxTrans(@Nonnull List<String> configurationUrls) throws EmbeddedJmxTransException {
         EmbeddedJmxTrans embeddedJmxTrans = new EmbeddedJmxTrans();
+
+        for (String configurationUrl : configurationUrls) {
+            mergeEmbeddedJmxTransConfiguration(configurationUrl, embeddedJmxTrans);
+        }
+        return embeddedJmxTrans;
+    }
+    
+    public EmbeddedJmxTrans newEmbeddedJmxTransWithCustomMBeanServer(@Nonnull List<String> configurationUrls, MBeanServer mbeanServer) throws EmbeddedJmxTransException {
+        EmbeddedJmxTrans embeddedJmxTrans = new EmbeddedJmxTrans(mbeanServer);
 
         for (String configurationUrl : configurationUrls) {
             mergeEmbeddedJmxTransConfiguration(configurationUrl, embeddedJmxTrans);
