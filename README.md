@@ -8,6 +8,7 @@ An in process JMX Exporter will solve the problem of remote JMX access in cloud-
 
 
 * [Documentation](https://github.com/jmxtrans/embedded-jmxtrans/wiki)
+* [Google Group](https://groups.google.com/forum/#!forum/jmxtrans) if you have anything to discuss
 * [Latest javadocs](http://jmxtrans.github.com/embedded-jmxtrans/apidocs/)
 * [Sample](https://github.com/jmxtrans/embedded-jmxtrans-samples)
 
