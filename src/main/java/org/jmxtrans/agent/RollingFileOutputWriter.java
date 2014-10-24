@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Date;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.TimeZone;
@@ -48,7 +49,7 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
     public final static long SETTING_MAX_FILE_SIZE_DEFAULT_VALUE=10;
     public final static String SETTING_MAX_BACKUP_INDEX = "maxBackupIndex";
     public final static int SETTING_MAX_BACKUP_INDEX_DEFAULT_VALUE = 5; 
-    private static DateFormat df = DateFormat.getDateTimeInstance();
+    private static DateFormat dfISO8601;
     
     protected Writer temporaryFileWriter;
     protected File temporaryFile;
@@ -59,7 +60,9 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
     @Override
     public synchronized void postConstruct(Map<String, String> settings) {
         super.postConstruct(settings);
-        df.setTimeZone(TimeZone.getTimeZone("GMT"));
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        dfISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+        dfISO8601.setTimeZone(tz);
         file = new File(getString(settings, SETTING_FILE_NAME, SETTING_FILE_NAME_DEFAULT_VALUE));
         maxFileSize = getLong(settings, SETTING_MAX_FILE_SIZE, SETTING_MAX_FILE_SIZE_DEFAULT_VALUE);
         maxBackupIndex = getInt(settings, SETTING_MAX_BACKUP_INDEX, SETTING_MAX_BACKUP_INDEX_DEFAULT_VALUE);
@@ -90,9 +93,9 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
         writeQueryResult(invocationName, null, value);
     }
 
-    public void writeQueryResult(@Nonnull String name, @Nullable String type, @Nullable Object value) throws IOException {
+    public synchronized void writeQueryResult(@Nonnull String name, @Nullable String type, @Nullable Object value) throws IOException {
         try {
-            getTemporaryFileWriter().write("["+df.format(Calendar.getInstance().getTime()) +"] "+name + " " + value + "\n");
+            getTemporaryFileWriter().write("["+dfISO8601.format(Calendar.getInstance().getTime()) +"] "+name + " " + value + "\n");
         } catch (IOException e) {
             releaseTemporaryWriter();
             throw e;
