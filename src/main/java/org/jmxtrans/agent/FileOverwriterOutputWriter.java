@@ -29,6 +29,7 @@ import javax.annotation.Nullable;
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.TimeZone;
@@ -48,12 +49,12 @@ public class FileOverwriterOutputWriter extends AbstractOutputWriter {
     protected File temporaryFile;
     protected File file = new File(SETTING_FILE_NAME_DEFAULT_VALUE);
     private static Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-    DateFormat df = DateFormat.getDateTimeInstance();
+    private static DateFormat dfISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
     
     @Override
     public synchronized void postConstruct(Map<String, String> settings) {
         super.postConstruct(settings);
-        df.setTimeZone(TimeZone.getTimeZone("GMT"));
+        dfISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
         file = new File(getString(settings, SETTING_FILE_NAME, SETTING_FILE_NAME_DEFAULT_VALUE));
         logger.log(getInfoLevel(), "FileOverwriterOutputWriter configured with file " + file.getAbsolutePath());
     }
@@ -79,9 +80,9 @@ public class FileOverwriterOutputWriter extends AbstractOutputWriter {
         writeQueryResult(invocationName, null, value);
     }
 
-    public void writeQueryResult(@Nonnull String name, @Nullable String type, @Nullable Object value) throws IOException {
+    public synchronized void writeQueryResult(@Nonnull String name, @Nullable String type, @Nullable Object value) throws IOException {
         try {
-            getTemporaryFileWriter().write("["+df.format(Calendar.getInstance().getTime()) +"] "+name + " " + value + "\n");
+            getTemporaryFileWriter().write("["+dfISO8601.format(Calendar.getInstance().getTime()) +"] "+name + " " + value + "\n");
         } catch (IOException e) {
             releaseTemporaryWriter();
             throw e;
