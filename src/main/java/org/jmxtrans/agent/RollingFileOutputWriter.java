@@ -49,7 +49,7 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
     public final static long SETTING_MAX_FILE_SIZE_DEFAULT_VALUE=10;
     public final static String SETTING_MAX_BACKUP_INDEX = "maxBackupIndex";
     public final static int SETTING_MAX_BACKUP_INDEX_DEFAULT_VALUE = 5; 
-    private static DateFormat dfISO8601;
+    private static DateFormat dfISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
     
     protected Writer temporaryFileWriter;
     protected File temporaryFile;
@@ -61,7 +61,6 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
     public synchronized void postConstruct(Map<String, String> settings) {
         super.postConstruct(settings);
         TimeZone tz = TimeZone.getTimeZone("UTC");
-        dfISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
         dfISO8601.setTimeZone(tz);
         file = new File(getString(settings, SETTING_FILE_NAME, SETTING_FILE_NAME_DEFAULT_VALUE));
         maxFileSize = getLong(settings, SETTING_MAX_FILE_SIZE, SETTING_MAX_FILE_SIZE_DEFAULT_VALUE);
