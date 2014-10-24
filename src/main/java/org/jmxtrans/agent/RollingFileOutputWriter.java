@@ -207,16 +207,6 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
 
         private static void appendToFile(File source, File destination, long maxFileSize, int maxBackupIndex) throws IOException {
             boolean destinationExists = validateDestinationFile(source, destination, maxFileSize, maxBackupIndex);
-//            if (destination.exists()) {
-//                boolean deleted = destination.delete();
-//                if (deleted) {
-//                    destinationExists = false;
-//                } else {
-//                    destinationExists = true;
-//                }
-//            } else {
-//                destinationExists = false;
-//            }
             if (destinationExists) {
                 doCopySmallFile(source, destination, true);
             } else {
