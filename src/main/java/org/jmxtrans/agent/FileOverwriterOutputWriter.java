@@ -37,6 +37,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.jmxtrans.agent.util.ConfigurationUtils.getString;
+import static org.jmxtrans.agent.util.ConfigurationUtils.getBoolean;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
@@ -45,9 +46,12 @@ public class FileOverwriterOutputWriter extends AbstractOutputWriter {
 
     public final static String SETTING_FILE_NAME = "fileName";
     public final static String SETTING_FILE_NAME_DEFAULT_VALUE = "jmxtrans-agent.data";
+    public final static String SETTING_SHOW_TIMESTAMP = "showTimeStamp";
+    public final static Boolean SETTING_SHOW_TIMESTAMP_DEFAULT = false;
     protected Writer temporaryFileWriter;
     protected File temporaryFile;
     protected File file = new File(SETTING_FILE_NAME_DEFAULT_VALUE);
+    protected Boolean showTimeStamp;
     private static Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
     private static DateFormat dfISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
     
@@ -56,6 +60,7 @@ public class FileOverwriterOutputWriter extends AbstractOutputWriter {
         super.postConstruct(settings);
         dfISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
         file = new File(getString(settings, SETTING_FILE_NAME, SETTING_FILE_NAME_DEFAULT_VALUE));
+        showTimeStamp = getBoolean(settings, SETTING_SHOW_TIMESTAMP, SETTING_SHOW_TIMESTAMP_DEFAULT);
         logger.log(getInfoLevel(), "FileOverwriterOutputWriter configured with file " + file.getAbsolutePath());
     }
 
@@ -82,7 +87,12 @@ public class FileOverwriterOutputWriter extends AbstractOutputWriter {
 
     public synchronized void writeQueryResult(@Nonnull String name, @Nullable String type, @Nullable Object value) throws IOException {
         try {
-            getTemporaryFileWriter().write("["+dfISO8601.format(Calendar.getInstance().getTime()) +"] "+name + " " + value + "\n");
+            if (showTimeStamp){
+                getTemporaryFileWriter().write("["+dfISO8601.format(Calendar.getInstance().getTime()) +"] "+name + " " + value + "\n");
+            } else {
+                getTemporaryFileWriter().write(name + " " + value + "\n");
+            }
+            
         } catch (IOException e) {
             releaseTemporaryWriter();
             throw e;
