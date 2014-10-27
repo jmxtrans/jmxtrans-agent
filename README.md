@@ -119,6 +119,7 @@ Out of the box output writers
   * `namePrefix`; prefix of the metric name. Optional, default values `servers.#hostname#.` where `#hostname#` is the auto discovered hostname of computer with `.` escpaed as `_` (`InetAddress.getLocalHost().getHostName()`).
 * [FileOverwriterOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/FileOverwriterOutputWriter.java): store the last collection of metrics in a file. Configuration parameters:
   * `fileName`: name of the file in which the collected metrics are stored. Optional, default value `jmxtrans-agent.data` (in JVM working dir, for example `$TOMCAT_HOME/bin`)
+  * 'showTimeStamp': true or false value that determines if the time stamp is printed with the lines.  Optional tag, default is false.
 * [SummarizingFileOverwriterOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/SummarizingFileOverwriterOutputWriter.java): Similar to the `FileOverwriterOutputWriter` but displays "per minute" values for counters of type `counter`
 * [ConsoleOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/ConsoleOutputWriter.java): output metric values to `stdout`
 * [SummarizingConsoleOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/SummarizingConsoleOutputWriter.java): Similar to the `ConsoleOutputWriter` but displays "per minute" values for counters of type `counter`
@@ -250,6 +251,11 @@ ACTIVEMQ_OPTS="$ACTIVEMQ_OPTS $JMXTRANS_AGENT"
     <outputWriter class="org.jmxtrans.agent.ConsoleOutputWriter">
         <enabled>false</enabled>
     </outputWriter>
+    <outputWriter class="org.jmxtrans.agent.RollingFileOutputWriter">
+      <fileName>rollingJMXOutputFile</fileName>
+      <maxFileSize>10</maxFileSize>
+      <maxBackupIndex>4</maxBackupIndex>
+   </outputWriter>
 </jmxtrans-agent>
 ```
 
