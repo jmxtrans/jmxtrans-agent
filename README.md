@@ -8,12 +8,12 @@ jmxtrans-agent is a version of [jmxtrans](http://jmxtrans.org/) intended to be u
 
 ## Java Agent Declaration
 
-Download [jmxtrans-agent-1.0.6.jar](http://repo1.maven.org/maven2/org/jmxtrans/agent/jmxtrans-agent/1.0.6/jmxtrans-agent-1.0.6.jar)
+Download [jmxtrans-agent-1.0.7.jar](http://repo1.maven.org/maven2/org/jmxtrans/agent/jmxtrans-agent/1.0.7/jmxtrans-agent-1.0.7.jar)
 
 Sample `setenv.sh` for Apache Tomcat
 
 ```
-export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.0.6.jar=jmxtrans-agent.xml"
+export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.0.7.jar=jmxtrans-agent.xml"
 ```
 
 * java agent jar path can be relative to the working dir
@@ -116,13 +116,17 @@ Out of the box output writers
   * `enabled`: to enable/disable the output writer. Optional, default value `true` 
   * `host`: Graphite Carbon listener host
   * `port`: Graphite Carbon Plain Text TCP listener port. Optional, default value `2003`
-  * `namePrefix`; prefix of the metric name. Optional, default values `servers.#hostname#.` where `#hostname#` is the auto discovered hostname of computer with `.` escpaed as `_` (`InetAddress.getLocalHost().getHostName()`).
+  * `namePrefix`; prefix of the metric name. Optional, default values `servers.#hostname#.` where `#hostname#` is the auto discovered hostname of computer with `.` escaped as `_` (`InetAddress.getLocalHost().getHostName()`).
 * [FileOverwriterOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/FileOverwriterOutputWriter.java): store the last collection of metrics in a file. Configuration parameters:
   * `fileName`: name of the file in which the collected metrics are stored. Optional, default value `jmxtrans-agent.data` (in JVM working dir, for example `$TOMCAT_HOME/bin`)
-  * 'showTimeStamp': true or false value that determines if the time stamp is printed with the lines.  Optional tag, default is false.
+  * `showTimeStamp`: true or false value that determines if the time stamp is printed with the lines.  Optional tag, default is `false.
 * [SummarizingFileOverwriterOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/SummarizingFileOverwriterOutputWriter.java): Similar to the `FileOverwriterOutputWriter` but displays "per minute" values for counters of type `counter`
 * [ConsoleOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/ConsoleOutputWriter.java): output metric values to `stdout`
 * [SummarizingConsoleOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/SummarizingConsoleOutputWriter.java): Similar to the `ConsoleOutputWriter` but displays "per minute" values for counters of type `counter`
+* [RollingFileOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/RollingFileOutputWriter.java)
+  * `fileName`: name of the file in which the collected metrics are stored. Optional, default value `jmxtrans-agent.data` (in JVM working dir, for example `$TOMCAT_HOME/bin`)
+  * `maxFileSize`: Maximum file size in MB before file is rolled. Optional, default is `10`
+  * `maxBackupIndex`: Maximum number of files. Optional, default is `5
 
 Output writers configuration support  an expression language based on property placeholders with the `{prop-name[:default-value]}` syntax (e.g. "`${graphite.host:2003}`").
 
@@ -204,10 +208,10 @@ You then have to make this implementation available in the classpath (adding it 
 # Sample ActiveMQ Configuration
 
 * Create directory `${ACTIVEMQ_HOME}/jmxtrans-agent/`
-* Copy `jmxtrans-agent-1.0.6.jar` under `${ACTIVEMQ_HOME}/jmxtrans-agent/`
+* Copy `jmxtrans-agent-1.0.7.jar` under `${ACTIVEMQ_HOME}/jmxtrans-agent/`
 * Update `${ACTIVEMQ_HOME}/bin/activemq`, add in `invoke_start()` and `invoke_console()`:
     ```
-JMXTRANS_AGENT="-javaagent:${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-1.0.6.jar=${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-activemq.xml"
+JMXTRANS_AGENT="-javaagent:${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-1.0.7.jar=${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-activemq.xml"
 ACTIVEMQ_OPTS="$ACTIVEMQ_OPTS $JMXTRANS_AGENT"
 ```
 * Copy to `${ACTIVEMQ_HOME}/jmxtrans-agent/` a config file similar to
