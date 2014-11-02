@@ -1,6 +1,6 @@
 # Jmxtrans Agent
 
-[![Build Status](https://jmxtrans.ci.cloudbees.com/job/jmxtrans-agent/badge/icon)](https://jmxtrans.ci.cloudbees.com/job/jmxtrans-agent/)
+[![Build Status](https://buildhive.cloudbees.com/job/jmxtrans/job/jmxtrans-agent/badge/icon)](https://buildhive.cloudbees.com/job/jmxtrans/job/jmxtrans-agent/)
 
 ## What is jmxtrans-agent ?
 
