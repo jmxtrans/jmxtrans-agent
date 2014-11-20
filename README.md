@@ -1,4 +1,4 @@
-[![Build Status](https://jmxtrans.ci.cloudbees.com/job/embedded-jmxtrans/badge/icon)](https://jmxtrans.ci.cloudbees.com/job/embedded-jmxtrans/)
+[![Build Status](https://buildhive.cloudbees.com/job/jmxtrans/job/embedded-jmxtrans/badge/icon)](https://buildhive.cloudbees.com/job/jmxtrans/job/embedded-jmxtrans/)
 
 # embedded-jmxtrans
 
