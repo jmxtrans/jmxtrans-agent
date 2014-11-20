@@ -87,9 +87,9 @@ public class PlaceholderEnabledJsonNodeFactory extends JsonNodeFactory {
 
     @Override
     public TextNode textNode(String text) {
-        String resolvedText = resolver.resolveString(text);
+        String resolvedText = (text == null) ? null : resolver.resolveString(text);
         if (logger.isInfoEnabled()) {
-            if (text == null ? resolvedText == null : text.equals(resolvedText)) {
+            if (text == null || text.equals(resolvedText)) {
                 logger.debug("Resolve '{}' into '{}'", text, resolvedText);
             } else {
                 logger.info("Resolve '{}' into '{}'", text, resolvedText);
