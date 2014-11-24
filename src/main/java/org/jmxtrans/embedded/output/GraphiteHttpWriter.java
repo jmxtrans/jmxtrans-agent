@@ -100,7 +100,7 @@ public class GraphiteHttpWriter extends AbstractOutputWriter implements OutputWr
     public void write(Iterable<QueryResult> results) {
         logger.debug("Export to '{}' results {}", graphiteHttpUrl, results);
         HttpURLConnection urlConnection = null;
-        OutputStreamWriter urlWriter = null;
+        OutputStreamWriter urlWriter;
         try {
             StringBuilder sbUrlWriter = new StringBuilder("");
             for (QueryResult result : results) {
