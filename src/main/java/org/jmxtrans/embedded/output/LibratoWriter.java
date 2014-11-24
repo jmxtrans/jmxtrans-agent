@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * <a href="https://metrics.librato.com//">Librato Metrics</a> implementation of the {@linkplain org.jmxtrans.embedded.output.OutputWriter}.
@@ -224,6 +225,10 @@ public class LibratoWriter extends AbstractOutputWriter implements OutputWriter 
                 g.writeNumberField("value", (Float) counter.getValue());
             } else if (counter.getValue() instanceof Double) {
                 g.writeNumberField("value", (Double) counter.getValue());
+            } else if (counter.getValue() instanceof AtomicInteger) {
+                g.writeNumberField("value", ((AtomicInteger) counter.getValue()).get());
+            } else if (counter.getValue() instanceof AtomicLong) {
+                g.writeNumberField("value", ((AtomicLong) counter.getValue()).get());
             }
             g.writeEndObject();
         }
@@ -246,6 +251,10 @@ public class LibratoWriter extends AbstractOutputWriter implements OutputWriter 
                 g.writeNumberField("value", (Float) gauge.getValue());
             } else if (gauge.getValue() instanceof Double) {
                 g.writeNumberField("value", (Double) gauge.getValue());
+            } else if (gauge.getValue() instanceof AtomicInteger) {
+                g.writeNumberField("value", ((AtomicInteger) gauge.getValue()).get());
+            } else if (gauge.getValue() instanceof AtomicLong) {
+                g.writeNumberField("value", ((AtomicLong) gauge.getValue()).get());
             }
             g.writeEndObject();
         }
