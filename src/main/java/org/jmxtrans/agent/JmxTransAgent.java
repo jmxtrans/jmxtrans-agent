@@ -45,7 +45,6 @@ public class JmxTransAgent {
             jmxTransExporter = new JmxTransExporterBuilder().build(configFile);
             //START
             jmxTransExporter.start();
-            logger.info("JmxTransAgent started with configuration '" + configFile + "'");
         } catch (Exception e) {
             String msg = "Exception loading JmxTransExporter from '" + configFile + "'";
             logger.log(Level.SEVERE, msg, e);
