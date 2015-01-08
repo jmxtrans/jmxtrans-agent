@@ -90,9 +90,7 @@ import java.util.Map;
 public interface ResultNameStrategy {
 
     @Nonnull
-    String getResultName(@Nonnull Query query, @Nonnull ObjectName objectName);
-    @Nonnull
-    String getResultName(@Nonnull Query query, @Nonnull ObjectName objectName, @Nullable String key);
+    String getResultName(@Nonnull Query query, @Nonnull ObjectName objectName, @Nullable String key, @Nullable String attribute);
 
     void postConstruct(@Nonnull Map<String, String> settings);
 }

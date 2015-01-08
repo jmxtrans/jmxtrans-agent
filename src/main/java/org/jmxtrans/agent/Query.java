@@ -28,10 +28,10 @@ import org.jmxtrans.agent.util.collect.Iterables2;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
+import javax.management.*;
 import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeType;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
@@ -129,53 +129,78 @@ public class Query {
         Set<ObjectName> objectNames = mbeanServer.queryNames(objectName, null);
 
         for (ObjectName on : objectNames) {
-
             try {
-                Object attributeValue = mbeanServer.getAttribute(on, attribute);
+                if (attribute == null || attribute.isEmpty()) {
+                    for (MBeanAttributeInfo mBeanAttributeInfo : mbeanServer.getMBeanInfo(on).getAttributes()) {
+                        collectAndExportAttribute(mbeanServer, outputWriter, on, mBeanAttributeInfo.getName());
+                    }
 
-                Object value;
-                if (attributeValue instanceof CompositeData) {
-                    CompositeData compositeData = (CompositeData) attributeValue;
-                    if (key == null) {
-                        logger.warning("Ignore compositeData without key specified for '" + on + "'#" + attribute + ": " + attributeValue);
-                        continue;
-                    } else {
-                        value = compositeData.get(key);
-                    }
                 } else {
-                    if (key == null) {
-                        value = attributeValue;
-                    } else {
-                        logger.warning("Ignore NON compositeData for specified key for '" + on + "'#" + attribute + "#" + key + ": " + attributeValue);
-                        continue;
-                    }
-                }
-                if (value != null && value.getClass().isArray()) {
-                    List valueAsList = new ArrayList();
-                    for (int i = 0; i < Array.getLength(value); i++) {
-                        valueAsList.add(Array.get(value, i));
-                    }
-                    value = valueAsList;
-                }
-
-                String resultName = resultNameStrategy.getResultName(this, on, key);
-                if (value instanceof Iterable) {
-                    Iterable iterable = (Iterable) value;
-                    if (position == null) {
-                        int idx = 0;
-                        for (Object entry : iterable) {
-                            outputWriter.writeQueryResult(resultName + "_" + idx++, type, entry);
-                        }
-                    } else {
-                        value = Iterables2.get((Iterable) value, position);
-                        outputWriter.writeQueryResult(resultName, type, value);
-                    }
-                } else {
-                    outputWriter.writeQueryResult(resultName, type, value);
+                    collectAndExportAttribute(mbeanServer, outputWriter, on, attribute);
                 }
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Exception collecting " + on + "#" + attribute + (key == null ? "" : "#" + key), e);
             }
+        }
+    }
+
+    private void collectAndExportAttribute(MBeanServer mbeanServer, OutputWriter outputWriter, ObjectName objectName, String attribute) {
+        try {
+            Object attributeValue = null;
+            try {
+                attributeValue = mbeanServer.getAttribute(objectName, attribute);
+            } catch (Exception ex) {return;}
+
+            Object value;
+            if (attributeValue instanceof CompositeData) {
+                CompositeData compositeData = (CompositeData) attributeValue;
+                if (key == null) {
+                    CompositeType compositeType = compositeData.getCompositeType();
+                    for (String key : compositeType.keySet()) {
+                        value = compositeData.get(key);
+                        processValue(outputWriter, objectName, attribute, value, key);
+                    }
+                    return;
+                } else {
+                    value = compositeData.get(key);
+                }
+            } else {
+                if (key == null) {
+                    value = attributeValue;
+                } else {
+                    logger.warning("Ignore NON compositeData for specified key for '" + objectName + "'#" + attribute + "#" + key + ": " + attributeValue);
+                    return;
+                }
+            }
+            if (value != null && value.getClass().isArray()) {
+                List valueAsList = new ArrayList();
+                for (int i = 0; i < Array.getLength(value); i++) {
+                    valueAsList.add(Array.get(value, i));
+                }
+                value = valueAsList;
+            }
+
+            processValue(outputWriter, objectName, attribute, value, key);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Exception collecting " + objectName + "#" + attribute + (key == null ? "" : "#" + key), e);
+        }
+    }
+
+    private void processValue(OutputWriter outputWriter, ObjectName objectName, String attribute, Object value, String key) throws IOException {
+        String resultName = resultNameStrategy.getResultName(this, objectName, key, attribute);
+        if (value instanceof Iterable) {
+            Iterable iterable = (Iterable) value;
+            if (position == null) {
+                int idx = 0;
+                for (Object entry : iterable) {
+                    outputWriter.writeQueryResult(resultName + "_" + idx++, type, entry);
+                }
+            } else {
+                value = Iterables2.get((Iterable) value, position);
+                outputWriter.writeQueryResult(resultName, type, value);
+            }
+        } else {
+            outputWriter.writeQueryResult(resultName, type, value);
         }
     }
 
