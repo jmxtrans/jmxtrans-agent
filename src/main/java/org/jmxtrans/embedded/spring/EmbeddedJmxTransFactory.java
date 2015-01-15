@@ -54,7 +54,7 @@ import java.util.*;
  *
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
  */
-public class EmbeddedJmxTransFactory implements FactoryBean<SpringEmbeddedJmxTrans>, BeanNameAware {
+public class EmbeddedJmxTransFactory implements FactoryBean<SpringEmbeddedJmxTrans>, BeanNameAware, DisposableBean {
 
     private final static String DEFAULT_CONFIGURATION_URL = "classpath:jmxtrans.json, classpath:org/jmxtrans/embedded/config/jmxtrans-internals.json";
 
@@ -112,6 +112,26 @@ public class EmbeddedJmxTransFactory implements FactoryBean<SpringEmbeddedJmxTra
             embeddedJmxTrans.start();
         }
         return embeddedJmxTrans;
+    }
+
+    /**
+     * <p>
+     *     See <a href="http://spring.io/blog/2011/08/09/what-s-a-factorybean">Josh Long: What's a FactoryBean?</a>
+     * </p>
+     * <quote>
+     * One important takeaway here is that it is the <code>FactoryBean</code>, <i>not</i> the factoried object itself,
+     * that lives in the Spring container and enjoys the lifecycle hooks and container services. The returned instance
+     * is transient - Spring knows nothing about what you’ve returned from <code>getObject()</code>, and will make
+     * no attempt to exercise any lifecycle hooks or anything else on it.
+     * </quote>
+     *
+     * @throws Exception
+     */
+    @Override
+    public void destroy() throws Exception {
+        if (this.embeddedJmxTrans != null) {
+            this.embeddedJmxTrans.destroy();
+        }
     }
 
     @Override
