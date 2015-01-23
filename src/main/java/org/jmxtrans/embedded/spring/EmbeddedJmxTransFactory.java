@@ -95,8 +95,7 @@ public class EmbeddedJmxTransFactory implements FactoryBean<SpringEmbeddedJmxTra
                         loadConfiguration(embeddedJmxTrans, configurations);
                         embeddedJmxTrans.start();
                     } catch (Exception e) {
-                        logger.error("Error while reloading the configuration. Embedded JmxTrans disabled.", e);
-                        return;
+                        logger.error("Error while reloading the configuration. Embedded JmxTrans is disabled until the configuration is fixed.", e);
                     }
                 }
             }
