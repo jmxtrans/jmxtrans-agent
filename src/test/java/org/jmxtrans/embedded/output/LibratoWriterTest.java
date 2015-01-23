@@ -1,6 +1,8 @@
 package org.jmxtrans.embedded.output;
 
+import org.hamcrest.Matchers;
 import org.jmxtrans.embedded.QueryResult;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -35,5 +37,19 @@ public class LibratoWriterTest {
 
         System.out.println(new String(baos.toByteArray()));
 
+    }
+    @Test
+    public void testHttpUserAgent(){
+        String actual = new LibratoWriter().httpUserAgent;
+
+        Assert.assertThat(actual, Matchers.startsWith("embedded-jmxtrans/"));
+        Assert.assertThat(actual, Matchers.containsString(System.getProperty("os.name")));
+        Assert.assertThat(actual, Matchers.containsString(System.getProperty("os.arch")));
+        Assert.assertThat(actual, Matchers.containsString(System.getProperty("os.version")));
+
+        Assert.assertThat(actual, Matchers.containsString(System.getProperty("java.vm.name")));
+        Assert.assertThat(actual, Matchers.containsString(System.getProperty("java.version")));
+
+        System.out.println(actual);
     }
 }

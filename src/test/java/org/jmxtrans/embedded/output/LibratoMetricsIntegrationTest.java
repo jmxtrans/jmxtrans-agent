@@ -29,10 +29,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
 
 import static org.hamcrest.core.IsEqual.equalTo;
 
@@ -44,11 +43,16 @@ public class LibratoMetricsIntegrationTest {
     LibratoWriter libratoWriter;
 
     @Before
-    public void before() {
+    public void before() throws IOException {
+        InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("my-librato-config.properties");
+        Assert.assertNotNull("File src/test/resources/my-librato-config.properties is missing. See librato-config.template.properties for details", in);
+        Properties config = new Properties();
+        config.load(in);
+
         libratoWriter = new LibratoWriter();
         Map<String, Object> settings = new HashMap<String, Object>();
-        settings.put(AbstractOutputWriter.SETTING_USERNAME, "<<YOUR_USERNAME>>");
-        settings.put(AbstractOutputWriter.SETTING_TOKEN, "<<YOUR_TOKEN>>");
+        settings.put(AbstractOutputWriter.SETTING_USERNAME,config.get("LIBRATO_USER"));
+        settings.put(AbstractOutputWriter.SETTING_TOKEN, config.getProperty("LIBRATO_TOKEN"));
 
         libratoWriter.setSettings(settings);
         libratoWriter.start();
