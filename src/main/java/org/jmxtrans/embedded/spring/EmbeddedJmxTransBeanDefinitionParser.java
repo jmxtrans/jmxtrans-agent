@@ -15,23 +15,21 @@
  */
 package org.jmxtrans.embedded.spring;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jmxtrans.embedded.EmbeddedJmxTransException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.ListFactoryBean;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.xml.AbstractBeanDefinitionParser;
 import org.springframework.beans.factory.xml.AbstractSingleBeanDefinitionParser;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.util.StringUtils;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * {@link org.springframework.beans.factory.xml.BeanDefinitionParser} for an {@link EmbeddedJmxTransFactory}.
@@ -41,6 +39,7 @@ import java.util.List;
 public class EmbeddedJmxTransBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 
     private static final String CONFIGURATION_ATTRIBUTE = "configuration";
+    private static final String CONFIGURATION_SCAN_PERIOD = "configuration-scan-period";
     private static final String IGNORE_CONFIGURATION_NOT_FOUND_ATTRIBUTE = "ignore-configuration-not-found";
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -61,6 +60,10 @@ public class EmbeddedJmxTransBeanDefinitionParser extends AbstractSingleBeanDefi
         builder.setRole(BeanDefinition.ROLE_APPLICATION);
         builder.getRawBeanDefinition().setSource(parserContext.extractSource(element));
 
+        if (element.hasAttribute(CONFIGURATION_SCAN_PERIOD)) {
+            builder.addPropertyValue("configurationScanPeriod", element.getAttribute(CONFIGURATION_SCAN_PERIOD));
+        }
+        
         if (element.hasAttribute(IGNORE_CONFIGURATION_NOT_FOUND_ATTRIBUTE)) {
             builder.addPropertyValue("ignoreConfigurationNotFound", element.getAttribute(IGNORE_CONFIGURATION_NOT_FOUND_ATTRIBUTE));
         }
