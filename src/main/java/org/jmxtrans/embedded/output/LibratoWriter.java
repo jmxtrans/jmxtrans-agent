@@ -30,6 +30,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import org.jmxtrans.embedded.EmbeddedJmxTransException;
 import org.jmxtrans.embedded.QueryResult;
 import org.jmxtrans.embedded.util.io.IoUtils2;
+import org.python.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,6 +83,21 @@ public class LibratoWriter extends AbstractOutputWriter implements OutputWriter 
     public static final String SETTING_SOURCE = "source";
     public static final String DEFAULT_SOURCE = "#hostname#";
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    /**
+     * <p>
+     * See <a href="http://support.metrics.librato.com/knowledgebase/articles/175825-how-to-set-a-custom-user-agent-when-integrating-wi">
+     * How to set a custom User Agent when integrating with Librato</a>
+     * </p>
+     * <p>
+     *     TODO discover embedded-jmxtrans' version from maven's embedded pom.xml instead of hardcoding "1"
+     * </p>
+     */
+    @VisibleForTesting
+    protected final String httpUserAgent =
+            "embedded-jmxtrans/1 " + "(" +
+                    System.getProperty("java.vm.name") + "/" + System.getProperty("java.version") + "; " +
+                    System.getProperty("os.name") + "-" + System.getProperty("os.arch") + "/" + System.getProperty("os.version")
+                    + ")";
     private final AtomicInteger exceptionCounter = new AtomicInteger();
     private JsonFactory jsonFactory = new JsonFactory();
     /**
@@ -173,6 +189,7 @@ public class LibratoWriter extends AbstractOutputWriter implements OutputWriter 
             urlConnection.setReadTimeout(libratoApiTimeoutInMillis);
             urlConnection.setRequestProperty("content-type", "application/json; charset=utf-8");
             urlConnection.setRequestProperty("Authorization", "Basic " + basicAuthentication);
+            urlConnection.setRequestProperty("User-Agent", httpUserAgent);
 
             serialize(counters, gauges, urlConnection.getOutputStream());
             int responseCode = urlConnection.getResponseCode();
