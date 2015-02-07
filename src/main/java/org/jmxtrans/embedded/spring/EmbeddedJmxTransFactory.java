@@ -23,9 +23,18 @@
  */
 package org.jmxtrans.embedded.spring;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import org.jmxtrans.embedded.EmbeddedJmxTrans;
 import org.jmxtrans.embedded.EmbeddedJmxTransException;
 import org.jmxtrans.embedded.config.ConfigurationParser;
+import org.jmxtrans.embedded.util.concurrent.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanNameAware;
@@ -34,14 +43,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.jmx.export.naming.SelfNaming;
 import org.springframework.util.StringUtils;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import java.util.*;
 
 /**
  * {@link org.jmxtrans.embedded.EmbeddedJmxTrans} factory for Spring Framework integration.
@@ -70,6 +72,93 @@ public class EmbeddedJmxTransFactory implements FactoryBean<SpringEmbeddedJmxTra
 
     private String beanName = "jmxtrans";
 
+    private long lastModified;
+    
+    private int configurationScanPeriod = 0;
+    
+    private ScheduledExecutorService configurationReloaderExecutor;
+
+    /**
+     * <p>
+     * Runnable class responsible of reloading the configuration.
+     * </p>
+     * <ol>
+     *	<li>last modified date check</li>
+     *  <li>stop embeddedJmxTrans</li>
+     *  <li>clear embeddedJmxTrans queries and outputWriters</li>
+     *  <li>load configuration into embeddedJmxTrans</li>
+     *  <li>start embeddedJmxTrans</li>
+     * </ol>
+     */
+	private class ConfigurationReloader implements Runnable {
+		@Override
+		public void run() {
+			logger.debug("Check configuration last modified.");
+			List<Resource> configurations = getConfigurations();
+			long configurationLastModified = computeConfigurationLastModified(configurations);
+			if (configurationLastModified > lastModified && embeddedJmxTrans != null) {
+				logger.info("Reloading configuration.");
+				lastModified = configurationLastModified;
+				try {
+					embeddedJmxTrans.stop();
+					embeddedJmxTrans.getQueries().clear();
+					embeddedJmxTrans.getOutputWriters().clear();
+					loadConfiguration(embeddedJmxTrans, configurations);
+					embeddedJmxTrans.start();
+				} catch (Exception e) {
+					logger.error("Error while reloading the configuration. Embedded JmxTrans is disabled until the configuration is fixed.", e);
+				}
+			}
+		}
+	};
+
+    /**
+     * Computes the last modified date of all configuration files.
+     *
+     * @param configurations the list of available configurations as Spring resources
+     * @return 
+     */
+    private long computeConfigurationLastModified(List<Resource> configurations) {
+        long result = 0;
+        for (Resource configuration : configurations) {
+        	try {
+                long currentConfigurationLastModified = configuration.lastModified();
+                if (currentConfigurationLastModified > result) {
+                    result = currentConfigurationLastModified;
+                }
+            } catch (IOException ioex) {
+                logger.warn("Error while reading last configuration modification date.", ioex);
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * Returns the list of all configuration spring resources.
+     * 
+     * @return
+     */
+	private List<Resource> getConfigurations() {
+		List<Resource> result = new ArrayList<Resource>();
+		for (String delimitedConfigurationUrl : configurationUrls) {
+			String[] tokens = StringUtils.commaDelimitedListToStringArray(delimitedConfigurationUrl);
+			tokens = StringUtils.trimArrayElements(tokens);
+			for (String configurationUrl : tokens) {
+				configurationUrl = configurationUrl.trim();
+				Resource configuration = resourceLoader.getResource(configurationUrl);
+				if (configuration != null && configuration.exists()) {
+					result.add(configuration);
+				} else if (ignoreConfigurationNotFound) {
+					logger.debug("Ignore missing configuration file {}", configuration);
+				} else {
+					throw new EmbeddedJmxTransException("Configuration file " + configuration + " not found");
+				}
+			}
+		}
+		return result;
+	}
+
+
     @Autowired
     public EmbeddedJmxTransFactory(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
@@ -83,40 +172,45 @@ public class EmbeddedJmxTransFactory implements FactoryBean<SpringEmbeddedJmxTra
             if (configurationUrls == null) {
                 configurationUrls = Collections.singletonList(DEFAULT_CONFIGURATION_URL);
             }
-            ConfigurationParser parser = new ConfigurationParser();
+
             SpringEmbeddedJmxTrans newJmxTrans = new SpringEmbeddedJmxTrans();
             newJmxTrans.setObjectName("org.jmxtrans.embedded:type=EmbeddedJmxTrans,name=" + beanName);
 
-            for (String delimitedConfigurationUrl : configurationUrls) {
-                String[] tokens = StringUtils.commaDelimitedListToStringArray(delimitedConfigurationUrl);
-                tokens = StringUtils.trimArrayElements(tokens);
-                for (String configurationUrl : tokens) {
-                    configurationUrl = configurationUrl.trim();
-                    logger.debug("Load configuration {}", configurationUrl);
-                    Resource configuration = resourceLoader.getResource(configurationUrl);
-                    if (configuration.exists()) {
-                        try {
-                            parser.mergeEmbeddedJmxTransConfiguration(configuration.getInputStream(), newJmxTrans);
-                        } catch (Exception e) {
-                            throw new EmbeddedJmxTransException("Exception loading configuration " + configuration, e);
-                        }
-                    } else if (ignoreConfigurationNotFound) {
-                        logger.debug("Ignore missing configuration file {}", configuration);
-                    } else {
-                        throw new EmbeddedJmxTransException("Configuration file " + configuration + " not found");
-                    }
-                }
-            }
+            List<Resource> configurations = getConfigurations();
+            
+			loadConfiguration(newJmxTrans, configurations);
+
+			lastModified = computeConfigurationLastModified(configurations);
+
             embeddedJmxTrans = newJmxTrans;
             logger.info("Created EmbeddedJmxTrans with configuration {})", configurationUrls);
             embeddedJmxTrans.start();
+            
+            if (configurationScanPeriod > 0) {
+            	configurationReloaderExecutor = Executors.newScheduledThreadPool(1, new NamedThreadFactory("jmxtrans-configuration-reloader-", true));
+            	configurationReloaderExecutor.scheduleWithFixedDelay(new ConfigurationReloader(), 0, configurationScanPeriod, TimeUnit.MILLISECONDS);
+            	logger.info("Configuration reloader created. Scanning every {}ms.", configurationScanPeriod);
+            } else {
+            	logger.info("Automatic configuration reloading is disabled.");
+            }
         }
         return embeddedJmxTrans;
     }
 
+	private void loadConfiguration(SpringEmbeddedJmxTrans jmxTrans, List<Resource> configurations) {
+		ConfigurationParser parser = new ConfigurationParser();
+		for (Resource configuration : configurations) {
+			try {
+				parser.mergeEmbeddedJmxTransConfiguration(configuration.getInputStream(), jmxTrans);
+			} catch (Exception e) {
+				throw new EmbeddedJmxTransException("Exception loading configuration " + configuration, e);
+			}
+		}
+	}
+
     /**
      * <p>
-     *     See <a href="http://spring.io/blog/2011/08/09/what-s-a-factorybean">Josh Long: What's a FactoryBean?</a>
+     * See <a href="http://spring.io/blog/2011/08/09/what-s-a-factorybean">Josh Long: What's a FactoryBean?</a>
      * </p>
      * <quote>
      * One important takeaway here is that it is the <code>FactoryBean</code>, <i>not</i> the factoried object itself,
@@ -129,6 +223,10 @@ public class EmbeddedJmxTransFactory implements FactoryBean<SpringEmbeddedJmxTra
      */
     @Override
     public void destroy() throws Exception {
+    	if (this.configurationReloaderExecutor != null) {
+    		logger.info("Configuration reloader shutdown.");
+    		this.configurationReloaderExecutor.shutdown();
+    	}
         if (this.embeddedJmxTrans != null) {
             this.embeddedJmxTrans.destroy();
         }
@@ -169,4 +267,9 @@ public class EmbeddedJmxTransFactory implements FactoryBean<SpringEmbeddedJmxTra
     public void setBeanName(String beanName) {
         this.beanName = beanName;
     }
+
+
+	public void setConfigurationScanPeriod(int configurationScanPeriod) {
+		this.configurationScanPeriod = configurationScanPeriod;
+	}
 }

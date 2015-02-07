@@ -86,6 +86,16 @@
 				]]></xsd:documentation>
                 </xsd:annotation>
             </xsd:attribute>
+            <xsd:attribute name="configuration-scan-period" type="xsd:int"
+                           default="0">
+                <xsd:annotation>
+                    <xsd:documentation><![CDATA[
+	Specifies the time interval in ms to check for configuration modifications. If modifications are detected, 
+	then the configuration is reloaded in JmxTrans.
+	Default is 0, meaning that the configuration reloading is disabled.
+				]]></xsd:documentation>
+                </xsd:annotation>
+            </xsd:attribute>
         </xsd:complexType>
     </xsd:element>
 </xsd:schema>
