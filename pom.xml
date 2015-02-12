@@ -30,7 +30,7 @@
     </parent>
     <groupId>org.jmxtrans.embedded</groupId>
     <artifactId>embedded-jmxtrans</artifactId>
-    <version>1.0.14-SNAPSHOT</version>
+    <version>1.0.14</version>
     <packaging>jar</packaging>
     <name>embedded-jmxtrans</name>
     <description>In process JMX metrics exporter</description>
@@ -39,7 +39,7 @@
         <connection>scm:git:git@github.com:jmxtrans/embedded-jmxtrans.git</connection>
         <developerConnection>scm:git:git@github.com:jmxtrans/embedded-jmxtrans.git</developerConnection>
         <url>https://github.com/jmxtrans/embedded-jmxtrans</url>
-    <tag>HEAD</tag>
+    <tag>embedded-jmxtrans-1.0.14</tag>
   </scm>
     <build>
         <plugins>
