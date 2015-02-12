@@ -39,7 +39,7 @@ import org.w3c.dom.NodeList;
 public class EmbeddedJmxTransBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 
     private static final String CONFIGURATION_ATTRIBUTE = "configuration";
-    private static final String CONFIGURATION_SCAN_PERIOD = "configuration-scan-period";
+    private static final String CONFIGURATION_SCAN_PERIOD_IN_SECONDS = "configuration-scan-period-in-seconds";
     private static final String IGNORE_CONFIGURATION_NOT_FOUND_ATTRIBUTE = "ignore-configuration-not-found";
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -60,8 +60,8 @@ public class EmbeddedJmxTransBeanDefinitionParser extends AbstractSingleBeanDefi
         builder.setRole(BeanDefinition.ROLE_APPLICATION);
         builder.getRawBeanDefinition().setSource(parserContext.extractSource(element));
 
-        if (element.hasAttribute(CONFIGURATION_SCAN_PERIOD)) {
-            builder.addPropertyValue("configurationScanPeriod", element.getAttribute(CONFIGURATION_SCAN_PERIOD));
+        if (element.hasAttribute(CONFIGURATION_SCAN_PERIOD_IN_SECONDS)) {
+            builder.addPropertyValue("configurationScanPeriodInSeconds", element.getAttribute(CONFIGURATION_SCAN_PERIOD_IN_SECONDS));
         }
         
         if (element.hasAttribute(IGNORE_CONFIGURATION_NOT_FOUND_ATTRIBUTE)) {

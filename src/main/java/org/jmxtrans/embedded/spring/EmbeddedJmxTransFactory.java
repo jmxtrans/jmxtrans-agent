@@ -74,7 +74,7 @@ public class EmbeddedJmxTransFactory implements FactoryBean<SpringEmbeddedJmxTra
 
     private long lastModified;
     
-    private int configurationScanPeriod = 0;
+    private int configurationScanPeriodInSeconds = 0;
     
     private ScheduledExecutorService configurationReloaderExecutor;
 
@@ -92,25 +92,32 @@ public class EmbeddedJmxTransFactory implements FactoryBean<SpringEmbeddedJmxTra
      */
 	private class ConfigurationReloader implements Runnable {
 		@Override
-		public void run() {
+		public synchronized void run() {
 			logger.debug("Check configuration last modified.");
 			List<Resource> configurations = getConfigurations();
 			long configurationLastModified = computeConfigurationLastModified(configurations);
-			if (configurationLastModified > lastModified && embeddedJmxTrans != null) {
-				logger.info("Reloading configuration.");
+            if (embeddedJmxTrans == null) {
+                // silently skip
+            } else if (configurationLastModified > lastModified) {
+				logger.info("Configuration change detected. Reload configuration....");
 				lastModified = configurationLastModified;
 				try {
+                    logger.debug("Stop jmxtrans....");
 					embeddedJmxTrans.stop();
 					embeddedJmxTrans.getQueries().clear();
 					embeddedJmxTrans.getOutputWriters().clear();
+                    logger.debug("jmxtrans stopped. Start jmxtrans....");
 					loadConfiguration(embeddedJmxTrans, configurations);
 					embeddedJmxTrans.start();
+                    logger.info("jmxtrans restarted with new configuration.");
 				} catch (Exception e) {
 					logger.error("Error while reloading the configuration. Embedded JmxTrans is disabled until the configuration is fixed.", e);
 				}
-			}
+			} else {
+                logger.debug("No configuration change detected. Don't reload configuration");
+            }
 		}
-	};
+	}
 
     /**
      * Computes the last modified date of all configuration files.
@@ -186,10 +193,10 @@ public class EmbeddedJmxTransFactory implements FactoryBean<SpringEmbeddedJmxTra
             logger.info("Created EmbeddedJmxTrans with configuration {})", configurationUrls);
             embeddedJmxTrans.start();
             
-            if (configurationScanPeriod > 0) {
+            if (configurationScanPeriodInSeconds > 0) {
             	configurationReloaderExecutor = Executors.newScheduledThreadPool(1, new NamedThreadFactory("jmxtrans-configuration-reloader-", true));
-            	configurationReloaderExecutor.scheduleWithFixedDelay(new ConfigurationReloader(), 0, configurationScanPeriod, TimeUnit.MILLISECONDS);
-            	logger.info("Configuration reloader created. Scanning every {}ms.", configurationScanPeriod);
+            	configurationReloaderExecutor.scheduleWithFixedDelay(new ConfigurationReloader(), 0, configurationScanPeriodInSeconds, TimeUnit.SECONDS);
+            	logger.info("Configuration reloader created. Scanning every {}s.", configurationScanPeriodInSeconds);
             } else {
             	logger.info("Automatic configuration reloading is disabled.");
             }
@@ -269,7 +276,7 @@ public class EmbeddedJmxTransFactory implements FactoryBean<SpringEmbeddedJmxTra
     }
 
 
-	public void setConfigurationScanPeriod(int configurationScanPeriod) {
-		this.configurationScanPeriod = configurationScanPeriod;
+	public void setConfigurationScanPeriodInSeconds(int configurationScanPeriodInSeconds) {
+		this.configurationScanPeriodInSeconds = configurationScanPeriodInSeconds;
 	}
 }
