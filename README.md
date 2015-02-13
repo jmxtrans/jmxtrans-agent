@@ -8,12 +8,12 @@ jmxtrans-agent is a version of [jmxtrans](http://jmxtrans.org/) intended to be u
 
 ## Java Agent Declaration
 
-Download [jmxtrans-agent-1.0.7.jar](http://repo1.maven.org/maven2/org/jmxtrans/agent/jmxtrans-agent/1.0.7/jmxtrans-agent-1.0.7.jar)
+Download [jmxtrans-agent-1.0.8.jar](http://repo1.maven.org/maven2/org/jmxtrans/agent/jmxtrans-agent/1.0.8/jmxtrans-agent-1.0.8.jar)
 
 Sample `setenv.sh` for Apache Tomcat
 
 ```
-export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.0.7.jar=jmxtrans-agent.xml"
+export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.0.8.jar=jmxtrans-agent.xml"
 ```
 
 * java agent jar path can be relative to the working dir
@@ -208,10 +208,10 @@ You then have to make this implementation available in the classpath (adding it 
 # Sample ActiveMQ Configuration
 
 * Create directory `${ACTIVEMQ_HOME}/jmxtrans-agent/`
-* Copy `jmxtrans-agent-1.0.7.jar` under `${ACTIVEMQ_HOME}/jmxtrans-agent/`
+* Copy `jmxtrans-agent-1.0.8.jar` under `${ACTIVEMQ_HOME}/jmxtrans-agent/`
 * Update `${ACTIVEMQ_HOME}/bin/activemq`, add in `invoke_start()` and `invoke_console()`:
     ```
-JMXTRANS_AGENT="-javaagent:${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-1.0.7.jar=${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-activemq.xml"
+JMXTRANS_AGENT="-javaagent:${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-1.0.8.jar=${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-activemq.xml"
 ACTIVEMQ_OPTS="$ACTIVEMQ_OPTS $JMXTRANS_AGENT"
 ```
 * Copy to `${ACTIVEMQ_HOME}/jmxtrans-agent/` a config file similar to
