@@ -24,14 +24,16 @@
 package org.jmxtrans.agent;
 
 import org.jmxtrans.agent.util.StringUtils2;
+import org.jmxtrans.agent.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.management.ObjectName;
-import java.net.InetAddress;
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Build a {@linkplain org.jmxtrans.agent.QueryResult#name} from a collected metric ({@linkplain org.jmxtrans.agent.Query}).

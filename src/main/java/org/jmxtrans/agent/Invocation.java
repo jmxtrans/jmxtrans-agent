@@ -23,13 +23,14 @@
  */
 package org.jmxtrans.agent;
 
+import org.jmxtrans.agent.util.logging.Logger;
+
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>

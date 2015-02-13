@@ -23,6 +23,8 @@
  */
 package org.jmxtrans.agent;
 
+import org.jmxtrans.agent.util.logging.Logger;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -30,7 +32,6 @@ import java.sql.Timestamp;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static org.jmxtrans.agent.util.ConfigurationUtils.getBoolean;
 

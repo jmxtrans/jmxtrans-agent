@@ -24,6 +24,7 @@
 package org.jmxtrans.agent;
 
 import org.jmxtrans.agent.util.PropertyPlaceholderResolver;
+import org.jmxtrans.agent.util.logging.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -38,7 +39,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 /**
  * XML configuration parser.

@@ -25,6 +25,7 @@ package org.jmxtrans.agent;
 
 import org.jmxtrans.agent.util.Preconditions2;
 import org.jmxtrans.agent.util.collect.Iterables2;
+import org.jmxtrans.agent.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -37,7 +38,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>

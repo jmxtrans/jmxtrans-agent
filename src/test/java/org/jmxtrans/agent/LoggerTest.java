@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010-2013 the original author or authors
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -8,10 +8,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -19,38 +19,33 @@
  * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
+ * 
  */
 package org.jmxtrans.agent;
 
+import org.hamcrest.Matchers;
 import org.jmxtrans.agent.util.logging.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
-import java.lang.instrument.Instrumentation;
 import java.util.logging.Level;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class JmxTransAgent {
-    private static Logger logger = Logger.getLogger(JmxTransAgent.class.getName());
+public class LoggerTest {
 
-    public static void premain(String configFile, Instrumentation inst) {
+    @Test
+    public void testParseLogLevel() {
 
-        if (configFile == null || configFile.isEmpty()) {
-            String msg = "JmxTransExporter configurationFile must be defined";
-            logger.log(Level.SEVERE, msg);
-            throw new IllegalStateException(msg);
-        }
-        JmxTransExporter jmxTransExporter;
-        try {
-            jmxTransExporter = new JmxTransExporterBuilder().build(configFile);
-            //START
-            jmxTransExporter.start();
-            logger.info("JmxTransAgent started with configuration '" + configFile + "'");
-        } catch (Exception e) {
-            String msg = "Exception loading JmxTransExporter from '" + configFile + "'";
-            logger.log(Level.SEVERE, msg, e);
-            throw new IllegalStateException(msg, e);
-        }
+        Assert.assertThat(Logger.parseLevel("FINEST", null), Matchers.equalTo(Level.FINEST));
+        Assert.assertThat(Logger.parseLevel("FINER", null), Matchers.equalTo(Level.FINER));
+
+        Assert.assertThat(Logger.parseLevel("FINE", null), Matchers.equalTo(Level.FINE));
+        Assert.assertThat(Logger.parseLevel("fine", null), Matchers.equalTo(Level.FINE));
+        Assert.assertThat(Logger.parseLevel("debug", null), Matchers.equalTo(Level.FINE));
+
+        Assert.assertThat(Logger.parseLevel("INFO", null), Matchers.equalTo(Level.INFO));
+        Assert.assertThat(Logger.parseLevel("info", null), Matchers.equalTo(Level.INFO));
     }
 }

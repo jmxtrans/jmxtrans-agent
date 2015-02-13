@@ -24,6 +24,7 @@
 package org.jmxtrans.agent;
 
 import org.jmxtrans.agent.util.StringUtils2;
+import org.jmxtrans.agent.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 import javax.management.ObjectName;
@@ -32,7 +33,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
