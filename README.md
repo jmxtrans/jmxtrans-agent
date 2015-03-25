@@ -127,6 +127,11 @@ Out of the box output writers
   * `fileName`: name of the file in which the collected metrics are stored. Optional, default value `jmxtrans-agent.data` (in JVM working dir, for example `$TOMCAT_HOME/bin`)
   * `maxFileSize`: Maximum file size in MB before file is rolled. Optional, default is `10`
   * `maxBackupIndex`: Maximum number of files. Optional, default is `5
+* [StatsDOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/StatsDOutputWriter.java): output to StatD. Configuration parameters:
+  * `host`: StatsD listener host
+  * `port`: StatsD listener port
+  * `metricName`: metric name prefix. Optional, default value is machine hostname or IP (all `.` are scaped as `_`).
+  * `bufferSize`: max buffer size. Holds data to be sent. Optional, default value is 1024.
 
 Output writers configuration support  an expression language based on property placeholders with the `{prop-name[:default-value]}` syntax (e.g. "`${graphite.host:2003}`").
 
