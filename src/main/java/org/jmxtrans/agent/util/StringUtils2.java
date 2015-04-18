@@ -148,4 +148,26 @@ public class StringUtils2 {
     public static void appendEscapedNonAlphaNumericChars(@Nonnull String str, @Nonnull StringBuilder result) {
         appendEscapedNonAlphaNumericChars(str, true, result);
     }
+
+    public static boolean isNullOrEmpty(@Nullable String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    /**
+     * Abbreviates a String using ellipses. This will turn "Now is the time for all good men" into "Now is the time for..."
+     *
+     * @param str the String to abbreviate
+     * @param max the max number of chars of the abbreviated String
+     * @return the abbreviated string
+     */
+    @Nonnull
+    public static String abbreviate(String str, int max) {
+        if (str == null) {
+            return "";
+        } else if (str.length() <= max) {
+            return str;
+        } else {
+            return str.substring(0, max - 3) + "...";
+        }
+    }
 }
