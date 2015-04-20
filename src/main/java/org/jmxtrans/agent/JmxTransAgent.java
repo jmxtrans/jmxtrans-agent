@@ -23,9 +23,20 @@
  */
 package org.jmxtrans.agent;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jmxtrans.agent.util.logging.Logger;
 
+import javax.management.ObjectInstance;
+import javax.management.ObjectName;
 import java.lang.instrument.Instrumentation;
+import java.lang.management.ManagementFactory;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 /**
@@ -34,8 +45,12 @@ import java.util.logging.Level;
 public class JmxTransAgent {
     private static Logger logger = Logger.getLogger(JmxTransAgent.class.getName());
 
+    @SuppressFBWarnings("MS_SHOULD_BE_FINAL")
+    public static boolean DIAGNOSTIC = Boolean.valueOf(System.getProperty(JmxTransAgent.class.getName() + ".diagnostic", "false"));
+
     public static void premain(String configFile, Instrumentation inst) {
 
+        dumpDiagnosticInfo();
         if (configFile == null || configFile.isEmpty()) {
             String msg = "JmxTransExporter configurationFile must be defined";
             logger.log(Level.SEVERE, msg);
@@ -52,5 +67,50 @@ public class JmxTransAgent {
             logger.log(Level.SEVERE, msg, e);
             throw new IllegalStateException(msg, e);
         }
+    }
+
+    public static void dumpDiagnosticInfo() {
+        if (!JmxTransAgent.DIAGNOSTIC)
+            return;
+
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+
+                while (JmxTransAgent.DIAGNOSTIC) {
+
+                    String prefix = new Timestamp(System.currentTimeMillis()) + " [jmxtrans-agent] ";
+                    System.out.println(prefix + "JMXTRANS-AGENT DIAGNOSTIC INFO");
+
+                    // CONTEXT
+                    System.out.println(prefix + "Logger level: " + Logger.level);
+
+                    // MBEANS
+                    Set<ObjectInstance> objectInstances = ManagementFactory.getPlatformMBeanServer().queryMBeans(null, null);
+                    List<ObjectName> objectNames = new ArrayList<>();
+                    for (ObjectInstance objectInstance : objectInstances) {
+                        objectNames.add(objectInstance.getObjectName());
+                    }
+                    Collections.sort(objectNames);
+                    System.out.println(prefix + "ManagementFactory.getPlatformMBeanServer().queryMBeans(null, null)");
+                    for (ObjectName objectName : objectNames) {
+                        System.out.println(prefix + "\t" + objectName);
+                    }
+
+                    System.out.println(prefix + "ENF OF JMXTRANS-AGENT DIAGNOSING INFO");
+                    try {
+                        Thread.sleep(TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        break;
+                    }
+                }
+            }
+        };
+
+        Thread thread = new Thread(runnable);
+        thread.setName("jmxtrans-agent-diagnostic");
+        thread.setDaemon(true);
+        thread.start();
     }
 }
