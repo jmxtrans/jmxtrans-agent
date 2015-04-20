@@ -55,7 +55,7 @@ public class JmxTransExporter {
     protected ResultNameStrategy resultNameStrategy;
     protected int collectInterval = 10;
     protected TimeUnit collectIntervalTimeUnit = TimeUnit.SECONDS;
-    private Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger logger = Logger.getLogger(getClass().getName());
     private ThreadFactory threadFactory = new ThreadFactory() {
         final AtomicInteger counter = new AtomicInteger();
 

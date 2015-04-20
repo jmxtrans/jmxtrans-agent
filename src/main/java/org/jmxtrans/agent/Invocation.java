@@ -23,8 +23,11 @@
  */
 package org.jmxtrans.agent;
 
+import org.jmxtrans.agent.util.Preconditions2;
 import org.jmxtrans.agent.util.logging.Logger;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -37,22 +40,27 @@ import java.util.logging.Level;
  */
 public class Invocation {
 
+    @Nullable
     protected final ObjectName objectName;
+    @Nonnull
     protected final String operationName;
+    @Nullable
     protected final String resultAlias;
+    @Nonnull
     protected final Object[] params;
+    @Nonnull
     protected final String[] signature;
     private final Logger logger = Logger.getLogger(getClass().getName());
 
-    public Invocation(String objectName, String operationName, Object[] params, String[] signature, String resultAlias) {
+    public Invocation(@Nullable String objectName, @Nonnull String operationName, @Nonnull Object[] params, @Nonnull String[] signature, @Nullable String resultAlias) {
         try {
-            this.objectName = new ObjectName(objectName);
+            this.objectName = objectName == null ? null : new ObjectName(objectName);
         } catch (MalformedObjectNameException e) {
             throw new IllegalArgumentException("Invalid objectName '" + objectName + "'", e);
         }
-        this.operationName = operationName;
-        this.params = params;
-        this.signature = signature;
+        this.operationName = Preconditions2.checkNotNull(operationName, "operationName");
+        this.params = Preconditions2.checkNotNull(params, "params");
+        this.signature = Preconditions2.checkNotNull(signature, "signature");
         this.resultAlias = resultAlias;
     }
 

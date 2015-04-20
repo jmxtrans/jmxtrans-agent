@@ -51,7 +51,7 @@ public class Query {
 
     @Nonnull
     protected final ObjectName objectName;
-    @Nonnull
+    @Nullable
     protected final String resultAlias;
     /**
      * The attribute to retrieve ({@link MBeanServer#getAttribute(javax.management.ObjectName, String)})
@@ -91,7 +91,7 @@ public class Query {
     /**
      * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
      */
-    public Query(@Nonnull String objectName, @Nonnull String attribute, @Nonnull String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
+    public Query(@Nonnull String objectName, @Nonnull String attribute, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
         this(objectName, attribute, null, null, null, resultAlias, resultNameStrategy);
     }
 
@@ -108,7 +108,7 @@ public class Query {
      *                           {@link #collectAndExport(javax.management.MBeanServer, OutputWriter)} phase.
      */
     public Query(@Nonnull String objectName, @Nonnull String attribute, @Nullable String key, @Nullable Integer position,
-                 @Nullable String type, @Nonnull String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
+                 @Nullable String type, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
         try {
             this.objectName = new ObjectName(Preconditions2.checkNotNull(objectName));
         } catch (MalformedObjectNameException e) {
@@ -116,7 +116,7 @@ public class Query {
         }
         this.attribute = Preconditions2.checkNotNull(attribute);
         this.key = key;
-        this.resultAlias = Preconditions2.checkNotNull(resultAlias);
+        this.resultAlias = resultAlias;
         this.position = position;
         this.type = type;
         this.resultNameStrategy = Preconditions2.checkNotNull(resultNameStrategy, "resultNameStrategy");
@@ -194,7 +194,7 @@ public class Query {
         return objectName;
     }
 
-    @Nonnull
+    @Nullable
     public String getResultAlias() {
         return resultAlias;
     }

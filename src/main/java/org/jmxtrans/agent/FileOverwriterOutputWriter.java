@@ -27,6 +27,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.*;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -71,7 +72,7 @@ public class FileOverwriterOutputWriter extends AbstractOutputWriter {
             temporaryFileWriter = null;
         }
         if (temporaryFileWriter == null) {
-            temporaryFileWriter = new BufferedWriter(new FileWriter(temporaryFile, false));
+            temporaryFileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(temporaryFile, false), StandardCharsets.UTF_8));
         }
 
         return temporaryFileWriter;
@@ -103,7 +104,10 @@ public class FileOverwriterOutputWriter extends AbstractOutputWriter {
             // silently skip
         }
         if (temporaryFile != null) {
-            temporaryFile.delete();
+            boolean deleted = temporaryFile.delete();
+            if (deleted) {
+                logger.warning("Failure to delete " + temporaryFile);
+            }
         }
         temporaryFile = null;
 

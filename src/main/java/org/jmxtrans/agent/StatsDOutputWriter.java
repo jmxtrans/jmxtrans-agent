@@ -55,7 +55,7 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
     private DatagramChannel channel;
 
     @Override
-    public void postConstruct(Map<String, String> settings) {
+    public synchronized void postConstruct(Map<String, String> settings) {
         super.postConstruct(settings);
 
         final String host = ConfigurationUtils.getString(settings, SETTING_HOST);
@@ -109,7 +109,7 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
     }
 
     @Override
-    public void writeQueryResult(String metricName, String metricType, Object value) throws IOException {
+    public synchronized void writeQueryResult(String metricName, String metricType, Object value) throws IOException {
         String stats = metricNamePrefix + "." + metricName + ":" + value + "|c\n";
         if (logger.isLoggable(getDebugLevel())) {
             logger.log(getDebugLevel(), "Sending msg: " + stats);

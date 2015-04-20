@@ -23,6 +23,8 @@
  */
 package org.jmxtrans.agent.util.logging;
 
+import edu.umd.cs.findbugs.annotations.*;
+
 import javax.annotation.Nullable;
 import java.sql.Timestamp;
 import java.util.HashMap;
@@ -40,6 +42,7 @@ public class Logger {
 
     private final String name;
 
+    @SuppressFBWarnings("MS_SHOULD_BE_REFACTORED_TO_BE_FINAL")
     public static Level level = Level.INFO;
 
     @Nullable

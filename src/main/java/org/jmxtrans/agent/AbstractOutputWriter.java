@@ -42,8 +42,8 @@ public abstract class AbstractOutputWriter implements OutputWriter {
      * Define the level of log message to display tweaking java.util.logging configuration.<p/>
      * Supported values are {@code INFO}
      */
-    public static String SETTING_LOG_LEVEL = "logLevel";
-    public static String SETTING_LOG_LEVEL_DEFAULT_VALUE = "INFO";
+    public final static String SETTING_LOG_LEVEL = "logLevel";
+    public final static String SETTING_LOG_LEVEL_DEFAULT_VALUE = "INFO";
     protected final Logger logger = Logger.getLogger(getClass().getName());
     private Level debugLevel = Level.FINE;
     private Level traceLevel = Level.FINER;

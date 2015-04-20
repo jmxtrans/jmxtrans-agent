@@ -23,10 +23,13 @@
  */
 package org.jmxtrans.agent;
 
+import org.jmxtrans.agent.util.logging.Logger;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.*;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DateFormat;
@@ -77,7 +80,7 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
             temporaryFileWriter = null;
         }
         if (temporaryFileWriter == null) {
-            temporaryFileWriter = new BufferedWriter(new FileWriter(temporaryFile, false));
+            temporaryFileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(temporaryFile, false), StandardCharsets.UTF_8));
         }
 
         return temporaryFileWriter;
@@ -104,7 +107,10 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
             // silently skip
         }
         if (temporaryFile != null) {
-            temporaryFile.delete();
+            boolean deleted = temporaryFile.delete();
+            if(!deleted) {
+                logger.warning("Silently ignore failure to delete " + temporaryFile);
+            }
         }
         temporaryFile = null;
 
@@ -123,6 +129,7 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
     }
 
     public static class IoUtils {
+        private final static Logger LOGGER = Logger.getLogger(IoUtils.class.getName());
 
         /**
          * Simple implementation without chunking if the source file is big.
@@ -147,7 +154,7 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
             try {
                 fos = new FileOutputStream(destination, append);
                 if (append) {
-                    fos.write(("\n").getBytes());
+                    fos.write(("\n").getBytes(StandardCharsets.UTF_8));
                 }
                 fos.write(Files.readAllBytes(Paths.get(source.getAbsolutePath())));
             } finally {
@@ -178,7 +185,7 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
             }
         }
 
-        public static void closeQuietly(Writer writer) {
+        public static void closeQuietly(@Nullable Writer writer) {
             if (writer == null)
                 return;
             try {
@@ -239,7 +246,10 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
                 doCopySmallFile(f, fNext, false);
             }
             
-            destination.delete();
+            boolean deleted = destination.delete();
+            if (!deleted) {
+                LOGGER.warning("Failure to delete file " + destination);
+            }
         }
     }
 }
