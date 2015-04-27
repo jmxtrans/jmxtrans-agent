@@ -37,14 +37,14 @@ import java.util.logging.Level;
 
 /**
  * Build a {@linkplain org.jmxtrans.agent.QueryResult#name} from a collected metric ({@linkplain org.jmxtrans.agent.Query}).
- * <p/>
+ *
  * Build name must be escaped to be compatible with all {@linkplain org.jmxtrans.agent.OutputWriter}.
  * The approach is to escape non alpha-numeric chars.
- * <p/>
+ *
  * Expressions support '#' based keywords (e.g. <code>#hostname#</code>) and with '%' based variables mapped to objectname properties.
- * <p/>
+ *
  * Supported '#' based 'functions':
- * <table>
+ * <table summary="Functions">
  * <tr>
  * <th>Function</th>
  * <th>Description</th>
@@ -123,8 +123,8 @@ public class ResultNameStrategyImpl implements ResultNameStrategy {
     }
 
     /**
-     * Transforms an {@linkplain javax.management.ObjectName} into a plain {@linkplain String} only composed of (a->Z, A-Z, '_').
-     * <p/>
+     * Transforms an {@linkplain javax.management.ObjectName} into a plain {@linkplain String} only composed of ('a' to 'Z', 'A' to 'Z', '_').
+     *
      * '_' is the escape char for not compliant chars.
      */
     protected String escapeObjectName(@Nonnull ObjectName objectName) {

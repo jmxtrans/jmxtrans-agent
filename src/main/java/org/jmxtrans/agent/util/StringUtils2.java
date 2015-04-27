@@ -39,10 +39,10 @@ public class StringUtils2 {
     }
 
     /**
-     * Split given String. Delimiters are <code>","</code>, <code>";"</code> and <code>"\n"</code>.
+     * Split given String. Delimiters are {@code ","}, {@code ";"} and {@code "\n"}.
      *
      * @param delimitedString
-     * @return splitted string or <code>null</code> if given <code>delimitedString</code> is <code>null</code>
+     * @return splitted string or {@code null} if given {@code delimitedString} is {@code null}
      */
     public static List<String> delimitedStringToList(@Nullable String delimitedString) {
         if (delimitedString == null) {
@@ -63,13 +63,13 @@ public class StringUtils2 {
 
     /**
      * Join given {@code tokens} with given {@code delimiter}.
-     * <p/>
-     * Sample: tokens <code>"com", "mycompany, "ecommerce", "server1"</code> with delimiter <code>"."</code>
-     * returns <code>"com.mycompany.ecommerce.server1"</code>.
+     *
+     * Sample: tokens {@code "com", "mycompany, "ecommerce", "server1"} with delimiter {@code "."}
+     * returns {@code "com.mycompany.ecommerce.server1"}.
      *
      * @param tokens
      * @param delimiter
-     * @return the joined tokens (<code>null</code> if given <code>tokens</code> is <code>null</code>
+     * @return the joined tokens ({@code null} if given {@code tokens} is {@code null}
      */
     public static String join(@Nullable List<String> tokens, @Nonnull String delimiter) {
         if (tokens == null) {
@@ -90,12 +90,12 @@ public class StringUtils2 {
     }
 
     /**
-     * <p> Reverse tokens of given tokenized <code>str</code>.</p>
-     * <p>Sample: "server1.ecommerce.mycompany.com" returns <code>"com.mycompany.ecommerce.server1"</code>.</p>
+     * <p> Reverse tokens of given tokenized {@code str}.</p>
+     * <p>Sample: "server1.ecommerce.mycompany.com" returns {@code "com.mycompany.ecommerce.server1"}.</p>
      *
      * @param str
      * @param delimiter
-     * @return reversed string or <code>null</code> if given string is <code>null</code>
+     * @return reversed string or {@code null} if given string is {@code null}
      */
     public static String reverseTokens(@Nullable String str, @Nonnull String delimiter) {
         if (str == null) {
@@ -115,9 +115,9 @@ public class StringUtils2 {
     }
 
     /**
-     * Escape all non a->z,A->Z, 0->9 and '-' with a '_'.
-     * <p/>
-     * '.' is escaped with a '_' if {@code escapeDot} is <code>true</code>.
+     * Escape all non 'a' to 'z','A' to 'Z', '0' to '9' and '-' with a '_'.
+     *
+     * '.' is escaped with a '_' if {@code escapeDot} is {@code true}.
      *
      * @param str       the string to escape
      * @param escapeDot indicates whether '.' should be escaped into '_' or not.
@@ -140,7 +140,7 @@ public class StringUtils2 {
     }
 
     /**
-     * Escape all non a->z,A->Z, 0->9 and '-' with a '_'.
+     * Escape all non 'a' to 'z','A' to 'Z', '0' to '9' and '-' with a '_'.
      *
      * @param str    the string to escape
      * @param result the {@linkplain StringBuilder} in which the escaped string is appended

@@ -39,7 +39,8 @@ import static org.jmxtrans.agent.util.ConfigurationUtils.getString;
 public abstract class AbstractOutputWriter implements OutputWriter {
 
     /**
-     * Define the level of log message to display tweaking java.util.logging configuration.<p/>
+     * Define the level of log message to display tweaking java.util.logging configuration.
+     *
      * Supported values are {@code INFO}
      */
     public final static String SETTING_LOG_LEVEL = "logLevel";

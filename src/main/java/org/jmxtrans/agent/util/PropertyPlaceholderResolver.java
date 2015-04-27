@@ -27,13 +27,13 @@ import java.io.Serializable;
 
 /**
  * Inspired by Spring Property placeholder mechanism.
- * <p/>
+ *
  * Placeholders are delimited by '{' and '}' and support default value with ':'. Sample : '<code>{graphite.host}</code>'
  * or '<code>{graphite.port:2003}</code>'.
- * <p/>
+ *
  * If the placeholder is not found in the system properties, it is searched in the environment variables and then
  * converted to underscore delimited upper case and searched in environment variables.
- * <p/>
+ *
  * Sample for '<code>{graphite.port:2003}</code>':
  * <ol>
  * <li><code>System.getProperty("graphite.port")</code></li>

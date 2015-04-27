@@ -30,14 +30,14 @@ import java.util.Map;
 
 /**
  * Build a {@linkplain QueryResult#name} from a collected metric ({@linkplain Query}).
- * <p/>
+ *
  * Build name must be escaped to be compatible with all {@linkplain OutputWriter}.
  * The approach is to escape non alpha-numeric chars.
- * <p/>
+ *
  * Expressions support '#' based keywords (e.g. <code>#hostname#</code>) and with '%' based variables mapped to objectname properties.
- * <p/>
+ *
  * Supported '#' based 'functions':
- * <table>
+ * <table summary="Functions">
  * <tr>
  * <th>Function</th>
  * <th>Description</th>
