@@ -29,10 +29,10 @@ import org.jmxtrans.agent.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
+import javax.management.*;
 import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeType;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,12 +51,13 @@ public class Query {
 
     @Nonnull
     protected final ObjectName objectName;
+
     @Nullable
     protected final String resultAlias;
     /**
      * The attribute to retrieve ({@link MBeanServer#getAttribute(javax.management.ObjectName, String)})
      */
-    @Nonnull
+    @Nullable
     protected final String attribute;
     /**
      * If the MBean attribute value is a {@link CompositeData}, the key to lookup.
@@ -77,21 +78,21 @@ public class Query {
     /**
      * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
      */
-    public Query(@Nonnull String objectName, @Nonnull String attribute, @Nonnull ResultNameStrategy resultNameStrategy) {
+    public Query(@Nonnull String objectName, @Nullable String attribute, @Nonnull ResultNameStrategy resultNameStrategy) {
         this(objectName, attribute, null, null, null, attribute, resultNameStrategy);
     }
 
     /**
      * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
      */
-    public Query(@Nonnull String objectName, @Nonnull String attribute, int position, @Nonnull ResultNameStrategy resultNameStrategy) {
+    public Query(@Nonnull String objectName, @Nullable String attribute, int position, @Nonnull ResultNameStrategy resultNameStrategy) {
         this(objectName, attribute, null, position, null, attribute, resultNameStrategy);
     }
 
     /**
      * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
      */
-    public Query(@Nonnull String objectName, @Nonnull String attribute, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
+    public Query(@Nonnull String objectName, @Nullable String attribute, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
         this(objectName, attribute, null, null, null, resultAlias, resultNameStrategy);
     }
 
@@ -107,14 +108,14 @@ public class Query {
      * @param resultNameStrategy the {@link org.jmxtrans.agent.ResultNameStrategy} used during the
      *                           {@link #collectAndExport(javax.management.MBeanServer, OutputWriter)} phase.
      */
-    public Query(@Nonnull String objectName, @Nonnull String attribute, @Nullable String key, @Nullable Integer position,
+    public Query(@Nonnull String objectName, @Nullable String attribute, @Nullable String key, @Nullable Integer position,
                  @Nullable String type, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
         try {
             this.objectName = new ObjectName(Preconditions2.checkNotNull(objectName));
         } catch (MalformedObjectNameException e) {
             throw new IllegalArgumentException("Invalid objectName '" + objectName + "'", e);
         }
-        this.attribute = Preconditions2.checkNotNull(attribute);
+        this.attribute = attribute;
         this.key = key;
         this.resultAlias = resultAlias;
         this.position = position;
@@ -129,53 +130,84 @@ public class Query {
         Set<ObjectName> objectNames = mbeanServer.queryNames(objectName, null);
 
         for (ObjectName on : objectNames) {
-
             try {
-                Object attributeValue = mbeanServer.getAttribute(on, attribute);
+                if (attribute == null || attribute.isEmpty()) {
+                    for (MBeanAttributeInfo mBeanAttributeInfo : mbeanServer.getMBeanInfo(on).getAttributes()) {
+                        collectAndExportAttribute(mbeanServer, outputWriter, on, mBeanAttributeInfo.getName());
+                    }
 
-                Object value;
-                if (attributeValue instanceof CompositeData) {
-                    CompositeData compositeData = (CompositeData) attributeValue;
-                    if (key == null) {
-                        logger.warning("Ignore compositeData without key specified for '" + on + "'#" + attribute + ": " + attributeValue);
-                        continue;
-                    } else {
-                        value = compositeData.get(key);
-                    }
                 } else {
-                    if (key == null) {
-                        value = attributeValue;
-                    } else {
-                        logger.warning("Ignore NON compositeData for specified key for '" + on + "'#" + attribute + "#" + key + ": " + attributeValue);
-                        continue;
-                    }
-                }
-                if (value != null && value.getClass().isArray()) {
-                    List valueAsList = new ArrayList();
-                    for (int i = 0; i < Array.getLength(value); i++) {
-                        valueAsList.add(Array.get(value, i));
-                    }
-                    value = valueAsList;
-                }
-
-                String resultName = resultNameStrategy.getResultName(this, on, key);
-                if (value instanceof Iterable) {
-                    Iterable iterable = (Iterable) value;
-                    if (position == null) {
-                        int idx = 0;
-                        for (Object entry : iterable) {
-                            outputWriter.writeQueryResult(resultName + "_" + idx++, type, entry);
-                        }
-                    } else {
-                        value = Iterables2.get((Iterable) value, position);
-                        outputWriter.writeQueryResult(resultName, type, value);
-                    }
-                } else {
-                    outputWriter.writeQueryResult(resultName, type, value);
+                    collectAndExportAttribute(mbeanServer, outputWriter, on, attribute);
                 }
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Exception collecting " + on + "#" + attribute + (key == null ? "" : "#" + key), e);
             }
+        }
+    }
+
+    private void collectAndExportAttribute(MBeanServer mbeanServer, OutputWriter outputWriter, ObjectName objectName, String attribute) {
+        try {
+            Object attributeValue = null;
+            try {
+                attributeValue = mbeanServer.getAttribute(objectName, attribute);
+            } catch (Exception ex) {
+                logger.warning("Failed to fetch attribute for '" + objectName + "'#" + attribute + ", exception: " + ex.getMessage());
+                return;
+            }
+
+            Object value;
+            if (attributeValue instanceof CompositeData) {
+                CompositeData compositeData = (CompositeData) attributeValue;
+                if (key == null) {
+                    /** Get for all keys */
+                    CompositeType compositeType = compositeData.getCompositeType();
+                    for (String key : compositeType.keySet()) {
+                        value = compositeData.get(key);
+                        processAttributeValue(outputWriter, objectName, attribute, value, key);
+                    }
+                    return;
+                } else {
+                    value = compositeData.get(key);
+                }
+            } else {
+                if (key == null) {
+                    value = attributeValue;
+                } else {
+                    logger.warning("Ignore NON compositeData for specified key for '" + objectName +
+                            "'#" + attribute + "#" + key + ": " + attributeValue);
+                    return;
+                }
+            }
+            if (value != null && value.getClass().isArray()) {
+                List valueAsList = new ArrayList();
+                for (int i = 0; i < Array.getLength(value); i++) {
+                    valueAsList.add(Array.get(value, i));
+                }
+                value = valueAsList;
+            }
+
+            processAttributeValue(outputWriter, objectName, attribute, value, key);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Exception collecting " + objectName + "#" + attribute + (key == null ? "" : "#" + key), e);
+        }
+    }
+
+    private void processAttributeValue(OutputWriter outputWriter, ObjectName objectName, String attribute,
+                                       Object value, String key) throws IOException {
+        String resultName = resultNameStrategy.getResultName(this, objectName, key, attribute);
+        if (value instanceof Iterable) {
+            Iterable iterable = (Iterable) value;
+            if (position == null) {
+                int idx = 0;
+                for (Object entry : iterable) {
+                    outputWriter.writeQueryResult(resultName + "_" + idx++, type, entry);
+                }
+            } else {
+                value = Iterables2.get((Iterable) value, position);
+                outputWriter.writeQueryResult(resultName, type, value);
+            }
+        } else {
+            outputWriter.writeQueryResult(resultName, type, value);
         }
     }
 
@@ -199,7 +231,7 @@ public class Query {
         return resultAlias;
     }
 
-    @Nonnull
+    @Nullable
     public String getAttribute() {
         return attribute;
     }
