@@ -102,19 +102,13 @@ public class ResultNameStrategyImpl implements ResultNameStrategy {
 
     @Nonnull
     @Override
-    public String getResultName(@Nonnull Query query, @Nonnull ObjectName objectName) {
-        return getResultName(query, objectName, null);
-    }
-
-    @Nonnull
-    @Override
-    public String getResultName(@Nonnull Query query, @Nonnull ObjectName objectName, @Nullable String key) {
+    public String getResultName(@Nonnull Query query, @Nonnull ObjectName objectName, @Nullable String key, @Nonnull String attribute) {
         String result;
         if (query.getResultAlias() == null) {
             if(key == null) {
-                result = escapeObjectName(objectName) + "." + query.getAttribute();
+                result = escapeObjectName(objectName) + "." + attribute;
             } else {
-                result = escapeObjectName(objectName) + "." + query.getAttribute() + "." + key;
+                result = escapeObjectName(objectName) + "." + attribute + "." + key;
             }
         } else {
             result = expressionLanguageEngine.resolveExpression(query.getResultAlias(), objectName);
