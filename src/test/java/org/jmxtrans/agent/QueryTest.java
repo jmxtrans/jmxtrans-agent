@@ -45,14 +45,17 @@ public class QueryTest {
     static MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
     static ObjectName mockObjectName;
     static Mock mock = new Mock("PS Eden Space", 87359488L);
-    MockOutputWriter mockOutputWriter = new MockOutputWriter();
-    ResultNameStrategy resultNameStrategy = new ResultNameStrategyImpl();
-    ResultNameStrategy jConsoleNameStrategy = new JConsoleNameStrategyImpl();
+    static MockOutputWriter mockOutputWriter = new MockOutputWriter();
+    static ResultNameStrategyImpl resultNameStrategy = new ResultNameStrategyImpl();
+    static JConsoleNameStrategyImpl jConsoleNameStrategy = new JConsoleNameStrategyImpl();
+    static ExpressionLanguageEngineImpl expressionLanguageEngine = new ExpressionLanguageEngineImpl();
 
     @BeforeClass
     public static void beforeClass() throws Exception {
         mockObjectName = new ObjectName("test:type=Mock,name=mock");
         mbeanServer.registerMBean(mock, mockObjectName);
+        resultNameStrategy.setExpressionLanguageEngine(expressionLanguageEngine);
+        jConsoleNameStrategy.setExpressionLanguageEngine(expressionLanguageEngine);
     }
 
     @AfterClass
@@ -90,7 +93,7 @@ public class QueryTest {
 
     @Test
     public void attribute_with_jconsole_name_strategy_format() throws Exception {
-        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", jConsoleNameStrategy);
+        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", null, jConsoleNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
         Object actual = mockOutputWriter.resultsByName.get("test.mock.Mock.CollectionUsageThreshold");
         assertThat(actual, notNullValue());

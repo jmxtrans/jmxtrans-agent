@@ -30,7 +30,6 @@ import javax.management.ObjectName;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Builds names with general rules like JConsole / VisualVM do.
@@ -41,11 +40,16 @@ import java.util.Map;
  *
  * @author <a href="mailto:maheshkelkar@gmail.com">Mahesh V Kelkar</a>
  */
-public class JConsoleNameStrategyImpl implements ResultNameStrategy {
+public class JConsoleNameStrategyImpl extends ResultNameStrategyImpl {
 
-    @Nonnull
+    /**
+     * Transforms an {@linkplain javax.management.ObjectName} into a plain {@linkplain String}
+     * only composed of ('a' to 'Z', 'A' to 'Z', '.', '_') similar to JConsole naming
+     *
+     * '_' is the escape char for not compliant chars.
+     */
     @Override
-    public String getResultName(Query query, ObjectName objectName, String key, String attributeName) {
+    protected String escapeObjectName(@Nonnull ObjectName objectName) {
 
         /** Add objectName's domain */
         StringBuilder result = new StringBuilder();
@@ -61,22 +65,7 @@ public class JConsoleNameStrategyImpl implements ResultNameStrategy {
                     result);
         }
 
-        /** Add attribute name */
-        if (attributeName != null && !attributeName.isEmpty()) {
-            result.append('.');
-            StringUtils2.appendEscapedNonAlphaNumericChars(attributeName, false, result);
-        }
-
-        /** Add composite-data key, if present */
-        if (key != null && !key.isEmpty()){
-            result.append('.');
-            StringUtils2.appendEscapedNonAlphaNumericChars(key, false, result);
-        }
-
         return result.toString();
     }
 
-    @Override
-    public void postConstruct(Map<String, String> settings) {
-    }
 }
