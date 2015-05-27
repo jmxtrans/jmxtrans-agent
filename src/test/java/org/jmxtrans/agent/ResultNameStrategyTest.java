@@ -88,4 +88,12 @@ public class ResultNameStrategyTest {
         String actual = engine.resolveExpression("#canonical_hostname#");
         assertThat(actual, is("server1.mycompany.com"));
     }
+
+    @Test
+    public void testGetResultName() throws Exception {
+        Query query = new Query("*:*", "count", "Katalina.%name%.%type%", strategy);
+        String objectName = "Catalina:type=Resource,resourcetype=Context,host=localhost,class=javax.sql.DataSource,name=\"jdbc/my-datasource\"";
+        String actual = strategy.getResultName(query, new ObjectName(objectName), "usage", "count");
+        assertThat(actual, is("Katalina.jdbc_my-datasource.Resource.count.usage"));
+    }
 }
