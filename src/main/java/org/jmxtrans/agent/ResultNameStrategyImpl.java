@@ -105,12 +105,10 @@ public class ResultNameStrategyImpl implements ResultNameStrategy {
     public String getResultName(@Nonnull Query query, @Nonnull ObjectName objectName, @Nullable String key, @Nonnull String attribute) {
         String result;
         if (query.getResultAlias() == null) {
-            result = escapeObjectName(objectName);
-            if (attribute != null && !attribute.isEmpty()) {
-                result += "." + attribute;
-            }
-            if (key != null && !key.isEmpty()) {
-                result += "." + key;
+            if (key == null) {
+                result = escapeObjectName(objectName) + "." + attribute;
+            } else {
+                result = escapeObjectName(objectName) + "." + attribute + "." + key;
             }
         } else {
             result = expressionLanguageEngine.resolveExpression(query.getResultAlias(), objectName);

@@ -24,12 +24,15 @@
 package org.jmxtrans.agent;
 
 import org.jmxtrans.agent.util.StringUtils2;
+import org.jmxtrans.agent.util.logging.Logger;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.management.ObjectName;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Builds names with general rules like JConsole / VisualVM do.
@@ -40,15 +43,33 @@ import java.util.List;
  *
  * @author <a href="mailto:maheshkelkar@gmail.com">Mahesh V Kelkar</a>
  */
-public class JConsoleNameStrategyImpl extends ResultNameStrategyImpl {
+public class JConsoleNameStrategyImpl implements ResultNameStrategy {
+    protected final Logger logger = Logger.getLogger(getClass().getName());
+    private ExpressionLanguageEngine expressionLanguageEngine = new ExpressionLanguageEngineImpl();
 
+    @Nonnull
+    @Override
+    public String getResultName(@Nonnull Query query, @Nonnull ObjectName objectName, @Nullable String key, @Nonnull String attribute) {
+        String result;
+        if (query.getResultAlias() == null) {
+            result = escapeObjectName(objectName);
+            if (attribute != null && !attribute.isEmpty()) {
+                result += "." + attribute;
+            }
+            if (key != null && !key.isEmpty()) {
+                result += "." + key;
+            }
+        } else {
+            result = expressionLanguageEngine.resolveExpression(query.getResultAlias(), objectName);
+        }
+        return result;
+    }
     /**
      * Transforms an {@linkplain javax.management.ObjectName} into a plain {@linkplain String}
      * only composed of ('a' to 'Z', 'A' to 'Z', '.', '_') similar to JConsole naming
      *
      * '_' is the escape char for not compliant chars.
      */
-    @Override
     protected String escapeObjectName(@Nonnull ObjectName objectName) {
 
         /** Add objectName's domain */
@@ -68,4 +89,15 @@ public class JConsoleNameStrategyImpl extends ResultNameStrategyImpl {
         return result.toString();
     }
 
+    public ExpressionLanguageEngine getExpressionLanguageEngine() {
+        return expressionLanguageEngine;
+    }
+
+    public void setExpressionLanguageEngine(ExpressionLanguageEngine expressionLanguageEngine) {
+        this.expressionLanguageEngine = expressionLanguageEngine;
+    }
+
+    public void postConstruct(@Nonnull Map<String, String> settings) {
+
+    }
 }
