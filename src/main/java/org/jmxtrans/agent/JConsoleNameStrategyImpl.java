@@ -49,7 +49,7 @@ public class JConsoleNameStrategyImpl implements ResultNameStrategy {
 
         /** Add objectName's domain */
         StringBuilder result = new StringBuilder();
-        StringUtils2.appendEscapedNonAlphaNumericChars(objectName.getDomain(), result);
+        StringUtils2.appendEscapedNonAlphaNumericChars(objectName.getDomain(), false, result);
 
         /** Walk through (sorted) properties of the ObjectName and add values to the result */
         List<String> keys = Collections.list(objectName.getKeyPropertyList().keys());
