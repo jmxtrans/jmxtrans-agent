@@ -151,7 +151,7 @@ public class Query {
             try {
                 attributeValue = mbeanServer.getAttribute(objectName, attribute);
             } catch (Exception ex) {
-                logger.warning("Failed to fetch attribute for '" + objectName + "'#" + attribute + ", exception: " + ex.getMessage());
+                logger.info("Failed to fetch attribute for '" + objectName + "'#" + attribute + ", exception: " + ex.getMessage());
                 return;
             }
 

@@ -47,6 +47,7 @@ public class QueryTest {
     static Mock mock = new Mock("PS Eden Space", 87359488L);
     MockOutputWriter mockOutputWriter = new MockOutputWriter();
     ResultNameStrategy resultNameStrategy = new ResultNameStrategyImpl();
+    ResultNameStrategy jConsoleNameStrategy = new JConsoleNameStrategyImpl();
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -83,6 +84,15 @@ public class QueryTest {
         Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", null, resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
         Object actual = mockOutputWriter.resultsByName.get("test.name__mock.type__Mock.CollectionUsageThreshold");
+        assertThat(actual, notNullValue());
+        assertThat(actual, instanceOf(Number.class));
+    }
+
+    @Test
+    public void attribute_with_jconsole_name_strategy_format() throws Exception {
+        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", jConsoleNameStrategy);
+        query.collectAndExport(mbeanServer, mockOutputWriter);
+        Object actual = mockOutputWriter.resultsByName.get("test.mock.Mock.CollectionUsageThreshold");
         assertThat(actual, notNullValue());
         assertThat(actual, instanceOf(Number.class));
     }
@@ -178,7 +188,7 @@ public class QueryTest {
 
     @Test
     public void query_wildcard_objectname_property_returns_mbean_with_resultalias() throws Exception {
-        Query query = new Query("test:*", "CollectionUsageThreshold", "altTest.%name%.%type%", resultNameStrategy);
+             Query query = new Query("test:*", "CollectionUsageThreshold", "altTest.%name%.%type%", resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
         Object actual = mockOutputWriter.resultsByName.get("altTest.mock.Mock");
         assertThat(actual, notNullValue());
