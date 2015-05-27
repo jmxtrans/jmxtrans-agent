@@ -71,9 +71,9 @@ public class QueryTest {
 
     @Test
     public void basic_attribute_return_simple_result() throws Exception {
-        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", resultNameStrategy);
+        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", null, resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
-        Object actual = mockOutputWriter.resultsByName.get("CollectionUsageThreshold");
+        Object actual = mockOutputWriter.resultsByName.get("test.name__mock.type__Mock.CollectionUsageThreshold");
         assertThat(actual, notNullValue());
         assertThat(actual, instanceOf(Number.class));
     }
@@ -89,7 +89,7 @@ public class QueryTest {
 
     @Test
     public void expression_language_substitutes_object_name_key() throws Exception {
-        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", "test_%type%_%name%.CollectionUsageThreshold", resultNameStrategy);
+        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", "test_%type%_%name%", resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
         Object actual = mockOutputWriter.resultsByName.get("test_Mock_mock.CollectionUsageThreshold");
         assertThat(actual, notNullValue());
@@ -102,7 +102,7 @@ public class QueryTest {
         engine.registerExpressionEvaluator("hostname", "my-hostname");
         ResultNameStrategyImpl resultNameStrategy = new ResultNameStrategyImpl();
         resultNameStrategy.setExpressionLanguageEngine(engine);
-        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", "#hostname#.mock.CollectionUsageThreshold", resultNameStrategy);
+        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", "#hostname#.mock", resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
         Object actual = mockOutputWriter.resultsByName.get("my-hostname.mock.CollectionUsageThreshold");
         assertThat(actual, notNullValue());
@@ -113,18 +113,18 @@ public class QueryTest {
     public void indexed_list_attribute_return_simple_result() throws Exception {
         Query query = new Query("test:type=Mock,name=mock", "IntegerList", 1, resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
-        Object actual = mockOutputWriter.resultsByName.get("IntegerList");
+        Object actual = mockOutputWriter.resultsByName.get("IntegerList.IntegerList");
         assertThat(actual, notNullValue());
         assertThat(actual, instanceOf(Number.class));
     }
 
     @Test
     public void non_indexed_list_attribute_return_simple_result() throws Exception {
-        Query query = new Query("test:type=Mock,name=mock", "IntegerList", resultNameStrategy);
+        Query query = new Query("test:type=Mock,name=mock", "IntegerList", null, resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
 
         for (int i = 0; i < mock.getIntegerList().size(); i++) {
-            String name = "IntegerList_" + i;
+            String name = "test.name__mock.type__Mock.IntegerList_" + i;
             Object actual = mockOutputWriter.resultsByName.get(name);
             assertThat("Result '" + name + "' is missing", actual, notNullValue());
             assertThat("Result '" + name + "' type is invalid", actual, instanceOf(Number.class));
@@ -135,7 +135,7 @@ public class QueryTest {
     public void indexed_int_array_attribute_return_simple_result() throws Exception {
         Query query = new Query("test:type=Mock,name=mock", "IntArray", 1, resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
-        Object actual = mockOutputWriter.resultsByName.get("IntArray");
+        Object actual = mockOutputWriter.resultsByName.get("IntArray.IntArray");
         assertThat(actual, notNullValue());
         assertThat(actual, instanceOf(Number.class));
     }
@@ -144,7 +144,7 @@ public class QueryTest {
     public void indexed_integer_array_attribute_return_simple_result() throws Exception {
         Query query = new Query("test:type=Mock,name=mock", "IntegerArray", 1, resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
-        Object actual = mockOutputWriter.resultsByName.get("IntegerArray");
+        Object actual = mockOutputWriter.resultsByName.get("IntegerArray.IntegerArray");
         assertThat(actual, notNullValue());
         assertThat(actual, instanceOf(Number.class));
     }
@@ -168,10 +168,10 @@ public class QueryTest {
     }
 
     @Test
-    public void query_wildcard_objectname_domain_returns_meabn_with_resultalias() throws Exception {
+    public void query_wildcard_objectname_domain_returns_mbean_with_resultalias() throws Exception {
         Query query = new Query("*:type=Mock,name=mock", "CollectionUsageThreshold", "altTest.%name%.%type%", resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
-        Object actual = mockOutputWriter.resultsByName.get("altTest.mock.Mock");
+        Object actual = mockOutputWriter.resultsByName.get("altTest.mock.Mock.CollectionUsageThreshold");
         assertThat(actual, notNullValue());
         assertThat(actual, instanceOf(Number.class));
     }
@@ -180,7 +180,7 @@ public class QueryTest {
     public void query_wildcard_objectname_property_returns_mbean_with_resultalias() throws Exception {
         Query query = new Query("test:*", "CollectionUsageThreshold", "altTest.%name%.%type%", resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
-        Object actual = mockOutputWriter.resultsByName.get("altTest.mock.Mock");
+        Object actual = mockOutputWriter.resultsByName.get("altTest.mock.Mock.CollectionUsageThreshold");
         assertThat(actual, notNullValue());
         assertThat(actual, instanceOf(Number.class));
     }
