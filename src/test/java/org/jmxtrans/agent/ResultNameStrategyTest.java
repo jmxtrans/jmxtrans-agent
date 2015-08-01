@@ -37,34 +37,16 @@ import static org.junit.Assert.assertThat;
 public class ResultNameStrategyTest {
 
     static ResultNameStrategyImpl strategy = new ResultNameStrategyImpl();
-    static ExpressionLanguageEngineImpl expressionLanguageEngine = new ExpressionLanguageEngineImpl();
 
     @BeforeClass
     public static void beforeClass() throws Exception {
+        ExpressionLanguageEngineImpl expressionLanguageEngine = new ExpressionLanguageEngineImpl();
         strategy.setExpressionLanguageEngine(expressionLanguageEngine);
-        expressionLanguageEngine.registerExpressionEvaluator("hostname", "tomcat1");
-        expressionLanguageEngine.registerExpressionEvaluator("canonical_hostname","tomcat1.www.private.mycompany.com");
-        expressionLanguageEngine.registerExpressionEvaluator("escaped_canonical_hostname","tomcat1_www_private_mycompany_com");
-        expressionLanguageEngine.registerExpressionEvaluator("hostaddress","10.0.0.81");
-        expressionLanguageEngine.registerExpressionEvaluator("escaped_hostaddress","10_0_0_81");
-    }
-
-
-    /**
-     * Test an expression with '#' based keywords (#hostname#) and with '%' based variables mapped to objectname properties.
-     * @throws Exception
-     */
-    @Test
-    public void testResolveExpression() throws Exception {
-        // prepare
-        String expression = "#hostname#.tomcat.datasource.%host%.%path%.%name%";
-        String objectName = "Catalina:type=Resource,resourcetype=Context,path=/,host=localhost,class=javax.sql.DataSource,name=\"jdbc/my-datasource\"";
-
-        // test
-        String actual = expressionLanguageEngine.resolveExpression(expression, new ObjectName(objectName));
-
-        // verify
-        assertThat(actual, is("tomcat1.tomcat.datasource.localhost._.jdbc_my-datasource"));
+        expressionLanguageEngine.registerExpressionEvaluator("hostname", new ExpressionLanguageEngineImpl.StaticFunction("tomcat1"));
+        expressionLanguageEngine.registerExpressionEvaluator("canonical_hostname", new ExpressionLanguageEngineImpl.StaticFunction("tomcat1.www.private.mycompany.com"));
+        expressionLanguageEngine.registerExpressionEvaluator("escaped_canonical_hostname", new ExpressionLanguageEngineImpl.StaticFunction("tomcat1_www_private_mycompany_com"));
+        expressionLanguageEngine.registerExpressionEvaluator("hostaddress", new ExpressionLanguageEngineImpl.StaticFunction("10.0.0.81"));
+        expressionLanguageEngine.registerExpressionEvaluator("escaped_hostaddress", new ExpressionLanguageEngineImpl.StaticFunction("10_0_0_81"));
     }
 
     @Test
@@ -79,13 +61,5 @@ public class ResultNameStrategyTest {
         String objectName = "Catalina:type=Resource,resourcetype=Context,path=/,host=localhost,class=javax.sql.DataSource,name=\"jdbc/my-datasource\"";
         String actual = strategy.escapeObjectName(new ObjectName(objectName));
         assertThat(actual, is("Catalina.class__javax_sql_DataSource.host__localhost.name__jdbc_my-datasource.path___.resourcetype__Context.type__Resource"));
-    }
-
-    @Test
-    public void testCanonicalHostNameDotsAreNotEscaped() throws Exception {
-        ExpressionLanguageEngineImpl engine = new ExpressionLanguageEngineImpl();
-        engine.registerExpressionEvaluator("canonical_hostname", "server1.mycompany.com");
-        String actual = engine.resolveExpression("#canonical_hostname#");
-        assertThat(actual, is("server1.mycompany.com"));
     }
 }

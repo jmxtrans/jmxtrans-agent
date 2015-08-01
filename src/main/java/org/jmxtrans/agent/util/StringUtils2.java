@@ -123,7 +123,10 @@ public class StringUtils2 {
      * @param escapeDot indicates whether '.' should be escaped into '_' or not.
      * @param result    the {@linkplain StringBuilder} in which the escaped string is appended
      */
-    public static void appendEscapedNonAlphaNumericChars(@Nonnull String str, boolean escapeDot, @Nonnull StringBuilder result) {
+    public static void appendEscapedNonAlphaNumericChars(@Nullable String str, boolean escapeDot, @Nonnull StringBuilder result) {
+        if (str == null) {
+            return;
+        }
         char[] chars = str.toCharArray();
         for (int i = 0; i < chars.length; i++) {
             char ch = chars[i];

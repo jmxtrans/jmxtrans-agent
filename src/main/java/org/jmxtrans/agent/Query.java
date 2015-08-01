@@ -34,9 +34,7 @@ import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeType;
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 
 /**
@@ -61,6 +59,8 @@ public class Query {
     protected final String attribute;
     /**
      * If the MBean attribute value is a {@link CompositeData}, the key to lookup.
+     *
+     * @see CompositeData#get(String)
      */
     @Nullable
     protected final String key;
@@ -79,14 +79,14 @@ public class Query {
      * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
      */
     public Query(@Nonnull String objectName, @Nullable String attribute, @Nonnull ResultNameStrategy resultNameStrategy) {
-        this(objectName, attribute, null, null, null, attribute, resultNameStrategy);
+        this(objectName, attribute, null, null, null, null, resultNameStrategy);
     }
 
     /**
      * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
      */
     public Query(@Nonnull String objectName, @Nullable String attribute, int position, @Nonnull ResultNameStrategy resultNameStrategy) {
-        this(objectName, attribute, null, position, null, attribute, resultNameStrategy);
+        this(objectName, attribute, null, position, null, null, resultNameStrategy);
     }
 
     /**
@@ -159,11 +159,11 @@ public class Query {
             if (attributeValue instanceof CompositeData) {
                 CompositeData compositeData = (CompositeData) attributeValue;
                 if (key == null) {
-                    /** Get for all keys */
+                    // Get for all keys
                     CompositeType compositeType = compositeData.getCompositeType();
                     for (String key : compositeType.keySet()) {
                         value = compositeData.get(key);
-                        processAttributeValue(outputWriter, objectName, attribute, value, key);
+                        processAttributeValue(outputWriter, objectName, attribute, key, value);
                     }
                     return;
                 } else {
@@ -186,27 +186,41 @@ public class Query {
                 value = valueAsList;
             }
 
-            processAttributeValue(outputWriter, objectName, attribute, value, key);
+            processAttributeValue(outputWriter, objectName, attribute, key, value);
         } catch (Exception e) {
             logger.log(Level.WARNING, "Exception collecting " + objectName + "#" + attribute + (key == null ? "" : "#" + key), e);
         }
     }
 
-    private void processAttributeValue(OutputWriter outputWriter, ObjectName objectName, String attribute,
-                                       Object value, String key) throws IOException {
-        String resultName = resultNameStrategy.getResultName(this, objectName, key, attribute);
+    /**
+     *
+     * @param outputWriter
+     * @param objectName
+     * @param attribute attribute of the MBean
+     * @param compositeDataKey if the MBean value is a {@link CompositeData}, the name of the key (see {@link CompositeData#get(String)})
+     * @param value value
+     * @throws IOException
+     */
+    private void processAttributeValue(@Nonnull OutputWriter outputWriter, @Nonnull ObjectName objectName, @Nonnull String attribute,
+                                       @Nullable String compositeDataKey, Object value) throws IOException {
+
         if (value instanceof Iterable) {
-            Iterable iterable = (Iterable) value;
+            Iterable valueAsIterable = (Iterable) value;
             if (position == null) {
+                // get for all entries
                 int idx = 0;
-                for (Object entry : iterable) {
-                    outputWriter.writeQueryResult(resultName + "_" + idx++, type, entry);
+                for (Object subValue : valueAsIterable) {
+                    String resultName = resultNameStrategy.getResultName(this, objectName, attribute, compositeDataKey, idx);
+                    outputWriter.writeQueryResult(resultName, type, subValue);
+                    idx++;
                 }
             } else {
+                String resultName = resultNameStrategy.getResultName(this, objectName, attribute, compositeDataKey, position);
                 value = Iterables2.get((Iterable) value, position);
                 outputWriter.writeQueryResult(resultName, type, value);
             }
         } else {
+            String resultName = resultNameStrategy.getResultName(this, objectName, attribute, compositeDataKey, null);
             outputWriter.writeQueryResult(resultName, type, value);
         }
     }

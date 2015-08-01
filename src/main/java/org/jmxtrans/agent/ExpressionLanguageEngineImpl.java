@@ -27,11 +27,11 @@ import org.jmxtrans.agent.util.StringUtils2;
 import org.jmxtrans.agent.util.logging.Logger;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.management.ObjectName;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.logging.Level;
 
 /**
@@ -49,14 +49,18 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
             String reversedCanonicalHostName = StringUtils2.reverseTokens(canonicalHostName, ".");
             String hostAddress = localHost.getHostAddress();
 
-            registerExpressionEvaluator("hostname", hostName);
-            registerExpressionEvaluator("reversed_hostname", reversedHostName);
-            registerExpressionEvaluator("escaped_hostname", hostName.replaceAll("\\.", "_"));
-            registerExpressionEvaluator("canonical_hostname", canonicalHostName);
-            registerExpressionEvaluator("reversed_canonical_hostname", reversedCanonicalHostName);
-            registerExpressionEvaluator("escaped_canonical_hostname", canonicalHostName.replaceAll("\\.", "_"));
-            registerExpressionEvaluator("hostaddress", hostAddress);
-            registerExpressionEvaluator("escaped_hostaddress", hostAddress.replaceAll("\\.", "_"));
+            functionsByName.put("hostname", new StaticFunction(hostName));
+            functionsByName.put("reversed_hostname", new StaticFunction(reversedHostName));
+            functionsByName.put("escaped_hostname", new StaticFunction(hostName.replaceAll("\\.", "_")));
+            functionsByName.put("canonical_hostname", new StaticFunction(canonicalHostName));
+            functionsByName.put("reversed_canonical_hostname", new StaticFunction(reversedCanonicalHostName));
+            functionsByName.put("escaped_canonical_hostname", new StaticFunction(canonicalHostName.replaceAll("\\.", "_")));
+            functionsByName.put("hostaddress", new StaticFunction(hostAddress));
+            functionsByName.put("escaped_hostaddress", new StaticFunction(hostAddress.replaceAll("\\.", "_")));
+            functionsByName.put("attribute", new ExtractAttributeFunction());
+            functionsByName.put("key", new ExtractCompositeDataKeyFunction());
+            functionsByName.put("compositeDataKey", new ExtractCompositeDataKeyFunction());
+            functionsByName.put("position", new ExtractPositionFunction());
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Exception resolving localhost, expressions like #hostname#, #canonical_hostname# or #hostaddress# will not be available", e);
         }
@@ -66,7 +70,7 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
      * Function based evaluators for expressions like '#hostname#' or '#hostname_canonical#'
      */
     @Nonnull
-    private Map<String, Callable<String>> expressionEvaluators = new HashMap<String, Callable<String>>();
+    private Map<String, Function> functionsByName = new HashMap<String, Function>();
 
     /**
      * Replace all the '#' based keywords (e.g. <code>#hostname#</code>) by their value.
@@ -88,14 +92,14 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
                     throw new IllegalStateException("Invalid expression '" + expression + "', no ending '#' after beginning '#' at position " + beginningSeparatorPosition);
                 }
                 String key = expression.substring(beginningSeparatorPosition + 1, endingSeparatorPosition);
-                Callable<String> expressionProcessor = expressionEvaluators.get(key);
+                Function expressionProcessor = functionsByName.get(key);
                 String value;
                 if (expressionProcessor == null) {
                     value = "#unsupported_expression#";
                     logger.info("Unsupported expression '" + key + "'");
                 } else {
                     try {
-                        value = expressionProcessor.call();
+                        value = expressionProcessor.evaluate();
                     } catch (Exception e) {
                         value = "#expression_error#";
                         logger.log(Level.WARNING, "Error evaluating expression '" + key + "'", e);
@@ -116,52 +120,52 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
     }
 
     @Nonnull
-    public String resolveExpression(@Nonnull String expression, @Nonnull ObjectName exactObjectName) {
+    public String resolveExpression(@Nonnull String expression, @Nonnull ObjectName exactObjectName, @Nullable String attribute, @Nullable String compositeDataKey, @Nullable Integer position) {
 
         StringBuilder result = new StringBuilder(expression.length());
 
-        int position = 0;
-        while (position < expression.length()) {
-            char c = expression.charAt(position);
+        int pos = 0;
+        while (pos < expression.length()) {
+            char c = expression.charAt(pos);
             if (c == '%') {
-                int beginningSeparatorPosition = position;
+                int beginningSeparatorPosition = pos;
                 int endingSeparatorPosition = expression.indexOf('%', beginningSeparatorPosition + 1);
                 if (endingSeparatorPosition == -1) {
                     throw new IllegalStateException("Invalid expression '" + expression + "', no ending '%' after beginning '%' at position " + beginningSeparatorPosition);
                 }
-                String key = expression.substring(beginningSeparatorPosition + 1, endingSeparatorPosition);
-                String value = exactObjectName.getKeyProperty(key);
+                String objectNameKey = expression.substring(beginningSeparatorPosition + 1, endingSeparatorPosition);
+                String value = exactObjectName.getKeyProperty(objectNameKey);
                 if (value == null) {
                     value = "null";
                 }
                 StringUtils2.appendEscapedNonAlphaNumericChars(value, result);
-                position = endingSeparatorPosition + 1;
+                pos = endingSeparatorPosition + 1;
             } else if (c == '#') {
-                int beginningSeparatorPosition = position;
+                int beginningSeparatorPosition = pos;
                 int endingSeparatorPosition = expression.indexOf('#', beginningSeparatorPosition + 1);
                 if (endingSeparatorPosition == -1) {
                     throw new IllegalStateException("Invalid expression '" + expression + "', no ending '#' after beginning '#' at position " + beginningSeparatorPosition);
                 }
-                String key = expression.substring(beginningSeparatorPosition + 1, endingSeparatorPosition);
-                Callable<String> expressionProcessor = expressionEvaluators.get(key);
+                String functionName = expression.substring(beginningSeparatorPosition + 1, endingSeparatorPosition);
+                Function function = functionsByName.get(functionName);
                 String value;
-                if (expressionProcessor == null) {
+                if (function == null) {
                     value = "#unsupported_expression#";
-                    logger.info("Unsupported expression '" + key + "'");
+                    logger.info("Unsupported expression '" + functionName + "'");
                 } else {
                     try {
-                        value = expressionProcessor.call();
+                        value = function.evaluate(exactObjectName, attribute, compositeDataKey, position);
                     } catch (Exception e) {
                         value = "#expression_error#";
-                        logger.log(Level.WARNING, "Error evaluating expression '" + key + "'", e);
+                        logger.log(Level.WARNING, "Error evaluating expression '" + compositeDataKey + "'", e);
                     }
                 }
                 StringUtils2.appendEscapedNonAlphaNumericChars(value, false, result);
-                position = endingSeparatorPosition + 1;
+                pos = endingSeparatorPosition + 1;
 
             } else {
                 result.append(c);
-                position++;
+                pos++;
             }
         }
         if (logger.isLoggable(Level.FINEST))
@@ -173,39 +177,75 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
     /**
      * Registers an expression evaluator with a static value.
      */
-    public void registerExpressionEvaluator(String expression, Callable<String> evaluator) {
-        expressionEvaluators.put(expression, evaluator);
+    public void registerExpressionEvaluator(@Nonnull String expression, @Nonnull Function evaluator) {
+        functionsByName.put(expression, evaluator);
     }
 
-    /**
-     * Registers an expression evaluator with a static value.
-     */
-    public void registerExpressionEvaluator(String expression, String value) {
-        expressionEvaluators.put(expression, new StaticEvaluator(value));
+    public interface Function {
+        @Nullable
+        String evaluate();
+        @Nullable
+        String evaluate(@Nullable ObjectName objectName, @Nullable String attribute, @Nullable String compositeDataKey, @Nullable Integer position);
     }
 
-    @Nonnull
-    public Map<String, Callable<String>> getExpressionEvaluators() {
-        return expressionEvaluators;
-    }
-
-    public static class StaticEvaluator implements Callable<String> {
+    public static class StaticFunction implements Function {
         final String value;
 
-        public StaticEvaluator(String value) {
+        public StaticFunction(String value) {
             this.value = value;
         }
 
         @Override
-        public String call() throws Exception {
+        public String evaluate() {
+            return value;
+        }
+
+        @Override
+        public String evaluate(@Nullable ObjectName objectName, @Nullable String attribute, @Nullable String compositeDataKey, @Nullable Integer position) {
             return value;
         }
 
         @Override
         public String toString() {
-            return "StaticStringCallable{" +
+            return "StaticFunction{" +
                     "value='" + value + '\'' +
                     '}';
+        }
+    }
+
+    private static class ExtractAttributeFunction implements Function {
+        @Override
+        public String evaluate() {
+            return null;
+        }
+
+        @Override
+        public String evaluate(@Nullable ObjectName objectName, @Nullable String attribute, @Nullable String compositeDataKey, @Nullable Integer position) {
+            return attribute;
+        }
+    }
+
+    private static class ExtractCompositeDataKeyFunction implements Function {
+        @Override
+        public String evaluate() {
+            return null;
+        }
+
+        @Override
+        public String evaluate(@Nullable ObjectName objectName, @Nullable String attribute, @Nullable String compositeDataKey, @Nullable Integer position) {
+            return compositeDataKey;
+        }
+    }
+
+    private static class ExtractPositionFunction implements Function {
+        @Override
+        public String evaluate() {
+            return null;
+        }
+
+        @Override
+        public String evaluate(@Nullable ObjectName objectName, @Nullable String attribute, @Nullable String compositeDataKey, @Nullable Integer position) {
+            return position == null ? null : position.toString();
         }
     }
 }

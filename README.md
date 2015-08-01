@@ -1,6 +1,7 @@
 # Jmxtrans Agent
 
-[![Build Status](https://buildhive.cloudbees.com/job/jmxtrans/job/jmxtrans-agent/badge/icon)](https://buildhive.cloudbees.com/job/jmxtrans/job/jmxtrans-agent/)
+[![Build Status](https://jmxtrans.ci.cloudbees.com/buildStatus/icon?job=jmxtrans-agent)](https://jmxtrans.ci.cloudbees.com/job/jmxtrans-agent/)
+
 
 ## What is jmxtrans-agent ?
 
@@ -30,6 +31,7 @@ Use `attribute` to specify the value to lookup. See `javax.management.MBeanServe
    resultAlias="jvm.thread"/>
 ```
 
+
 ### MBean Composite Data attribute
 
 Use `key` to specify the key of the CompositeData. See `javax.management.openmbean.CompositeData#get(key)`.
@@ -39,7 +41,14 @@ Use `key` to specify the key of the CompositeData. See `javax.management.openmbe
     resultAlias="jvm.heapMemoryUsage.used"/>
 ```
 
-### Multi-valued attribute (Iterable or array)
+* You can collect all the keys of the composite data omitting `key` in the `<query />` declaration.
+* Use the expression language `#key#` (or its synonym `#compositeDataKey#`) in the `resultAlias` to use the composite data key in the metric name. Sample:
+
+         ```xml
+ <query objectName="java.lang:type=Memory" attribute="HeapMemoryUsage" resultAlias="jvm.heapMemoryUsage.#key#"/>
+```
+
+### Multi-valued data (Iterable or array)
 
 Use `position` to specify the value to lookup. Position is `0 based.
 
@@ -48,9 +57,19 @@ Use `position` to specify the value to lookup. Position is `0 based.
     resultAlias="myMBean.myMultiValuedAttributeValue"/>
 ```
 
-If `position` is not specified, all the values of the attribute are outputted with the name `${resultAlias}_${position}`.
+* `position` is 0 based
+* You can collect all the entries of the multi-valued data omitting `position` in the `<query />` declaration.
+* Use the expression language `#position#` in the `resultAlias` to use the multi-valued data position in the metric name. Sample:
 
-Sample: `myMBean.myMultiValuedAttributeValue_0`, `myMBean.myMultiValuedAttributeValue_1`, ...
+       ```xml
+ <query objectName="MyApp:type=MyMBean" attribute="MyMultiValuedAttribute" resultAlias="myMBean.myMultiValuedAttributeValue"/>
+```
+
+* If no `resultAlias` is specified, the generated metric name is suffixed by `_#position#`. Sample:
+
+       ```
+myMBean.myMultiValuedAttributeValue_0`
+```
 
 
 ## Sample configuration file

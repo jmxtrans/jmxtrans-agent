@@ -31,7 +31,6 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryType;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -71,7 +70,7 @@ public class QueryTest {
 
     @Test
     public void basic_attribute_return_simple_result() throws Exception {
-        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", resultNameStrategy);
+        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", null, null, null, "CollectionUsageThreshold", resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
         Object actual = mockOutputWriter.resultsByName.get("CollectionUsageThreshold");
         assertThat(actual, notNullValue());
@@ -99,7 +98,7 @@ public class QueryTest {
     @Test
     public void expression_language_substitutes_function() throws Exception {
         ExpressionLanguageEngineImpl engine = new ExpressionLanguageEngineImpl();
-        engine.registerExpressionEvaluator("hostname", "my-hostname");
+        engine.registerExpressionEvaluator("hostname", new ExpressionLanguageEngineImpl.StaticFunction("my-hostname"));
         ResultNameStrategyImpl resultNameStrategy = new ResultNameStrategyImpl();
         resultNameStrategy.setExpressionLanguageEngine(engine);
         Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold", "#hostname#.mock.CollectionUsageThreshold", resultNameStrategy);
@@ -111,7 +110,7 @@ public class QueryTest {
 
     @Test
     public void indexed_list_attribute_return_simple_result() throws Exception {
-        Query query = new Query("test:type=Mock,name=mock", "IntegerList", 1, resultNameStrategy);
+        Query query = new Query("test:type=Mock,name=mock", "IntegerList", null, 1, null, "IntegerList", resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
         Object actual = mockOutputWriter.resultsByName.get("IntegerList");
         assertThat(actual, notNullValue());
@@ -120,7 +119,7 @@ public class QueryTest {
 
     @Test
     public void non_indexed_list_attribute_return_simple_result() throws Exception {
-        Query query = new Query("test:type=Mock,name=mock", "IntegerList", resultNameStrategy);
+        Query query = new Query("test:type=Mock,name=mock", "IntegerList", null, null, null, "IntegerList_#position#", resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
 
         for (int i = 0; i < mock.getIntegerList().size(); i++) {
@@ -133,7 +132,7 @@ public class QueryTest {
 
     @Test
     public void indexed_int_array_attribute_return_simple_result() throws Exception {
-        Query query = new Query("test:type=Mock,name=mock", "IntArray", 1, resultNameStrategy);
+        Query query = new Query("test:type=Mock,name=mock", "IntArray", null, 1, null, "IntArray", resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
         Object actual = mockOutputWriter.resultsByName.get("IntArray");
         assertThat(actual, notNullValue());
@@ -142,7 +141,7 @@ public class QueryTest {
 
     @Test
     public void indexed_integer_array_attribute_return_simple_result() throws Exception {
-        Query query = new Query("test:type=Mock,name=mock", "IntegerArray", 1, resultNameStrategy);
+        Query query = new Query("test:type=Mock,name=mock", "IntegerArray", null, 1, null, "IntegerArray", resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
         Object actual = mockOutputWriter.resultsByName.get("IntegerArray");
         assertThat(actual, notNullValue());
@@ -190,7 +189,7 @@ public class QueryTest {
         Query query = new Query("test:type=Mock,name=mock", null, null, resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
         Integer actualSize = mockOutputWriter.resultsByName.size();
-        assert(actualSize == 24);
+        assert (actualSize == 24);
     }
 
     public static class MockOutputWriter extends AbstractOutputWriter {
