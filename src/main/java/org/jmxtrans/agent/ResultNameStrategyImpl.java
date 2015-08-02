@@ -106,7 +106,7 @@ public class ResultNameStrategyImpl implements ResultNameStrategy {
         String result;
         if (query.getResultAlias() == null) {
             result = escapeObjectName(objectName);
-            result+="." + attribute;
+            result += "." + attribute;
             if(compositeDataKey != null) {
                 result+= "." + compositeDataKey;
             }
