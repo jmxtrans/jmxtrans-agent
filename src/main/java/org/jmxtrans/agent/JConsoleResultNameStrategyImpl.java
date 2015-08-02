@@ -48,8 +48,8 @@ public class JConsoleResultNameStrategyImpl implements ResultNameStrategy {
 
     /**
      * Transforms an {@linkplain javax.management.ObjectName} into a plain {@linkplain String}
-     * only composed of ('a' to 'Z', 'A' to 'Z', '.', '_') similar to JConsole naming
-     * <p/>
+     * only composed of ('a' to 'Z', 'A' to 'Z', '.', '_') similar to JConsole naming.
+     *
      * '_' is the escape char for not compliant chars.
      */
     protected String escapeObjectName(@Nonnull ObjectName objectName) {
