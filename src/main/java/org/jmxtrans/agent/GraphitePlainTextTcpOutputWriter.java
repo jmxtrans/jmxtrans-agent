@@ -169,8 +169,13 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
         if (writer == null) {
             return;
         }
-
-        writer.flush();
+        
+        try {
+            writer.flush();
+        } catch (IOException e) {
+			releaseGraphiteConnection();
+            throw e;
+        }
     }
 
     @Override
