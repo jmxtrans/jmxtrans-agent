@@ -44,7 +44,7 @@ Use `key` to specify the key of the CompositeData. See `javax.management.openmbe
 * You can collect all the keys of the composite data omitting `key` in the `<query />` declaration.
 * Use the expression language `#key#` (or its synonym `#compositeDataKey#`) in the `resultAlias` to use the composite data key in the metric name. Sample:
 
-         ```xml
+```xml
  <query objectName="java.lang:type=Memory" attribute="HeapMemoryUsage" resultAlias="jvm.heapMemoryUsage.#key#"/>
 ```
 
