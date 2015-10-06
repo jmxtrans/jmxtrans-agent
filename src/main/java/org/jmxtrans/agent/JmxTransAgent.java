@@ -48,8 +48,15 @@ public class JmxTransAgent {
     @SuppressFBWarnings("MS_SHOULD_BE_FINAL")
     public static boolean DIAGNOSTIC = Boolean.valueOf(System.getProperty(JmxTransAgent.class.getName() + ".diagnostic", "false"));
 
-    public static void premain(String configFile, Instrumentation inst) {
+    public static void agentmain(String configFile, Instrumentation inst) {
+        initializeAgent(configFile);
+    }
 
+    public static void premain(String configFile, Instrumentation inst) {
+        initializeAgent(configFile);
+    }
+
+    private static void initializeAgent(String configFile) {
         dumpDiagnosticInfo();
         if (configFile == null || configFile.isEmpty()) {
             String msg = "JmxTransExporter configurationFile must be defined";
