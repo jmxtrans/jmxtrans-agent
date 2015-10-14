@@ -64,11 +64,8 @@ public class LibratoWriter extends AbstractOutputWriter implements OutputWriter 
 
     @Override
     public synchronized void postConstruct(Map<String, String> settings) {
-        final String user = ConfigurationUtils.getString(settings, SETTING_USERNAME);
-        final String token = ConfigurationUtils.getString(settings, SETTING_TOKEN);
-        if (user == null || token == null) {
-            throw new RuntimeException("Username and/or token cannot be null");
-        }
+        user = ConfigurationUtils.getString(settings, SETTING_USERNAME);
+        token = ConfigurationUtils.getString(settings, SETTING_TOKEN);
         basicAuthentication = Base64Variants.getDefaultVariant().encode((user + ":" + token).getBytes(Charset.forName("US-ASCII")));
         httpUserAgent = "jmxtrans-standalone/1 " + "(" +
 						System.getProperty("java.vm.name") + "/" + System.getProperty("java.version") + "; " +
@@ -93,11 +90,10 @@ public class LibratoWriter extends AbstractOutputWriter implements OutputWriter 
     }
 
     @Override
-    public synchronized void writeQueryResult(String metricName, String metricType, Object value) throws IOException {
-		HttpURLConnection urlConnection = null;
+    public synchronized void writeQueryResult(String metricName, String metricType, Object value) {
 		try {
-			urlConnection = (HttpURLConnection) url.openConnection();
-			urlConnection.setRequestMethod("POST");
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("POST");
             urlConnection.setDoInput(true);
             urlConnection.setDoOutput(true);
             urlConnection.setRequestProperty("content-type", "application/json; charset=utf-8");
@@ -109,7 +105,6 @@ public class LibratoWriter extends AbstractOutputWriter implements OutputWriter 
 			g.writeArrayFieldStart("gauges");
 			g.writeStartObject();
 			g.writeStringField("name", metricName);
-			//g.writeNumberField("measure_time", gauge.getEpoch(TimeUnit.SECONDS));
 			if (value instanceof Integer) {
                 g.writeNumberField("value", (Integer) value);
             } else if (value instanceof Long) {
@@ -129,8 +124,8 @@ public class LibratoWriter extends AbstractOutputWriter implements OutputWriter 
             if (responseCode != 200) {
                 logger.info(String.format("Failure %d:'%s' to send result to Librato server '%s', user %s", responseCode, urlConnection.getResponseMessage(), url, user));
             }
-		} catch (Exception e) {
+		} catch (IOException e) {
 			logger.info(String.format("Failure to send result to Librato server '%s' user %s", url, user));
-		} 
+		}
     }
 }
