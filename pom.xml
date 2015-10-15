@@ -89,7 +89,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.4</version>
+                <version>2.6</version>
                 <configuration>
                     <archive>
                         <manifestEntries>
@@ -102,7 +102,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <version>3.3</version>
                 <configuration>
                     <source>1.7</source>
                     <target>1.7</target>
@@ -111,7 +111,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.1</version>
+                <version>3.0.2</version>
                 <executions>
                     <execution>
                         <phase>verify</phase>
