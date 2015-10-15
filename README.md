@@ -1,7 +1,5 @@
 # Jmxtrans Agent
 
-[![Build Status](https://jmxtrans.ci.cloudbees.com/buildStatus/icon?job=jmxtrans-agent)](https://jmxtrans.ci.cloudbees.com/job/jmxtrans-agent/)
-
 
 ## What is jmxtrans-agent ?
 
@@ -9,7 +7,7 @@ jmxtrans-agent is a version of [jmxtrans](http://jmxtrans.org/) intended to be u
 
 ## Java Agent Declaration
 
-Download [jmxtrans-agent-1.1.0.jar](http://repo1.maven.org/maven2/org/jmxtrans/agent/jmxtrans-agent/1.1.0/jmxtrans-agent-1.1.0.jar)
+Download [jmxtrans-agent-1.2.0.jar](http://repo1.maven.org/maven2/org/jmxtrans/agent/jmxtrans-agent/1.2.0/jmxtrans-agent-1.2.0.jar)
 
 Sample `setenv.sh` for Apache Tomcat
 
