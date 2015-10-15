@@ -23,64 +23,57 @@
  */
 package org.jmxtrans.agent;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.Base64Variants;
-import com.fasterxml.jackson.core.JsonEncoding;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import java.net.URL;
-import java.net.MalformedURLException;
 
-import org.jmxtrans.agent.util.CachingReference;
 import org.jmxtrans.agent.util.ConfigurationUtils;
+import org.jmxtrans.agent.util.StandardCharsets2;
 import org.jmxtrans.agent.util.StringUtils2;
 
-import javax.annotation.Nonnull;
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.nio.channels.DatagramChannel;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
-import java.net.HttpURLConnection;
-import java.nio.charset.Charset;
-
+/**
+ * OutputWriter for <a href="https://www.librato.com/">Librato</a>.
+ */
 public class LibratoWriter extends AbstractOutputWriter implements OutputWriter {
     public static final String DEFAULT_LIBRATO_API_URL = "https://metrics-api.librato.com/v1/metrics";
     public static final String SETTING_USERNAME = "username";
     public static final String SETTING_TOKEN = "token";
- 
-    private String user;
-    private String token;
+
+    private String username;
     private String basicAuthentication;
     private String httpUserAgent;
-	private URL url;
-	private final JsonFactory jsonFactory = new JsonFactory();
+    private URL url;
+
+    private final AtomicInteger exceptionCounter = new AtomicInteger();
 
     @Override
     public synchronized void postConstruct(Map<String, String> settings) {
-        final String user = ConfigurationUtils.getString(settings, SETTING_USERNAME);
+        final String username = ConfigurationUtils.getString(settings, SETTING_USERNAME);
         final String token = ConfigurationUtils.getString(settings, SETTING_TOKEN);
-        if (user == null || token == null) {
+        if (username == null || token == null) {
             throw new RuntimeException("Username and/or token cannot be null");
         }
-        basicAuthentication = Base64Variants.getDefaultVariant().encode((user + ":" + token).getBytes(Charset.forName("US-ASCII")));
-        httpUserAgent = "jmxtrans-standalone/1 " + "(" +
-						System.getProperty("java.vm.name") + "/" + System.getProperty("java.version") + "; " +
-						System.getProperty("os.name") + "-" + System.getProperty("os.arch") + "/" + System.getProperty("os.version")
-						+ ")";
-		try {
-			url = new URL(DEFAULT_LIBRATO_API_URL);
-		} catch (MalformedURLException e) {
-			logger.info("Malformed url");
-		}
+        this.username = username;
+        basicAuthentication = DatatypeConverter.printBase64Binary((username + ":" + token).getBytes(StandardCharsets2.US_ASCII));
+        httpUserAgent = "jmxtrans-agent/2 " + "(" +
+                System.getProperty("java.vm.name") + "/" + System.getProperty("java.version") + "; " +
+                System.getProperty("os.name") + "-" + System.getProperty("os.arch") + "/" + System.getProperty("os.version")
+                + ")";
+        try {
+            url = new URL(DEFAULT_LIBRATO_API_URL);
+        } catch (MalformedURLException e) {
+            logger.info("Malformed url");
+        }
 
-        logger.info(String.format("LibratoWriter[username=%s, token=%s]", user, token));
+        logger.info(String.format("LibratoWriter[username=%s, token=***]", username));
     }
 
     @Override
@@ -94,43 +87,62 @@ public class LibratoWriter extends AbstractOutputWriter implements OutputWriter 
 
     @Override
     public synchronized void writeQueryResult(String metricName, String metricType, Object value) throws IOException {
-		HttpURLConnection urlConnection = null;
-		try {
-			urlConnection = (HttpURLConnection) url.openConnection();
-			urlConnection.setRequestMethod("POST");
+        HttpURLConnection urlConnection;
+        try {
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("POST");
             urlConnection.setDoInput(true);
             urlConnection.setDoOutput(true);
             urlConnection.setRequestProperty("content-type", "application/json; charset=utf-8");
             urlConnection.setRequestProperty("Authorization", "Basic " + basicAuthentication);
             urlConnection.setRequestProperty("User-Agent", httpUserAgent);
-			
-			JsonGenerator g = jsonFactory.createGenerator(urlConnection.getOutputStream(), JsonEncoding.UTF8);
-			g.writeStartObject();
-			g.writeArrayFieldStart("gauges");
-			g.writeStartObject();
-			g.writeStringField("name", metricName);
-			//g.writeNumberField("measure_time", gauge.getEpoch(TimeUnit.SECONDS));
-			if (value instanceof Integer) {
-                g.writeNumberField("value", (Integer) value);
-            } else if (value instanceof Long) {
-                g.writeNumberField("value", (Long) value);
-            } else if (value instanceof Float) {
-                g.writeNumberField("value", (Float) value);
-            } else if (value instanceof Double) {
-                g.writeNumberField("value", (Double) value);
-            }
-			g.writeEndObject();
-			g.writeEndArray();
-        	g.writeEndObject();
-        	g.flush();
-        	g.close();
 
-			int responseCode = urlConnection.getResponseCode();
+            Writer out = new OutputStreamWriter(urlConnection.getOutputStream(), StandardCharsets2.UTF_8);
+
+            writeQueryResult(metricName, metricType, value, out);
+            out.flush();
+            out.close();
+
+            int responseCode = urlConnection.getResponseCode();
             if (responseCode != 200) {
-                logger.info(String.format("Failure %d:'%s' to send result to Librato server '%s', user %s", responseCode, urlConnection.getResponseMessage(), url, user));
+                exceptionCounter.incrementAndGet();
+                logger.info(String.format("Failure %d:'%s' to send result to Librato server '%s', username %s", responseCode, urlConnection.getResponseMessage(), url, username));
             }
-		} catch (Exception e) {
-			logger.info(String.format("Failure to send result to Librato server '%s' user %s", url, user));
-		} 
+        } catch (RuntimeException e) {
+            exceptionCounter.incrementAndGet();
+            logger.info(String.format("Failure to send result to Librato server '%s' username %s", url, username));
+        }
     }
+
+    protected void writeQueryResult(String metricName, String metricType, Object value, Writer out) throws IOException {
+        String libratoMetricsType = "gauge".equalsIgnoreCase(metricType) || "g".equalsIgnoreCase(metricType) ? "gauges" : "counters";
+
+        out.write("{");
+        out.write("\"" + libratoMetricsType + "\": [");
+        out.write("{");
+        out.write("\"name\": \"" + metricName + "\"");
+        out.write(",");
+        out.write("\"value\":");
+        if (value == null) {
+            out.write("null");
+        } else if (value instanceof Number) {
+            out.write(value.toString());
+        } else if (value instanceof String) {
+            out.write("\"" + ((String) value).replaceAll("\"", "\\\"") + "\"");
+        } else {
+            String valueAsString = value.toString();
+            if (logger.isLoggable(Level.FINE)) {
+                logger.warning("warning: no converter found for metric \"" + metricName + "\" with value type \"" + value.getClass() + "\". Use toString() on \"" + StringUtils2.abbreviate(valueAsString, 20) + "\"");
+            }
+            out.write(valueAsString);
+        }
+        out.write("}");
+        out.write("]");
+        out.write("}");
+    }
+
+    public int getExceptionCounter() {
+        return exceptionCounter.get();
+    }
+
 }
