@@ -26,6 +26,7 @@ package org.jmxtrans.agent;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,6 +59,7 @@ public class LibratoMetricsIntegrationTest {
     }
 
 
+    @Category(IntegrationTest.class)
     @Test
     public void testWithOneCounter() throws Exception {
         libratoWriter.writeQueryResult("test-with-one-counter.singleresult", "counter", 10);
@@ -65,6 +67,7 @@ public class LibratoMetricsIntegrationTest {
         Assert.assertThat(libratoWriter.getExceptionCounter(), equalTo(0));
     }
 
+    @Category(IntegrationTest.class)
     @Test
     public void testWithOneGauge() throws Exception {
         libratoWriter.writeQueryResult("test-with-one-gauge.singleresult", "gauge", 10);
