@@ -23,20 +23,19 @@
  */
 package org.jmxtrans.agent;
 
-import static org.jmxtrans.agent.util.ConfigurationUtils.*;
+import static org.jmxtrans.agent.graphite.GraphiteOutputWriterCommonSettings.*;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
+import org.jmxtrans.agent.graphite.GraphiteMetricMessageBuilder;
 import org.jmxtrans.agent.util.net.HostAndPort;
 
 /**
@@ -47,26 +46,20 @@ import org.jmxtrans.agent.util.net.HostAndPort;
 public class GraphiteUdpOutputWriter extends AbstractOutputWriter {
 
     final static Charset CHARSET_FOR_UDP_PACKET = Charset.forName("UTF-8");
-    private final static String SETTING_HOST = "host";
-    private final static String SETTING_PORT = "port";
-    private static final int SETTING_PORT_DEFAULT_VALUE = 2003;
-    private final static String SETTING_NAME_PREFIX = "namePrefix";
     private HostAndPort graphiteServerHostAndPort;
-    private String metricPathPrefix;
     private UdpMessageSender messageSender;
     private Clock clock;
+    private GraphiteMetricMessageBuilder messageBuilder;
 
     @Override
     public void postConstruct(Map<String, String> settings) {
         super.postConstruct(settings);
-        graphiteServerHostAndPort = new HostAndPort(
-                getString(settings, SETTING_HOST),
-                getInt(settings, SETTING_PORT, SETTING_PORT_DEFAULT_VALUE));
-        metricPathPrefix = getString(settings, SETTING_NAME_PREFIX, null);
+        graphiteServerHostAndPort = getHostAndPort(settings);
+        messageBuilder = new GraphiteMetricMessageBuilder(getConfiguredMetricPrefixOrNull(settings));
         messageSender = new UdpMessageSender(graphiteServerHostAndPort);
         clock = new SystemCurrentTimeMillisClock();
         logger.log(getInfoLevel(), "GraphiteUdpOutputWriter is configured with " + graphiteServerHostAndPort
-                + ", metricPathPrefix=" + metricPathPrefix);
+                + ", metricPathPrefix=" + messageBuilder.getPrefix());
     }
 
     @Override
@@ -76,29 +69,9 @@ public class GraphiteUdpOutputWriter extends AbstractOutputWriter {
 
     @Override
     public void writeQueryResult(String metricName, String metricType, Object value) throws IOException {
-        String msg = buildMetricPathPrefix() + metricName + " " + value + " " + clock.getCurrentInTimeSeconds() + "\n";
+        String msg = messageBuilder.buildMessage(metricName, value, clock.getCurrentInTimeSeconds());
         logMessageIfTraceLoggable(msg);
-        tryWriteMsg(msg);
-    }
-
-    /**
-     * {@link java.net.InetAddress#getLocalHost()} may not be known at JVM startup when the process is launched as a
-     * Linux service.
-     *
-     * @return
-     */
-    protected String buildMetricPathPrefix() {
-        if (metricPathPrefix != null) {
-            return metricPathPrefix;
-        }
-        String hostname;
-        try {
-            hostname = InetAddress.getLocalHost().getHostName().replaceAll("\\.", "_");
-        } catch (UnknownHostException e) {
-            hostname = "#unknown#";
-        }
-        metricPathPrefix = "servers." + hostname + ".";
-        return metricPathPrefix;
+        tryWriteMsg(msg + "\n");
     }
 
     private void logMessageIfTraceLoggable(String msg) {
@@ -128,7 +101,7 @@ public class GraphiteUdpOutputWriter extends AbstractOutputWriter {
     public String toString() {
         return "GraphiteUdpOutputWriter{" +
                 ", " + graphiteServerHostAndPort +
-                ", metricPathPrefix='" + metricPathPrefix + "'" +
+                ", metricPathPrefix='" + messageBuilder.getPrefix() + "'" +
                 "}";
     }
 

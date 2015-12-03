@@ -57,7 +57,7 @@ public class JmxTransExporterBuilderTest {
         GraphitePlainTextTcpOutputWriter graphiteWriter = (GraphitePlainTextTcpOutputWriter) circuitBreakerDecorator.delegate;
         assertThat(graphiteWriter.graphiteServerHostAndPort.getPort(), is(2203));
         assertThat(graphiteWriter.graphiteServerHostAndPort.getHost(), is("localhost"));
-        assertThat(graphiteWriter.metricPathPrefix, is("app_123456.server.i876543."));
+        assertThat(graphiteWriter.getMetricPathPrefix(), is("app_123456.server.i876543."));
 
         assertThat(jmxTransExporter.queries.size(), is(13));
 
@@ -111,7 +111,7 @@ public class JmxTransExporterBuilderTest {
             GraphitePlainTextTcpOutputWriter writer = (GraphitePlainTextTcpOutputWriter) circuitBreakerDecorator.delegate;
             assertThat(writer.graphiteServerHostAndPort.getPort(), is(2003));
             assertThat(writer.graphiteServerHostAndPort.getHost(), is("localhost"));
-            assertThat(writer.metricPathPrefix, is("servers.localhost."));
+            assertThat(writer.getMetricPathPrefix(), is("servers.localhost."));
         }
         {
             OutputWriter decoratedOutputWriter = outputWritersChain.outputWriters.get(1);

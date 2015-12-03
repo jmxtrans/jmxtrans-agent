@@ -23,7 +23,8 @@
  */
 package org.jmxtrans.agent;
 
-import org.jmxtrans.agent.util.net.HostAndPort;
+import static org.jmxtrans.agent.graphite.GraphiteOutputWriterCommonSettings.*;
+import static org.jmxtrans.agent.util.ConfigurationUtils.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -36,27 +37,24 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
-import static org.jmxtrans.agent.util.ConfigurationUtils.getInt;
-import static org.jmxtrans.agent.util.ConfigurationUtils.getString;
+
+import org.jmxtrans.agent.graphite.GraphiteMetricMessageBuilder;
+import org.jmxtrans.agent.util.net.HostAndPort;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter implements OutputWriter {
 
-    public final static String SETTING_HOST = "host";
-    public final static String SETTING_PORT = "port";
-    public static final int SETTING_PORT_DEFAULT_VALUE = 2003;
-    public final static String SETTING_NAME_PREFIX = "namePrefix";
     public final static String SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS = "socket.connectTimeoutInMillis";
     public final static int SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS_DEFAULT_VALUE = 500;
 
     private final static Charset UTF_8 = Charset.forName("UTF-8");
-    protected String metricPathPrefix;
     protected HostAndPort graphiteServerHostAndPort;
     private Socket socket;
     private Writer writer;
     private int socketConnectTimeoutInMillis = SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS_DEFAULT_VALUE;
+    private GraphiteMetricMessageBuilder messageBuilder;
 
     @Override
     public void postConstruct(Map<String, String> settings) {
@@ -65,32 +63,13 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
         graphiteServerHostAndPort = new HostAndPort(
                 getString(settings, SETTING_HOST),
                 getInt(settings, SETTING_PORT, SETTING_PORT_DEFAULT_VALUE));
-        metricPathPrefix = getString(settings, SETTING_NAME_PREFIX, null);
+        messageBuilder = new GraphiteMetricMessageBuilder(getConfiguredMetricPrefixOrNull(settings));
         socketConnectTimeoutInMillis = getInt(settings,
                 SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS,
                 SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS_DEFAULT_VALUE);
 
-        logger.log(getInfoLevel(), "GraphitePlainTextTcpOutputWriter is configured with " + graphiteServerHostAndPort + ", metricPathPrefix=" + metricPathPrefix +
+        logger.log(getInfoLevel(), "GraphitePlainTextTcpOutputWriter is configured with " + graphiteServerHostAndPort + ", metricPathPrefix=" + messageBuilder.getPrefix() +
                 ", socketConnectTimeoutInMillis=" + socketConnectTimeoutInMillis);
-    }
-
-    /**
-     * {@link java.net.InetAddress#getLocalHost()} may not be known at JVM startup when the process is launched as a Linux service.
-     *
-     * @return
-     */
-    protected String buildMetricPathPrefix() {
-        if (metricPathPrefix != null) {
-            return metricPathPrefix;
-        }
-        String hostname;
-        try {
-            hostname = InetAddress.getLocalHost().getHostName().replaceAll("\\.", "_");
-        } catch (UnknownHostException e) {
-            hostname = "#unknown#";
-        }
-        metricPathPrefix = "servers." + hostname + ".";
-        return metricPathPrefix;
     }
 
     @Override
@@ -100,7 +79,7 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
 
     @Override
     public void writeQueryResult(@Nonnull String metricName, @Nullable String type, @Nullable Object value) throws IOException {
-        String msg = buildMetricPathPrefix() + metricName + " " + value + " " + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+        String msg = messageBuilder.buildMessage(metricName, value, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
         try {
             ensureGraphiteConnection();
             if (logger.isLoggable(getTraceLevel())) {
@@ -177,7 +156,11 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
     public String toString() {
         return "GraphitePlainTextTcpOutputWriter{" +
                 ", " + graphiteServerHostAndPort +
-                ", metricPathPrefix='" + metricPathPrefix + '\'' +
+                ", metricPathPrefix='" + messageBuilder.getPrefix() + '\'' +
                 '}';
+    }
+    
+    String getMetricPathPrefix() {
+        return messageBuilder.getPrefix();
     }
 }
