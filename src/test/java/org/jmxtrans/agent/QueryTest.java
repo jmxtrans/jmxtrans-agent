@@ -192,6 +192,21 @@ public class QueryTest {
         assert (actualSize == 24);
     }
 
+    @Test
+    public void comma_separted_attribute_returns_specified_attributes() throws Exception {
+        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold,Name", "altTest.#attribute#", resultNameStrategy);
+        query.collectAndExport(mbeanServer, mockOutputWriter);
+        assertThat(mockOutputWriter.resultsByName.get("altTest.Name"), notNullValue());
+        assertThat(mockOutputWriter.resultsByName.get("altTest.CollectionUsageThreshold"), notNullValue());
+    }
+
+    @Test
+    public void comma_separted_attribute_does_not_return_not_specified_attribute() throws Exception {
+        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold,Name", "altTest.#attribute#", resultNameStrategy);
+        query.collectAndExport(mbeanServer, mockOutputWriter);
+        assertThat(mockOutputWriter.resultsByName.get("CollectionUsageThreshold"), nullValue());
+    }
+
     public static class MockOutputWriter extends AbstractOutputWriter {
 
         protected final boolean failOnDuplicateResult;

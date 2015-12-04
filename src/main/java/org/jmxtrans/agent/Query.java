@@ -131,18 +131,33 @@ public class Query {
 
         for (ObjectName on : objectNames) {
             try {
-                if (attribute == null || attribute.isEmpty()) {
-                    for (MBeanAttributeInfo mBeanAttributeInfo : mbeanServer.getMBeanInfo(on).getAttributes()) {
-                        collectAndExportAttribute(mbeanServer, outputWriter, on, mBeanAttributeInfo.getName());
-                    }
-
-                } else {
-                    collectAndExportAttribute(mbeanServer, outputWriter, on, attribute);
-                }
+                collectAndExportForObjectName(mbeanServer, on, outputWriter);
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Exception collecting " + on + "#" + attribute + (key == null ? "" : "#" + key), e);
             }
         }
+    }
+
+    private void collectAndExportForObjectName(MBeanServer mbeanServer, ObjectName on, OutputWriter outputWriter)
+            throws Exception {
+        for (String attribute : resolveAttributes(mbeanServer, on)) {
+                collectAndExportAttribute(mbeanServer, outputWriter, on, attribute);
+        }
+    }
+
+    private List<String> resolveAttributes(MBeanServer mbeanServer, ObjectName on) throws Exception {
+        List<String> resolvedAttributes = new ArrayList<>();
+        if (attribute == null || attribute.isEmpty()) {
+            // Null or empty attribute specified, collect all attributes
+            for (MBeanAttributeInfo mBeanAttributeInfo : mbeanServer.getMBeanInfo(on).getAttributes()) {
+                resolvedAttributes.add(mBeanAttributeInfo.getName());
+            }
+        } else {
+           // Single attribute or comma-separated list specified, collect specified attribute(s).
+           String[]  attributes = attribute.split(",");
+           resolvedAttributes.addAll(Arrays.asList(attributes));
+        }
+        return resolvedAttributes;
     }
 
     private void collectAndExportAttribute(MBeanServer mbeanServer, OutputWriter outputWriter, ObjectName objectName, String attribute) {
