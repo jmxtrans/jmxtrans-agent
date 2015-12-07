@@ -20,9 +20,38 @@ export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.1.0.jar=jmxtra
 
 ## Query configuration
 
+### Selecting attributes
+
+To select which attributes to collect, use the `attribute` or `attributes` attribute on the `query` element. `attribute` accepts a
+single attribute while `attributes` accepts a comma-separated list of attributes to collect. If you do not specify any attributes, all attributes
+of the MBean will be dynamically discovered and collected. Use the expression language `#attribute#` in the `resultAlias`
+to use the attribute name in the metric name when collecting many attributes.
+
+Example - collect the `ThreadCount` attribute from the Threading MBean:
+
+```xml
+<query objectName="java.lang:type=Threading" attribute="ThreadCount"
+   resultAlias="jvm.thread.count"/>
+```
+
+Example - collect `ThreadCount` and `TotalStartedThreadCount` from the Threading MBean:
+
+```xml
+<query objectName="java.lang:type=Threading" attributes="ThreadCount,TotalStartedThreadCount"
+  resultAlias="jvm.threads.#attribute#"/>
+```
+
+Example - collect all attributes from the Threading MBean:
+
+```xml
+<query objectName="java.lang:type=Threading" resultAlias="jvm.threads.#attribute#"/>
+```
+
+
 ### Simple mono-valued attribute
 
-Use `attribute` to specify the value to lookup. See `javax.management.MBeanServer.getAttribute(objectName, attribute)`.
+Use `attribute` or `attributes` to specify the values to lookup. No additional configuration is required.
+See `javax.management.MBeanServer.getAttribute(objectName, attribute)`.
 
 ```xml
 <query objectName="java.lang:type=Threading" attribute="ThreadCount"
