@@ -145,6 +145,9 @@ public class JmxTransExporterBuilder {
         String attribute = queryElement.getAttribute("attribute");
         String attributes = queryElement.getAttribute("attributes");
         validateOnlyAttributeOrAttributesSpecified(attribute, attributes, objectName);
+        if (attribute.isEmpty() && attributes.isEmpty()) {
+            return Collections.emptyList();
+        }
         if (!attribute.isEmpty()) {
             return Collections.singletonList(attribute);
         } else {

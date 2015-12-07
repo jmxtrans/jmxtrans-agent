@@ -154,6 +154,15 @@ public class JmxTransExporterBuilderTest {
         assertThat(query.getAttributes(), contains("ThreadCount", "TotalStartedThreadCount"));
     }
 
+    @Test
+    public void testNoAttributesSpecifiedGeneratesWildcardQuery() throws Exception {
+        JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
+        JmxTransExporter jmxTransExporter = builder.build("classpath:jmxtrans-no-attributes-specified-generates-wildcard-query-test.xml");
+        assertThat(jmxTransExporter.queries, hasSize(1));
+        Query query = jmxTransExporter.queries.get(0);
+        assertThat(query.getAttributes(), emptyIterable());
+    }
+
     @Test(expected=IllegalArgumentException.class)
     public void testParseConfigurationAttributeAndAttributesMutuallyExclusive() throws Exception {
         JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
