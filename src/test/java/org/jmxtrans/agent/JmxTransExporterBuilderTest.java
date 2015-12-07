@@ -66,14 +66,14 @@ public class JmxTransExporterBuilderTest {
         {
             Query query = queriesByResultAlias.get("os.systemLoadAverage");
             assertThat(query.objectName, is(new ObjectName("java.lang:type=OperatingSystem")));
-            assertThat(query.attribute, is("SystemLoadAverage"));
+            assertThat(query.getAttributes(), contains("SystemLoadAverage"));
             assertThat(query.resultAlias, is("os.systemLoadAverage"));
             assertThat(query.key, is((String) null));
         }
         {
             Query query = queriesByResultAlias.get("jvm.heapMemoryUsage.used");
             assertThat(query.objectName, is(new ObjectName("java.lang:type=Memory")));
-            assertThat(query.attribute, is("HeapMemoryUsage"));
+            assertThat(query.getAttributes(), contains("HeapMemoryUsage"));
             assertThat(query.resultAlias, is("jvm.heapMemoryUsage.used"));
             assertThat(query.key, is("used"));
         }
@@ -132,17 +132,32 @@ public class JmxTransExporterBuilderTest {
         {
             Query query = queriesByResultAlias.get("os.systemLoadAverage");
             assertThat(query.objectName, is(new ObjectName("java.lang:type=OperatingSystem")));
-            assertThat(query.attribute, is("SystemLoadAverage"));
+            assertThat(query.getAttributes(), contains("SystemLoadAverage"));
             assertThat(query.resultAlias, is("os.systemLoadAverage"));
             assertThat(query.key, is((String) null));
         }
         {
             Query query = queriesByResultAlias.get("jvm.heapMemoryUsage.used");
             assertThat(query.objectName, is(new ObjectName("java.lang:type=Memory")));
-            assertThat(query.attribute, is("HeapMemoryUsage"));
+            assertThat(query.getAttributes(), contains("HeapMemoryUsage"));
             assertThat(query.resultAlias, is("jvm.heapMemoryUsage.used"));
             assertThat(query.key, is("used"));
         }
+    }
+
+    @Test
+    public void testParseConfigurationMultipleAttributes() throws Exception {
+        JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
+        JmxTransExporter jmxTransExporter = builder.build("classpath:jmxtrans-multiple-attributes-test.xml");
+        assertThat(jmxTransExporter.queries, hasSize(1));
+        Query query = jmxTransExporter.queries.get(0);
+        assertThat(query.getAttributes(), contains("ThreadCount", "TotalStartedThreadCount"));
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testParseConfigurationAttributeAndAttributesMutuallyExclusive() throws Exception {
+        JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
+        builder.build("classpath:jmxtrans-attribute-attributes-exclusive-test.xml");
     }
 
     Map<String, Query> indexQueriesByResultAlias(Iterable<Query> queries) {

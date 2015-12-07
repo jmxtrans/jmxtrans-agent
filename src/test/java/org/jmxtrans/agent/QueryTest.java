@@ -31,6 +31,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -193,16 +194,18 @@ public class QueryTest {
     }
 
     @Test
-    public void comma_separted_attribute_returns_specified_attributes() throws Exception {
-        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold,Name", "altTest.#attribute#", resultNameStrategy);
+    public void attribute_list_returns_specified_attributes() throws Exception {
+        Query query = new Query("test:type=Mock,name=mock", Arrays.asList("CollectionUsageThreshold", "Name"), null,
+                null, null, "altTest.#attribute#", resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
         assertThat(mockOutputWriter.resultsByName.get("altTest.Name"), notNullValue());
         assertThat(mockOutputWriter.resultsByName.get("altTest.CollectionUsageThreshold"), notNullValue());
     }
 
     @Test
-    public void comma_separted_attribute_does_not_return_not_specified_attribute() throws Exception {
-        Query query = new Query("test:type=Mock,name=mock", "CollectionUsageThreshold,Name", "altTest.#attribute#", resultNameStrategy);
+    public void attribute_list_attribute_does_not_return_not_specified_attribute() throws Exception {
+        Query query = new Query("test:type=Mock,name=mock", Arrays.asList("CollectionUsageThreshold", "Name"), null,
+                null, null, "altTest.#attribute#", resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
         assertThat(mockOutputWriter.resultsByName.get("CollectionUsageThreshold"), nullValue());
     }
