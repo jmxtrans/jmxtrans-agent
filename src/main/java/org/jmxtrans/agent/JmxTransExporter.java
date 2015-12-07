@@ -71,13 +71,13 @@ public class JmxTransExporter {
     private MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
     private ScheduledFuture scheduledFuture;
 
-    public JmxTransExporter withQuery(@Nonnull String objectName, @Nonnull String attribute, @Nullable String resultAlias) {
-        return withQuery(objectName, attribute, null, null, null, resultAlias);
+    public JmxTransExporter withQuery(@Nonnull String objectName, @Nonnull List<String> attributes, @Nullable String resultAlias) {
+        return withQuery(objectName, attributes, null, null, null, resultAlias);
     }
 
-    public JmxTransExporter withQuery(@Nonnull String objectName, @Nonnull String attribute, @Nullable String key,
+    public JmxTransExporter withQuery(@Nonnull String objectName, @Nonnull List<String> attributes, @Nullable String key,
                                       @Nullable Integer position, @Nullable String type, @Nullable String resultAlias) {
-        Query query = new Query(objectName, attribute, key, position, type, resultAlias, this.resultNameStrategy);
+        Query query = new Query(objectName, attributes, key, position, type, resultAlias, this.resultNameStrategy);
         queries.add(query);
         return this;
     }

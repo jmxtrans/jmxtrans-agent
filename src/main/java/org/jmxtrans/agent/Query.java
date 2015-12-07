@@ -50,13 +50,15 @@ public class Query {
     @Nonnull
     protected final ObjectName objectName;
 
+    /**
+     * The attribute(s) to retrieve ({@link MBeanServer#getAttribute(javax.management.ObjectName, String)})
+     * 
+     * If empty, will fetch all attributes of the MBean.
+     */
+    @Nonnull
+    protected List<String> attributes;
     @Nullable
     protected final String resultAlias;
-    /**
-     * The attribute to retrieve ({@link MBeanServer#getAttribute(javax.management.ObjectName, String)})
-     */
-    @Nullable
-    protected final String attribute;
     /**
      * If the MBean attribute value is a {@link CompositeData}, the key to lookup.
      *
@@ -69,6 +71,8 @@ public class Query {
      */
     @Nullable
     protected final Integer position;
+
+
     /**
      * Attribute type like '{@code gauge}' or '{@code counter}'. Used by monitoring systems like Librato who require this information.
      */
@@ -110,18 +114,34 @@ public class Query {
      */
     public Query(@Nonnull String objectName, @Nullable String attribute, @Nullable String key, @Nullable Integer position,
                  @Nullable String type, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
+        this(objectName, nullOrEmtpy(attribute) ? Collections.<String>emptyList() : Collections.singletonList(attribute), key, position,
+                type, resultAlias, resultNameStrategy);
+    }
+
+    private static boolean nullOrEmtpy(String attribute) {
+        return attribute == null || attribute.isEmpty();
+    }
+    
+    /**
+     * Creates a query that accepts a list of attributes to collect. If the list is empty, all attributes will be collected.
+     * 
+     * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
+     */
+    public Query(@Nonnull String objectName, @Nonnull List<String> attributes, @Nullable String key, @Nullable Integer position,
+            @Nullable String type, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
         try {
             this.objectName = new ObjectName(Preconditions2.checkNotNull(objectName));
         } catch (MalformedObjectNameException e) {
             throw new IllegalArgumentException("Invalid objectName '" + objectName + "'", e);
         }
-        this.attribute = attribute;
+        this.attributes = Collections.unmodifiableList(new ArrayList<String>(Preconditions2.checkNotNull(attributes, "attributes")));
         this.key = key;
         this.resultAlias = resultAlias;
         this.position = position;
         this.type = type;
         this.resultNameStrategy = Preconditions2.checkNotNull(resultNameStrategy, "resultNameStrategy");
     }
+
 
     public void collectAndExport(@Nonnull MBeanServer mbeanServer, @Nonnull OutputWriter outputWriter) {
         if (resultNameStrategy == null)
@@ -130,19 +150,35 @@ public class Query {
         Set<ObjectName> objectNames = mbeanServer.queryNames(objectName, null);
 
         for (ObjectName on : objectNames) {
-            try {
-                if (attribute == null || attribute.isEmpty()) {
-                    for (MBeanAttributeInfo mBeanAttributeInfo : mbeanServer.getMBeanInfo(on).getAttributes()) {
-                        collectAndExportAttribute(mbeanServer, outputWriter, on, mBeanAttributeInfo.getName());
-                    }
-
-                } else {
-                    collectAndExportAttribute(mbeanServer, outputWriter, on, attribute);
-                }
-            } catch (Exception e) {
-                logger.log(Level.WARNING, "Exception collecting " + on + "#" + attribute + (key == null ? "" : "#" + key), e);
-            }
+            collectAndExportForObjectName(mbeanServer, outputWriter, on);
         }
+    }
+
+    private void collectAndExportForObjectName(MBeanServer mbeanServer, OutputWriter outputWriter, ObjectName on) {
+        for (String attribute : resolveAttributes(mbeanServer, on)) {
+            collectAndExportAttribute(mbeanServer, outputWriter, on, attribute);
+        }
+    }
+
+
+    private List<String> resolveAttributes(MBeanServer mbeanServer, ObjectName on) {
+        if (attributes.isEmpty()) {
+            return findAllAttributes(mbeanServer, on);
+        }
+        return attributes;
+    }
+
+    private List<String> findAllAttributes(MBeanServer mbeanServer, ObjectName on) {
+        List<String> resolvedAttributes = new ArrayList<>();
+        // Null or empty attribute specified, collect all attributes
+        try {
+            for (MBeanAttributeInfo mBeanAttributeInfo : mbeanServer.getMBeanInfo(on).getAttributes()) {
+                resolvedAttributes.add(mBeanAttributeInfo.getName());
+            }
+        } catch (IntrospectionException | InstanceNotFoundException | ReflectionException e) {
+            logger.log(Level.WARNING, "Error when finding attributes for ObjectName " + on + ", all attributes will not be collected", e);
+        }
+        return resolvedAttributes;
     }
 
     private void collectAndExportAttribute(MBeanServer mbeanServer, OutputWriter outputWriter, ObjectName objectName, String attribute) {
@@ -230,7 +266,7 @@ public class Query {
         return "Query{" +
                 "objectName=" + objectName +
                 ", resultAlias='" + resultAlias + '\'' +
-                ", attribute='" + attribute + '\'' +
+                ", attributes='" + attributes + '\'' +
                 ", key='" + key + '\'' +
                 '}';
     }
@@ -246,8 +282,8 @@ public class Query {
     }
 
     @Nullable
-    public String getAttribute() {
-        return attribute;
+    public List<String> getAttributes() {
+        return attributes;
     }
 
     @Nullable

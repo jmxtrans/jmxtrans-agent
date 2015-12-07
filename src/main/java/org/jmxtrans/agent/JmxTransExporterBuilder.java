@@ -35,10 +35,13 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * XML configuration parser.
@@ -47,6 +50,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class JmxTransExporterBuilder {
 
+    private static final Pattern ATTRIBUTE_SPLIT_PATTERN = Pattern.compile("\\s*,\\s*");
     private Logger logger = Logger.getLogger(getClass().getName());
     private PropertyPlaceholderResolver placeholderResolver = new PropertyPlaceholderResolver();
 
@@ -120,7 +124,7 @@ public class JmxTransExporterBuilder {
         for (int i = 0; i < queries.getLength(); i++) {
             Element queryElement = (Element) queries.item(i);
             String objectName = queryElement.getAttribute("objectName");
-            String attribute = queryElement.getAttribute("attribute");
+            List<String> attributes = getAttributes(queryElement, objectName);
             String key = queryElement.hasAttribute("key") ? queryElement.getAttribute("key") : null;
             String resultAlias = queryElement.getAttribute("resultAlias");
             String type = queryElement.getAttribute("type");
@@ -129,11 +133,33 @@ public class JmxTransExporterBuilder {
                 position = queryElement.hasAttribute("position") ? Integer.parseInt(queryElement.getAttribute("position")) : null;
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Invalid 'position' attribute for query objectName=" + objectName +
-                        ", attribute=" + attribute + ", resultAlias=" + resultAlias);
+                        ", attributes=" + attributes + ", resultAlias=" + resultAlias);
 
             }
 
-            jmxTransExporter.withQuery(objectName, attribute, key, position, type, resultAlias);
+            jmxTransExporter.withQuery(objectName, attributes, key, position, type, resultAlias);
+        }
+    }
+
+    private List<String> getAttributes(Element queryElement, String objectName) {
+        String attribute = queryElement.getAttribute("attribute");
+        String attributes = queryElement.getAttribute("attributes");
+        validateOnlyAttributeOrAttributesSpecified(attribute, attributes, objectName);
+        if (attribute.isEmpty() && attributes.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (!attribute.isEmpty()) {
+            return Collections.singletonList(attribute);
+        } else {
+           String[] splitAttributes = ATTRIBUTE_SPLIT_PATTERN.split(attributes);
+           return Arrays.asList(splitAttributes);
+        }
+    }
+
+
+    private void validateOnlyAttributeOrAttributesSpecified(String attribute, String attributes, String objectName) {
+        if (!attribute.isEmpty() && !attributes.isEmpty()) {
+            throw new IllegalArgumentException("Only one of 'attribute' and 'attributes' is supported for a query - not both - objectName: " + objectName);
         }
     }
 
