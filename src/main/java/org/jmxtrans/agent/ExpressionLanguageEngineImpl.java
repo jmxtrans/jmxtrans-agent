@@ -53,7 +53,7 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
             String shortHostName = getShortHostname(hostName);
 
             functionsByName.put("hostname", new StaticFunction(hostName));
-            functionsByName.put("short_hostname", new StaticFunction(hostName));
+            functionsByName.put("short_hostname", new StaticFunction(shortHostName));
             functionsByName.put("reversed_hostname", new StaticFunction(reversedHostName));
             functionsByName.put("escaped_hostname", new StaticFunction(hostName.replaceAll("\\.", "_")));
             functionsByName.put("canonical_hostname", new StaticFunction(canonicalHostName));
