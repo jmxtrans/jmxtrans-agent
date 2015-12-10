@@ -91,7 +91,6 @@ public class ExpressionLanguageEngineTest {
         assertThat(actual, is("tomcat1.tomcat.mybean.1"));
     }
 
-
     @Test
     public void test_canonical_hostname_dots_are_not_escaped() throws Exception {
         ExpressionLanguageEngineImpl engine = new ExpressionLanguageEngineImpl();
@@ -99,4 +98,18 @@ public class ExpressionLanguageEngineTest {
         String actual = engine.resolveExpression("#canonical_hostname#");
         assertThat(actual, is("server1.mycompany.com"));
     }
+
+    @Test
+    public void test_short_hostname() {
+        String short_name;
+        short_name = ExpressionLanguageEngineImpl.getShortHostname("server1.abc.com");
+        assertThat(short_name, is("server1"));
+        short_name = ExpressionLanguageEngineImpl.getShortHostname("server1.co");
+        assertThat(short_name, is("server1"));
+        short_name = ExpressionLanguageEngineImpl.getShortHostname("server1");
+        assertThat(short_name, is("server1"));
+        short_name = ExpressionLanguageEngineImpl.getShortHostname("server1.fun_com.co");
+        assertThat(short_name, is("server1"));
+    }
+
 }
