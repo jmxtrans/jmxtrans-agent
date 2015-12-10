@@ -35,8 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 
 /**
@@ -44,6 +43,7 @@ import java.util.logging.Level;
  */
 public class JmxTransAgent {
     private static Logger logger = Logger.getLogger(JmxTransAgent.class.getName());
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     @SuppressFBWarnings("MS_SHOULD_BE_FINAL")
     public static boolean DIAGNOSTIC = Boolean.valueOf(System.getProperty(JmxTransAgent.class.getName() + ".diagnostic", "false"));
@@ -52,11 +52,25 @@ public class JmxTransAgent {
         initializeAgent(configFile);
     }
 
-    public static void premain(String configFile, Instrumentation inst) {
-        initializeAgent(configFile);
+    public static void premain(String configFile, Instrumentation inst) throws Exception {
+        delayedPremain(configFile);
+    }
+
+    private static void delayedPremain(final String configFile) {
+        final Runnable premain = new Runnable() {
+            public void run() {
+                initializeAgent(configFile);
+            };
+        };
+        int delay = Integer.parseInt(System.getProperty("jmxtrans.agent.premain.delay", "0"));
+        if (delay > 0) {
+            System.out.println("jmxtrans agent initialization delayed by " + delay + " seconds");
+        }
+        scheduler.schedule(premain, delay, TimeUnit.SECONDS);
     }
 
     private static void initializeAgent(String configFile) {
+        System.out.println("org.jmxtrans.agent initialize");
         dumpDiagnosticInfo();
         if (configFile == null || configFile.isEmpty()) {
             String msg = "JmxTransExporter configurationFile must be defined";
