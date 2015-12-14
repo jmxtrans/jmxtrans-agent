@@ -33,6 +33,8 @@ import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
@@ -48,8 +50,10 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
             String canonicalHostName = localHost.getCanonicalHostName();
             String reversedCanonicalHostName = StringUtils2.reverseTokens(canonicalHostName, ".");
             String hostAddress = localHost.getHostAddress();
+            String shortHostName = getShortHostname(hostName);
 
             functionsByName.put("hostname", new StaticFunction(hostName));
+            functionsByName.put("short_hostname", new StaticFunction(shortHostName));
             functionsByName.put("reversed_hostname", new StaticFunction(reversedHostName));
             functionsByName.put("escaped_hostname", new StaticFunction(hostName.replaceAll("\\.", "_")));
             functionsByName.put("canonical_hostname", new StaticFunction(canonicalHostName));
@@ -248,4 +252,19 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
             return position == null ? null : position.toString();
         }
     }
+
+    public static String getShortHostname(String host) {
+        try {
+            String hostnameRegex = "([\\w\\-]+)\\..*";
+            Pattern p = Pattern.compile(hostnameRegex, Pattern.CASE_INSENSITIVE);
+            Matcher m = p.matcher(host);
+            if (m.matches()) {
+                host = m.group(1);
+            }
+        } catch (Exception e) {
+            // just return the original hostname
+        }
+        return host;
+    }
 }
+

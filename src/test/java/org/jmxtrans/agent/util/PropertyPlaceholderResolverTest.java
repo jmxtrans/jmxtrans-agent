@@ -23,10 +23,15 @@
  */
 package org.jmxtrans.agent.util;
 
+import org.jmxtrans.agent.ExpressionLanguageEngineImpl;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.net.InetAddress;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
@@ -34,6 +39,16 @@ import static org.junit.Assert.assertThat;
 public class PropertyPlaceholderResolverTest {
 
     private PropertyPlaceholderResolver resolver = new PropertyPlaceholderResolver();
+    static ExpressionLanguageEngineImpl expressionLanguageEngine = new ExpressionLanguageEngineImpl();
+
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        expressionLanguageEngine.registerExpressionEvaluator("hostname", new ExpressionLanguageEngineImpl.StaticFunction("tomcat1"));
+        expressionLanguageEngine.registerExpressionEvaluator("canonical_hostname", new ExpressionLanguageEngineImpl.StaticFunction("tomcat1.www.private.mycompany.com"));
+        expressionLanguageEngine.registerExpressionEvaluator("escaped_canonical_hostname", new ExpressionLanguageEngineImpl.StaticFunction("tomcat1_www_private_mycompany_com"));
+        expressionLanguageEngine.registerExpressionEvaluator("hostaddress", new ExpressionLanguageEngineImpl.StaticFunction("10.0.0.81"));
+        expressionLanguageEngine.registerExpressionEvaluator("escaped_hostaddress", new ExpressionLanguageEngineImpl.StaticFunction("10_0_0_81"));
+    }
 
     @Test
     public void testResolveStringWithSystemProperty() {
@@ -61,6 +76,18 @@ public class PropertyPlaceholderResolverTest {
     public void testResolveStringWithDefaultValue() {
         String actual = resolver.resolveString("${graphite.host:localhost}");
         assertThat(actual, is("localhost"));
+    }
+
+    @Test
+    public void testResolveStringWithDefaultValueAndExpression() {
+        String actual = resolver.resolveString("${graphite.host:localhost}.#hostname#");
+        try {
+            InetAddress localHost = InetAddress.getLocalHost();
+            String hostName = localHost.getHostName();
+            assertThat(actual, is("localhost." + hostName));
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
     }
 
 }

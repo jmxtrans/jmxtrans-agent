@@ -23,6 +23,9 @@
  */
 package org.jmxtrans.agent.util;
 
+import org.jmxtrans.agent.ExpressionLanguageEngine;
+import org.jmxtrans.agent.ExpressionLanguageEngineImpl;
+
 import java.io.Serializable;
 
 /**
@@ -47,6 +50,7 @@ import java.io.Serializable;
 public class PropertyPlaceholderResolver implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private ExpressionLanguageEngine expressionLanguageEngine = new ExpressionLanguageEngineImpl();
 
     /**
      * Parse the given <code>string</code> resolving property placeholders (<code>${my-property[:default-value]}</code>)
@@ -88,8 +92,7 @@ public class PropertyPlaceholderResolver implements Serializable {
                 position++;
             }
         }
-
-        return result.toString();
+        return expressionLanguageEngine.resolveExpression(result.toString());
     }
 
     /**
