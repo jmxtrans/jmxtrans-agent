@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<jmxtrans-agent>
+  <outputWriter class="org.jmxtrans.agent.GraphitePlainTextTcpOutputWriter">
+    <host>graphite.sample.com</host>
+    <port>2003</port>
+    <namePrefix>jmxdata.</namePrefix>
+  </outputWriter>
+  <outputWriter class="org.jmxtrans.agent.ConsoleOutputWriter"/>
+  <collectIntervalInSeconds>30</collectIntervalInSeconds>
+</jmxtrans-agent>

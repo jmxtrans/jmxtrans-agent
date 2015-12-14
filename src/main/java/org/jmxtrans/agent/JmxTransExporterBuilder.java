@@ -55,71 +55,89 @@ public class JmxTransExporterBuilder {
     private PropertyPlaceholderResolver placeholderResolver = new PropertyPlaceholderResolver();
 
     public JmxTransExporter build(String configurationFilePath) throws Exception {
-        if (configurationFilePath == null) {
+
+		if (configurationFilePath == null) {
             throw new NullPointerException("configurationFilePath cannot be null");
         }
         DocumentBuilder dBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 
         Document document;
+		List<Document> documents = new ArrayList<Document>();
+
         if (configurationFilePath.toLowerCase().startsWith("classpath:")) {
             String classpathResourcePath = configurationFilePath.substring("classpath:".length());
             InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(classpathResourcePath);
             document = dBuilder.parse(in);
+			documents.add(document);
         } else if (configurationFilePath.toLowerCase().startsWith("file://") ||
                 configurationFilePath.toLowerCase().startsWith("http://") ||
                 configurationFilePath.toLowerCase().startsWith("https://")
                 ) {
             URL url = new URL(configurationFilePath);
             document = dBuilder.parse(url.openStream());
+			documents.add(document);
         } else {
-            File xmlFile = new File(configurationFilePath);
-            if (!xmlFile.exists()) {
-                throw new IllegalArgumentException("Configuration file '" + xmlFile.getAbsolutePath() + "' not found");
-            }
-            document = dBuilder.parse(xmlFile);
+			File dir = new File(configurationFilePath);
+			File[] directoryListing = dir.listFiles();
+			if (directoryListing != null) {
+				for (File xmlFile : directoryListing) {
+					System.out.println("Processing file: " + xmlFile.getAbsolutePath() + " for config");
+					document = dBuilder.parse(xmlFile);
+					documents.add(document);
+				}
+			} else {
+				File xmlFile = new File(configurationFilePath);
+				if (!xmlFile.exists()) {
+					throw new IllegalArgumentException("Configuration file '" + xmlFile.getAbsolutePath() + "' not found");
+				}
+				document = dBuilder.parse(xmlFile);
+				documents.add(document);
+			}
         }
 
-        Element rootElement = document.getDocumentElement();
+		JmxTransExporter jmxTransExporter = new JmxTransExporter();
 
-        JmxTransExporter jmxTransExporter = new JmxTransExporter();
-
-        NodeList collectIntervalNodeList = rootElement.getElementsByTagName("collectIntervalInSeconds");
-        switch (collectIntervalNodeList.getLength()) {
-            case 0:
-                // nothing to do, use default value
-                break;
-            case 1:
-                Element collectIntervalElement = (Element) collectIntervalNodeList.item(0);
-                String collectIntervalString = placeholderResolver.resolveString(collectIntervalElement.getTextContent());
-                try {
-                    jmxTransExporter.withCollectInterval(Integer.parseInt(collectIntervalString), TimeUnit.SECONDS);
-                } catch (NumberFormatException e) {
-                    throw new IllegalStateException("Invalid <collectIntervalInSeconds> value '" + collectIntervalString + "', integer expected", e);
-                }
-                break;
-            default:
-                logger.warning("More than 1 <collectIntervalInSeconds> element found (" + collectIntervalNodeList.getLength() + "), use latest");
-                Element lastCollectIntervalElement = (Element) collectIntervalNodeList.item(collectIntervalNodeList.getLength() - 1);
-                String lastCollectIntervalString = placeholderResolver.resolveString(lastCollectIntervalElement.getTextContent());
-                try {
-                    jmxTransExporter.withCollectInterval(Integer.parseInt(lastCollectIntervalString), TimeUnit.SECONDS);
-                } catch (NumberFormatException e) {
-                    throw new IllegalStateException("Invalid <collectIntervalInSeconds> value '" + lastCollectIntervalString + "', integer expected", e);
-                }
-                break;
-
-        }
-
-        buildResultNameStrategy(rootElement, jmxTransExporter);
-        buildInvocations(rootElement, jmxTransExporter);
-        buildQueries(rootElement, jmxTransExporter);
-
-        buildOutputWriters(rootElement, jmxTransExporter);
+		for (Document doc: documents) {
+			Element rootElement = doc.getDocumentElement();
+			buildCollectInterval(rootElement, jmxTransExporter);
+			buildResultNameStrategy(rootElement, jmxTransExporter);
+			buildInvocations(rootElement, jmxTransExporter);
+			buildQueries(rootElement, jmxTransExporter);
+			buildOutputWriters(rootElement, jmxTransExporter);
+		}
 
         return jmxTransExporter;
     }
 
-    private void buildQueries(Element rootElement, JmxTransExporter jmxTransExporter) {
+	private void buildCollectInterval(Element rootElement, JmxTransExporter jmxTransExporter) {
+		NodeList collectIntervalNodeList = rootElement.getElementsByTagName("collectIntervalInSeconds");
+		switch (collectIntervalNodeList.getLength()) {
+			case 0:
+				// nothing to do, use default value
+				break;
+			case 1:
+				Element collectIntervalElement = (Element) collectIntervalNodeList.item(0);
+				String collectIntervalString = placeholderResolver.resolveString(collectIntervalElement.getTextContent());
+				try {
+					jmxTransExporter.withCollectInterval(Integer.parseInt(collectIntervalString), TimeUnit.SECONDS);
+				} catch (NumberFormatException e) {
+					throw new IllegalStateException("Invalid <collectIntervalInSeconds> value '" + collectIntervalString + "', integer expected", e);
+				}
+				break;
+			default:
+				logger.warning("More than 1 <collectIntervalInSeconds> element found (" + collectIntervalNodeList.getLength() + "), use latest");
+				Element lastCollectIntervalElement = (Element) collectIntervalNodeList.item(collectIntervalNodeList.getLength() - 1);
+				String lastCollectIntervalString = placeholderResolver.resolveString(lastCollectIntervalElement.getTextContent());
+				try {
+					jmxTransExporter.withCollectInterval(Integer.parseInt(lastCollectIntervalString), TimeUnit.SECONDS);
+				} catch (NumberFormatException e) {
+					throw new IllegalStateException("Invalid <collectIntervalInSeconds> value '" + lastCollectIntervalString + "', integer expected", e);
+				}
+				break;
+		}
+	}
+
+	private void buildQueries(Element rootElement, JmxTransExporter jmxTransExporter) {
         NodeList queries = rootElement.getElementsByTagName("query");
         for (int i = 0; i < queries.getLength(); i++) {
             Element queryElement = (Element) queries.item(i);

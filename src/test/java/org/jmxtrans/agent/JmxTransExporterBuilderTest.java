@@ -145,7 +145,46 @@ public class JmxTransExporterBuilderTest {
         }
     }
 
-    @Test
+	@Test
+	public void testParseConfigurationDir() throws Exception {
+		JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
+		JmxTransExporter jmxTransExporter = builder.build("src/test/resources/conf.d");
+
+		assertThat(jmxTransExporter.collectInterval, is(30));
+		assertThat(jmxTransExporter.collectIntervalTimeUnit, is(TimeUnit.SECONDS));
+
+		OutputWritersChain outputWritersChain = (OutputWritersChain) jmxTransExporter.outputWriter;
+
+		assertThat(outputWritersChain.outputWriters.size(), is(2));
+
+		assertThat(jmxTransExporter.queries.size(), is(17));
+	}
+
+	@Test
+	public void testParseConfigurationFile() throws Exception {
+		JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
+		JmxTransExporter jmxTransExporter = builder.build("src/test/resources/jmxtrans-agent.xml");
+
+		assertThat(jmxTransExporter.collectInterval, is(11));
+		assertThat(jmxTransExporter.collectIntervalTimeUnit, is(TimeUnit.SECONDS));
+
+		OutputWriter decoratedOutputWriter = jmxTransExporter.outputWriter;
+		// CircuitBreaker
+		assertTrue(decoratedOutputWriter.getClass().equals(OutputWriterCircuitBreakerDecorator.class));
+		OutputWriterCircuitBreakerDecorator circuitBreakerDecorator = (OutputWriterCircuitBreakerDecorator) decoratedOutputWriter;
+		assertThat(circuitBreakerDecorator.isDisabled(), is(false));
+
+		// Graphite Writer
+		assertTrue(circuitBreakerDecorator.delegate.getClass().equals(GraphitePlainTextTcpOutputWriter.class));
+		GraphitePlainTextTcpOutputWriter graphiteWriter = (GraphitePlainTextTcpOutputWriter) circuitBreakerDecorator.delegate;
+		assertThat(graphiteWriter.graphiteServerHostAndPort.getPort(), is(2203));
+		assertThat(graphiteWriter.graphiteServerHostAndPort.getHost(), is("localhost"));
+		assertThat(graphiteWriter.getMetricPathPrefix(), is("app_123456.server.i876543."));
+
+		assertThat(jmxTransExporter.queries.size(), is(13));
+	}
+
+	@Test
     public void testParseConfigurationMultipleAttributes() throws Exception {
         JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
         JmxTransExporter jmxTransExporter = builder.build("classpath:jmxtrans-multiple-attributes-test.xml");

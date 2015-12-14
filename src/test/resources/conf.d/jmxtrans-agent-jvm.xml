@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<jmxtrans-agent>
+  <queries>
+    <!-- Base OS Objects -->
+    <query objectName="java.lang:type=OperatingSystem" resultAlias="os.#attribute#"/>
+    <!-- Base JVM/Java Objects -->
+    <query objectName="java.lang:type=Memory" resultAlias="java.memory.#attribute#.#key#"/>
+    <query objectName="java.lang:type=MemoryPool,name=*" attribute="Usage" resultAlias="java.memory.%name%.#key#"/>
+    <query objectName="java.lang:type=GarbageCollector,name=*" attribute="CollectionCount" type="counter" resultAlias="java.gc.%name%.collection_count"/>
+    <query objectName="java.lang:type=GarbageCollector,name=*" attribute="CollectionTime" type="counter" resultAlias="java.gc.%name%.collection_time"/>
+    <query objectName="java.lang:type=Threading" attributes="ThreadCount,PeakThreadCount,CurrentThreadCpuTime,CurrentThreadUserTime,DaemonThreadCount,TotalStartedThreadCount" resultAlias="java.threads.#attribute#"/>
+    <query objectName="java.lang:type=ClassLoading" resultAlias="java.classes.#attribute#"/>
+    <query objectName="java.lang:type=Compilation" resultAlias="java.compilation.#attribute#"/>
+  </queries>
+</jmxtrans-agent>
