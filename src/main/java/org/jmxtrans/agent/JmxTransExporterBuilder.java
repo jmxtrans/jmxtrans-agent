@@ -78,12 +78,20 @@ public class JmxTransExporterBuilder {
             documents.add(document);
         } else {
             File dir = new File(configurationFilePath);
-            File[] directoryListing = dir.listFiles();
-            if (directoryListing != null) {
-                for (File xmlFile : directoryListing) {
-                    System.out.println("Processing file: " + xmlFile.getAbsolutePath() + " for config");
-                    document = dBuilder.parse(xmlFile);
-                    documents.add(document);
+            if (dir.isDirectory()) {
+                File[] directoryListing = dir.listFiles();
+                if (directoryListing != null) {
+                    for (File xmlFile : directoryListing) {
+                        if (xmlFile.getName().endsWith("xml")) {
+                            logger.info("Processing file: " + xmlFile.getAbsolutePath() + " for config");
+                            document = dBuilder.parse(xmlFile);
+                            documents.add(document);
+                        } else {
+                            logger.info("Skipping file " + xmlFile.getName());
+                        }
+                    }
+                } else {
+                    logger.warning("Configuration directory " + dir.getAbsolutePath() + " is empty");
                 }
             } else {
                 File xmlFile = new File(configurationFilePath);
