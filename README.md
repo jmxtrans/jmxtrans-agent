@@ -343,7 +343,7 @@ JMXTRANS_AGENT="-javaagent:${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-1.2.1.
 Documents are processed in order, so suggested configuration is to have a "base" class with common configuration:
 
 agent-base.xml:
-```
+```xml
 <?xml version="1.0"?>
 <jmxtrans-agent>
   <outputWriter class="org.jmxtrans.agent.GraphitePlainTextTcpOutputWriter">
@@ -359,7 +359,7 @@ agent-base.xml:
 And then a series of query files:
 
 agent-query-jvm.xml:
-```
+```xml
 <?xml version="1.0"?>
 <jmxtrans-agent>
   <queries>
@@ -378,7 +378,7 @@ agent-query-jvm.xml:
 ```
 
 agent-query-jboss5.xml:
-```
+```xml
 <?xml version="1.0"?>
 <jmxtrans-agent>
   <queries>
