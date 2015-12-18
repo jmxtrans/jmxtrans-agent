@@ -263,7 +263,7 @@ You can use your own implementation for the `ResultNameStrategy`
 
 You then have to make this implementation available in the classpath (adding it the the jmxtrans-agent jar, adding it to the boot classpath ...)
 
-# Relase Notes
+# Release Notes
 
 * [Milestones history](https://github.com/jmxtrans/jmxtrans-agent/issues/milestones?state=closed)
 * [Releases](https://github.com/jmxtrans/jmxtrans-agent/releases)
@@ -323,6 +323,76 @@ ACTIVEMQ_OPTS="$ACTIVEMQ_OPTS $JMXTRANS_AGENT"
       <maxFileSize>10</maxFileSize>
       <maxBackupIndex>4</maxBackupIndex>
    </outputWriter>
+</jmxtrans-agent>
+```
+
+# Sample Configuration using configuration directory
+Supported only in 1.2.1+
+* Create directory `${APP_HOME}/jmxtrans-agent/` and `${APP_HOME}/jmxtrans-agent/conf.d`
+* Copy `jmxtrans-agent-1.2.1.jar` under `${APP_HOME}/jmxtrans-agent/`
+* Copy one or more XML configuration files into `${APP_HOME}/jmxtrans-agent/conf.d`
+```
+JMXTRANS_AGENT="-javaagent:${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-1.2.1.jar=${APP_HOME}/jmxtrans-agent/conf.d"
+```
+* Any file ending in `xml` will be loaded by the agent
+* e.g.
+    * jvm.xml
+    * tomcat.xml
+
+## Notes
+Documents are processed in order, so suggested configuration is to have a "base" class with common configuration:
+
+agent-base.xml:
+```
+<?xml version="1.0"?>
+<jmxtrans-agent>
+  <outputWriter class="org.jmxtrans.agent.GraphitePlainTextTcpOutputWriter">
+    <host>graphite.sample.com</host>
+    <port>2003</port>
+    <namePrefix>jmxdata.</namePrefix>
+  </outputWriter>
+  <outputWriter class="org.jmxtrans.agent.ConsoleOutputWriter"/>
+  <collectIntervalInSeconds>30</collectIntervalInSeconds>
+</jmxtrans-agent>
+```
+
+And then a series of query files:
+
+agent-query-jvm.xml:
+```
+<?xml version="1.0"?>
+<jmxtrans-agent>
+  <queries>
+    <!-- Base OS Objects -->
+    <query objectName="java.lang:type=OperatingSystem" resultAlias="os.#attribute#"/>
+    <!-- Base JVM/Java Objects -->
+    <query objectName="java.lang:type=Memory" resultAlias="java.memory.#attribute#.#key#"/>
+    <query objectName="java.lang:type=MemoryPool,name=*" attribute="Usage" resultAlias="java.memory.%name%.#key#"/>
+    <query objectName="java.lang:type=GarbageCollector,name=*" attribute="CollectionCount" type="counter" resultAlias="java.gc.%name%.collection_count"/>
+    <query objectName="java.lang:type=GarbageCollector,name=*" attribute="CollectionTime" type="counter" resultAlias="java.gc.%name%.collection_time"/>
+    <query objectName="java.lang:type=Threading" attributes="ThreadCount,PeakThreadCount,CurrentThreadCpuTime,CurrentThreadUserTime,DaemonThreadCount,TotalStartedThreadCount" resultAlias="java.threads.#attribute#"/>
+    <query objectName="java.lang:type=ClassLoading" resultAlias="java.classes.#attribute#"/>
+    <query objectName="java.lang:type=Compilation" resultAlias="java.compilation.#attribute#"/>
+  </queries>
+</jmxtrans-agent>
+```
+
+agent-query-jboss5.xml:
+```
+<?xml version="1.0"?>
+<jmxtrans-agent>
+  <queries>
+    <!-- JBOSS 5 OBJECTS -->
+    <query objectName="jboss.jca:service=ManagedConnectionPool,name=*" attributes="AvailableConnectionCount,ConnectionCount,ConnectionCreatedCount,ConnectionDestroyedCount,InUseConnectionCount,MaxConnectionsInUseCount,State" resultAlias="jboss5.datasource.%name%.#attribute#"/>
+    <query objectName="jboss.web:type=ThreadPool,name=*" attributes="acceptorThreadCount,backlog,currentThreadCount,currentThreadsBusy,maxThreads" resultAlias="jboss5.threadpool.%name%.#attribute#"/>
+    <query objectName="jboss.web:type=JspMonitor,name=jsp,WebModule=*,J2EEApplication=*,J2EEServer=*" attributes="jspCount,jspReloadCount" resultAlias="jboss5.jspmonitor.%WebModule%.%J2EEApplication%.%J2EEServer%.#attribute#"/>
+    <query objectName="jboss.web:type=GlobalRequestProcessor,name=*" attributes="bytesReceived,bytesSent,errorCount,maxTime,processingTime,requestCount" resultAlias="jboss5.globalrequestprocessor.%name%.#attribute#"/>
+    <query objectName="jboss.web:type=Cache,host=*,path=*" attributes="accessCount,cacheMaxSize,cacheSize,desiredEntryAccessRatio,hitsCount,maxAllocateIterations,spareNotFoundEntries" resultAlias="jboss5.web_cache.%host%.%path%.#attribute#"/>
+    <query objectName="jboss.web:type=Manager,path=*,host=*" attributes="activeSessions,duplicates,expiredSessions,maxActive,maxActiveSessions,maxInactiveInterval,processExpiresFrequency,processingTime,rejectedSessions,sessionAverageAliveTime,sessionCounter,sessionIdLength,sessionMaxAliveTime" resultAlias="jboss5.web_manager.%host%.%path%.#attribute#"/>
+    <query objectName="jboss.messaging.destination:service=Queue,name=*" attributes="ConsumerCount,DeliveringCount,DownCacheSize,FullSize,MessageCount,PageSize,ScheduledMessageCount" resultAlias="jboss5.messaging.%name%.#attribute#"/>
+    <query objectName="jboss.jca:service=WorkManagerThreadPool" attributes="KeepAliveTime,MaximumPoolSize,MaximumQueueSize,MinimumPoolSize,PoolNumber,QueueSize" resultAlias="jboss5.workmanagerthreadpool.#attribute#"/>
+    <query objectName="jboss.jca:service=CachedConnectionManager" attributes="InUseConnections" resultAlias="jboss5.cachedconnectionmanager.#attribute#"/>
+  </queries>
 </jmxtrans-agent>
 ```
 
