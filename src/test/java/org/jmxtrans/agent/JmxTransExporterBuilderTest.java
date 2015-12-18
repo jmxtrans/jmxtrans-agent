@@ -41,12 +41,13 @@ public class JmxTransExporterBuilderTest {
     @Test
     public void testParseConfiguration() throws Exception {
         JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
-        JmxTransExporter jmxTransExporter = builder.build("classpath:jmxtrans-agent.xml");
+        JmxTransExporterConfiguration config = builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-agent.xml"));
 
-        assertThat(jmxTransExporter.collectInterval, is(11));
-        assertThat(jmxTransExporter.collectIntervalTimeUnit, is(TimeUnit.SECONDS));
+        assertThat(config.collectInterval, is(11));
+        assertThat(config.collectIntervalTimeUnit, is(TimeUnit.SECONDS));
+        assertThat(config.getConfigReloadInterval(), equalTo(-1));
 
-        OutputWriter decoratedOutputWriter = jmxTransExporter.outputWriter;
+        OutputWriter decoratedOutputWriter = config.outputWriter;
         // CircuitBreaker
         assertTrue(decoratedOutputWriter.getClass().equals(OutputWriterCircuitBreakerDecorator.class));
         OutputWriterCircuitBreakerDecorator circuitBreakerDecorator = (OutputWriterCircuitBreakerDecorator) decoratedOutputWriter;
@@ -59,9 +60,9 @@ public class JmxTransExporterBuilderTest {
         assertThat(graphiteWriter.graphiteServerHostAndPort.getHost(), is("localhost"));
         assertThat(graphiteWriter.getMetricPathPrefix(), is("app_123456.server.i876543."));
 
-        assertThat(jmxTransExporter.queries.size(), is(13));
+        assertThat(config.queries.size(), is(13));
 
-        Map<String, Query> queriesByResultAlias = indexQueriesByResultAlias(jmxTransExporter.queries);
+        Map<String, Query> queriesByResultAlias = indexQueriesByResultAlias(config.queries);
 
         {
             Query query = queriesByResultAlias.get("os.systemLoadAverage");
@@ -77,7 +78,7 @@ public class JmxTransExporterBuilderTest {
             assertThat(query.resultAlias, is("jvm.heapMemoryUsage.used"));
             assertThat(query.key, is("used"));
         }
-        Map<String, Invocation> invocationsByResultAlias = indexInvocationsByResultAlias(jmxTransExporter.invocations);
+        Map<String, Invocation> invocationsByResultAlias = indexInvocationsByResultAlias(config.invocations);
         {
             Invocation invocation = invocationsByResultAlias.get("jvm.gc");
             assertThat(invocation.objectName, is(new ObjectName("java.lang:type=Memory")));
@@ -89,13 +90,13 @@ public class JmxTransExporterBuilderTest {
     @Test
     public void testParseConfiguration2() throws Exception {
         JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
-        JmxTransExporter jmxTransExporter = builder.build("classpath:jmxtrans-agent-2.xml");
+        JmxTransExporterConfiguration config = builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-agent-2.xml"));
 
-        assertThat(jmxTransExporter.collectInterval, is(12));
-        assertThat(jmxTransExporter.collectIntervalTimeUnit, is(TimeUnit.SECONDS));
-        assertTrue(jmxTransExporter.outputWriter.getClass().equals(OutputWritersChain.class));
+        assertThat(config.collectInterval, is(12));
+        assertThat(config.collectIntervalTimeUnit, is(TimeUnit.SECONDS));
+        assertTrue(config.outputWriter.getClass().equals(OutputWritersChain.class));
 
-        OutputWritersChain outputWritersChain = (OutputWritersChain) jmxTransExporter.outputWriter;
+        OutputWritersChain outputWritersChain = (OutputWritersChain) config.outputWriter;
 
         assertThat(outputWritersChain.outputWriters.size(), is(2));
 
@@ -125,9 +126,9 @@ public class JmxTransExporterBuilderTest {
 
         }
 
-        assertThat(jmxTransExporter.queries.size(), is(13));
+        assertThat(config.queries.size(), is(13));
 
-        Map<String, Query> queriesByResultAlias = indexQueriesByResultAlias(jmxTransExporter.queries);
+        Map<String, Query> queriesByResultAlias = indexQueriesByResultAlias(config.queries);
 
         {
             Query query = queriesByResultAlias.get("os.systemLoadAverage");
@@ -148,25 +149,33 @@ public class JmxTransExporterBuilderTest {
     @Test
     public void testParseConfigurationMultipleAttributes() throws Exception {
         JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
-        JmxTransExporter jmxTransExporter = builder.build("classpath:jmxtrans-multiple-attributes-test.xml");
-        assertThat(jmxTransExporter.queries, hasSize(1));
-        Query query = jmxTransExporter.queries.get(0);
+        JmxTransExporterConfiguration config = builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-multiple-attributes-test.xml"));
+        assertThat(config.queries, hasSize(1));
+        Query query = config.queries.get(0);
         assertThat(query.getAttributes(), contains("ThreadCount", "TotalStartedThreadCount"));
     }
 
     @Test
     public void testNoAttributesSpecifiedGeneratesWildcardQuery() throws Exception {
         JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
-        JmxTransExporter jmxTransExporter = builder.build("classpath:jmxtrans-no-attributes-specified-generates-wildcard-query-test.xml");
-        assertThat(jmxTransExporter.queries, hasSize(1));
-        Query query = jmxTransExporter.queries.get(0);
+        JmxTransExporterConfiguration config = builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-no-attributes-specified-generates-wildcard-query-test.xml"));
+        assertThat(config.queries, hasSize(1));
+        Query query = config.queries.get(0);
         assertThat(query.getAttributes(), emptyIterable());
     }
 
     @Test(expected=IllegalArgumentException.class)
     public void testParseConfigurationAttributeAndAttributesMutuallyExclusive() throws Exception {
         JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
-        builder.build("classpath:jmxtrans-attribute-attributes-exclusive-test.xml");
+        builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-attribute-attributes-exclusive-test.xml"));
+    }
+    
+    @Test
+    public void testParseConfigReload() throws Exception {
+        JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
+        JmxTransExporterConfiguration config = builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-config-reload-test.xml"));
+        assertThat(config.getConfigReloadInterval(), equalTo(2));
+        
     }
 
     Map<String, Query> indexQueriesByResultAlias(Iterable<Query> queries) {

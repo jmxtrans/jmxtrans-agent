@@ -23,38 +23,22 @@
  */
 package org.jmxtrans.agent;
 
-import org.jmxtrans.agent.util.logging.Logger;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+
+import javax.management.MBeanServer;
+
+import org.jmxtrans.agent.util.logging.Logger;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class JmxTransExporter {
-    /**
-     * visible for test
-     */
-    protected List<Query> queries = new ArrayList<Query>();
-    /**
-     * visible for test
-     */
-    protected List<Invocation> invocations = new ArrayList<Invocation>();
-    /**
-     * visible for test
-     */
-    protected OutputWriter outputWriter = new DevNullOutputWriter();
-
-    protected ResultNameStrategy resultNameStrategy;
-    protected int collectInterval = 10;
-    protected TimeUnit collectIntervalTimeUnit = TimeUnit.SECONDS;
+public class JmxTransExporter implements ConfigurationChangedListener {
     private final Logger logger = Logger.getLogger(getClass().getName());
     private ThreadFactory threadFactory = new ThreadFactory() {
         final AtomicInteger counter = new AtomicInteger();
@@ -70,30 +54,10 @@ public class JmxTransExporter {
     private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, threadFactory);
     private MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
     private ScheduledFuture scheduledFuture;
+    private volatile JmxTransExporterConfiguration config;
 
-    public JmxTransExporter withQuery(@Nonnull String objectName, @Nonnull List<String> attributes, @Nullable String resultAlias) {
-        return withQuery(objectName, attributes, null, null, null, resultAlias);
-    }
-
-    public JmxTransExporter withQuery(@Nonnull String objectName, @Nonnull List<String> attributes, @Nullable String key,
-                                      @Nullable Integer position, @Nullable String type, @Nullable String resultAlias) {
-        Query query = new Query(objectName, attributes, key, position, type, resultAlias, this.resultNameStrategy);
-        queries.add(query);
-        return this;
-    }
-    public JmxTransExporter withInvocation(@Nonnull String objectName, @Nonnull String operation, @Nullable String resultAlias) {
-        invocations.add(new Invocation(objectName, operation, new Object[0], new String[0], resultAlias));
-        return this;
-    }
-    public JmxTransExporter withOutputWriter(OutputWriter outputWriter) {
-        this.outputWriter = outputWriter;
-        return this;
-    }
-
-    public JmxTransExporter withCollectInterval(int collectInterval, @Nonnull TimeUnit collectIntervalTimeUnit) {
-        this.collectInterval = collectInterval;
-        this.collectIntervalTimeUnit = collectIntervalTimeUnit;
-        return this;
+    public JmxTransExporter(JmxTransExporterConfiguration config) {
+        this.config = config;
     }
 
     public void start() {
@@ -107,7 +71,7 @@ public class JmxTransExporter {
             throw new IllegalArgumentException("Exporter is already started");
         }
 
-        if (resultNameStrategy == null)
+        if (config.getResultNameStrategy() == null)
             throw new IllegalStateException("resultNameStrategy is not defined, jmxTransExporter is not properly initialised");
 
         scheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
@@ -115,7 +79,7 @@ public class JmxTransExporter {
             public void run() {
                 collectAndExport();
             }
-        }, collectInterval / 2, collectInterval, collectIntervalTimeUnit);
+        }, config.getCollectInterval() / 2, config.getCollectInterval(), config.getCollectIntervalTimeUnit());
 
         logger.fine(getClass().getName() + " started");
     }
@@ -133,7 +97,7 @@ public class JmxTransExporter {
 
         // wait for stop
         try {
-            scheduledExecutorService.awaitTermination(collectInterval, collectIntervalTimeUnit);
+            scheduledExecutorService.awaitTermination(config.getCollectInterval(), config.getCollectIntervalTimeUnit());
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }
@@ -142,16 +106,17 @@ public class JmxTransExporter {
     }
 
     protected void collectAndExport() {
+        OutputWriter outputWriter = config.getOutputWriter();
         try {
             outputWriter.preCollect();
-            for (Invocation invocation : invocations) {
+            for (Invocation invocation : config.getInvocations()) {
                 try {
                     invocation.invoke(mbeanServer, outputWriter);
                 } catch (Exception e) {
                     logger.log(Level.WARNING, "Ignore exception invoking " + invocation, e);
                 }
             }
-            for (Query query : queries) {
+            for (Query query : config.getQueries()) {
                 try {
                     query.collectAndExport(mbeanServer, outputWriter);
                 } catch (Exception e) {
@@ -167,11 +132,12 @@ public class JmxTransExporter {
     @Override
     public String toString() {
         return "JmxTransExporter{" +
-                "queries=" + queries +
-                ", invocations=" + invocations +
-                ", outputWriter=" + outputWriter +
-                ", collectInterval=" + collectInterval +
-                " " + collectIntervalTimeUnit +
+                ", configuration=" + config +
                 '}';
+    }
+
+    @Override
+    public void configurationChanged(JmxTransExporterConfiguration configuration) {
+        this.config = configuration;
     }
 }
