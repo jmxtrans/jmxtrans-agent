@@ -142,4 +142,8 @@ public class JmxTransExporterConfiguration {
     public Document getDocument() {
         return document;
     }
+
+    public void destroy() {
+        getOutputWriter().preDestroy();
+    }
 }

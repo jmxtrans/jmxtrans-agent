@@ -54,7 +54,8 @@ public class JmxTransExporter implements ConfigurationChangedListener {
     private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, threadFactory);
     private MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
     private ScheduledFuture scheduledFuture;
-    private volatile JmxTransExporterConfiguration config;
+    private JmxTransExporterConfiguration config;
+    private volatile JmxTransExporterConfiguration newConfiguration;
 
     public JmxTransExporter(JmxTransExporterConfiguration config) {
         this.config = config;
@@ -106,6 +107,7 @@ public class JmxTransExporter implements ConfigurationChangedListener {
     }
 
     protected void collectAndExport() {
+        replaceConfigurationIfChanged();
         OutputWriter outputWriter = config.getOutputWriter();
         try {
             outputWriter.preCollect();
@@ -129,6 +131,15 @@ public class JmxTransExporter implements ConfigurationChangedListener {
         }
     }
 
+    private void replaceConfigurationIfChanged() {
+        if (newConfiguration != null) {
+            logger.log(Level.INFO, "Configuration has changed, destroying the old configuration and replacing with the new");
+            config.destroy();
+            config = newConfiguration;
+            newConfiguration = null;
+        }
+    }
+
     @Override
     public String toString() {
         return "JmxTransExporter{" +
@@ -138,6 +149,6 @@ public class JmxTransExporter implements ConfigurationChangedListener {
 
     @Override
     public void configurationChanged(JmxTransExporterConfiguration configuration) {
-        this.config = configuration;
+        this.newConfiguration = configuration;
     }
 }

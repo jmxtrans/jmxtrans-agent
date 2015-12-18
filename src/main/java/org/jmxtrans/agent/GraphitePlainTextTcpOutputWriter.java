@@ -160,6 +160,12 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
                 '}';
     }
     
+    @Override
+    public void preDestroy() {
+        super.preDestroy();
+        releaseGraphiteConnection();
+    };
+    
     String getMetricPathPrefix() {
         return messageBuilder.getPrefix();
     }
