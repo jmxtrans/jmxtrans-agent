@@ -64,6 +64,27 @@ public class ExpressionLanguageEngineTest {
         assertThat(actual, is("tomcat1.tomcat.datasource.localhost._.jdbc_my-datasource.numActive"));
     }
 
+    /**
+     * Systems like Solr may include valuable information in the MXBean domain (ex: Solr core name). Test a function to
+     * retrieve that domain.
+     * @throws Exception
+     */
+    @Test
+    public void test_resolve_expression_with_domain() throws Exception {
+        // prepare
+        String regular = "#hostname#.#domain#.%type%.%id%";
+        String reversed = "#hostname#.#reversed_domain#.%type%.%id%";
+        String objectName = "solr/demo.solr:type=/spell,id=Lazy[solr.SearchHandler]";
+
+        // test
+        String withRegularDomain = expressionLanguageEngine.resolveExpression(regular, new ObjectName(objectName), "numActive", null, null);
+        String withReversedDomain = expressionLanguageEngine.resolveExpression(reversed, new ObjectName(objectName), "numActive", null, null);
+
+        // verify
+        assertThat(withRegularDomain, is("tomcat1.solr_demo.solr._spell.Lazy_solr_SearchHandler_"));
+        assertThat(withReversedDomain, is("tomcat1.solr.solr_demo._spell.Lazy_solr_SearchHandler_"));
+    }
+
 
     @Test
     public void test_resolve_expression_with_composite_data_key() throws Exception {
