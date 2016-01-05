@@ -55,34 +55,69 @@ public class JmxTransExporterBuilder {
     private PropertyPlaceholderResolver placeholderResolver = new PropertyPlaceholderResolver();
 
     public JmxTransExporter build(String configurationFilePath) throws Exception {
+
         if (configurationFilePath == null) {
             throw new NullPointerException("configurationFilePath cannot be null");
         }
         DocumentBuilder dBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 
         Document document;
+        List<Document> documents = new ArrayList<Document>();
+
         if (configurationFilePath.toLowerCase().startsWith("classpath:")) {
             String classpathResourcePath = configurationFilePath.substring("classpath:".length());
             InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(classpathResourcePath);
             document = dBuilder.parse(in);
+            documents.add(document);
         } else if (configurationFilePath.toLowerCase().startsWith("file://") ||
                 configurationFilePath.toLowerCase().startsWith("http://") ||
                 configurationFilePath.toLowerCase().startsWith("https://")
                 ) {
             URL url = new URL(configurationFilePath);
             document = dBuilder.parse(url.openStream());
+            documents.add(document);
         } else {
-            File xmlFile = new File(configurationFilePath);
-            if (!xmlFile.exists()) {
-                throw new IllegalArgumentException("Configuration file '" + xmlFile.getAbsolutePath() + "' not found");
+            File dir = new File(configurationFilePath);
+            if (dir.isDirectory()) {
+                File[] directoryListing = dir.listFiles();
+                if (directoryListing != null) {
+                    for (File xmlFile : directoryListing) {
+                        if (xmlFile.getName().endsWith("xml")) {
+                            logger.info("Processing file: " + xmlFile.getAbsolutePath() + " for config");
+                            document = dBuilder.parse(xmlFile);
+                            documents.add(document);
+                        } else {
+                            logger.info("Skipping file " + xmlFile.getName());
+                        }
+                    }
+                } else {
+                    logger.warning("Configuration directory " + dir.getAbsolutePath() + " is empty");
+                }
+            } else {
+                File xmlFile = new File(configurationFilePath);
+                if (!xmlFile.exists()) {
+                    throw new IllegalArgumentException("Configuration file '" + xmlFile.getAbsolutePath() + "' not found");
+                }
+                document = dBuilder.parse(xmlFile);
+                documents.add(document);
             }
-            document = dBuilder.parse(xmlFile);
         }
-
-        Element rootElement = document.getDocumentElement();
 
         JmxTransExporter jmxTransExporter = new JmxTransExporter();
 
+        for (Document doc: documents) {
+            Element rootElement = doc.getDocumentElement();
+            buildCollectInterval(rootElement, jmxTransExporter);
+            buildResultNameStrategy(rootElement, jmxTransExporter);
+            buildInvocations(rootElement, jmxTransExporter);
+            buildQueries(rootElement, jmxTransExporter);
+            buildOutputWriters(rootElement, jmxTransExporter);
+        }
+
+        return jmxTransExporter;
+    }
+
+    private void buildCollectInterval(Element rootElement, JmxTransExporter jmxTransExporter) {
         NodeList collectIntervalNodeList = rootElement.getElementsByTagName("collectIntervalInSeconds");
         switch (collectIntervalNodeList.getLength()) {
             case 0:
@@ -107,19 +142,10 @@ public class JmxTransExporterBuilder {
                     throw new IllegalStateException("Invalid <collectIntervalInSeconds> value '" + lastCollectIntervalString + "', integer expected", e);
                 }
                 break;
-
         }
-
-        buildResultNameStrategy(rootElement, jmxTransExporter);
-        buildInvocations(rootElement, jmxTransExporter);
-        buildQueries(rootElement, jmxTransExporter);
-
-        buildOutputWriters(rootElement, jmxTransExporter);
-
-        return jmxTransExporter;
     }
 
-    private void buildQueries(Element rootElement, JmxTransExporter jmxTransExporter) {
+	private void buildQueries(Element rootElement, JmxTransExporter jmxTransExporter) {
         NodeList queries = rootElement.getElementsByTagName("query");
         for (int i = 0; i < queries.getLength(); i++) {
             Element queryElement = (Element) queries.item(i);

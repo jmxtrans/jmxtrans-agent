@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<jmxtrans-agent>
+  <queries>
+    <!-- JBOSS 5 OBJECTS -->
+    <query objectName="jboss.jca:service=ManagedConnectionPool,name=*" attributes="AvailableConnectionCount,ConnectionCount,ConnectionCreatedCount,ConnectionDestroyedCount,InUseConnectionCount,MaxConnectionsInUseCount,State" resultAlias="jboss5.datasource.%name%.#attribute#"/>
+    <query objectName="jboss.web:type=ThreadPool,name=*" attributes="acceptorThreadCount,backlog,currentThreadCount,currentThreadsBusy,maxThreads" resultAlias="jboss5.threadpool.%name%.#attribute#"/>
+    <query objectName="jboss.web:type=JspMonitor,name=jsp,WebModule=*,J2EEApplication=*,J2EEServer=*" attributes="jspCount,jspReloadCount" resultAlias="jboss5.jspmonitor.%WebModule%.%J2EEApplication%.%J2EEServer%.#attribute#"/>
+    <query objectName="jboss.web:type=GlobalRequestProcessor,name=*" attributes="bytesReceived,bytesSent,errorCount,maxTime,processingTime,requestCount" resultAlias="jboss5.globalrequestprocessor.%name%.#attribute#"/>
+    <query objectName="jboss.web:type=Cache,host=*,path=*" attributes="accessCount,cacheMaxSize,cacheSize,desiredEntryAccessRatio,hitsCount,maxAllocateIterations,spareNotFoundEntries" resultAlias="jboss5.web_cache.%host%.%path%.#attribute#"/>
+    <query objectName="jboss.web:type=Manager,path=*,host=*" attributes="activeSessions,duplicates,expiredSessions,maxActive,maxActiveSessions,maxInactiveInterval,processExpiresFrequency,processingTime,rejectedSessions,sessionAverageAliveTime,sessionCounter,sessionIdLength,sessionMaxAliveTime" resultAlias="jboss5.web_manager.%host%.%path%.#attribute#"/>
+    <query objectName="jboss.messaging.destination:service=Queue,name=*" attributes="ConsumerCount,DeliveringCount,DownCacheSize,FullSize,MessageCount,PageSize,ScheduledMessageCount" resultAlias="jboss5.messaging.%name%.#attribute#"/>
+	<query objectName="jboss.jca:service=WorkManagerThreadPool" attributes="KeepAliveTime,MaximumPoolSize,MaximumQueueSize,MinimumPoolSize,PoolNumber,QueueSize" resultAlias="jboss5.workmanagerthreadpool.#attribute#"/>
+    <query objectName="jboss.jca:service=CachedConnectionManager" attributes="InUseConnections" resultAlias="jboss5.cachedconnectionmanager.#attribute#"/>
+  </queries>
+</jmxtrans-agent>
