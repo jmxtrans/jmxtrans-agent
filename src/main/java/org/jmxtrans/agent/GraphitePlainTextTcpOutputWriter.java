@@ -149,7 +149,13 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
             return;
         }
 
-        writer.flush();
+        try {
+            writer.flush();
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Exception flushing the stream to " + graphiteServerHostAndPort, e);
+            releaseGraphiteConnection();
+            throw e;
+        }
     }
 
     @Override
@@ -159,7 +165,7 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
                 ", metricPathPrefix='" + messageBuilder.getPrefix() + '\'' +
                 '}';
     }
-    
+
     String getMetricPathPrefix() {
         return messageBuilder.getPrefix();
     }
