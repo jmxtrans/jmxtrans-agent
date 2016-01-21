@@ -1,5 +1,6 @@
 # Jmxtrans Agent
 
+[![Build Status](https://travis-ci.org/jmxtrans/jmxtrans-agent.svg?branch=master)](https://travis-ci.org/jmxtrans/jmxtrans-agent)
 
 ## What is jmxtrans-agent ?
 
@@ -159,7 +160,7 @@ OutputWriters are very simple to develop, you just have to extend [AbstractOutpu
 Out of the box output writers
 
 * [GraphitePlainTextTcpOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/GraphitePlainTextTcpOutputWriter.java): output to Graphite Carbon plain text protocol on TCP. Configuration parameters:
-  * `enabled`: to enable/disable the output writer. Optional, default value `true` 
+  * `enabled`: to enable/disable the output writer. Optional, default value `true`
   * `host`: Graphite Carbon listener host
   * `port`: Graphite Carbon Plain Text TCP listener port. Optional, default value `2003`
   * `namePrefix`; prefix of the metric name. Optional, default values `servers.#hostname#.` where `#hostname#` is the auto discovered hostname of computer with `.` escaped as `_` (`InetAddress.getLocalHost().getHostName()`).

@@ -61,6 +61,8 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
             functionsByName.put("key", new ExtractCompositeDataKeyFunction());
             functionsByName.put("compositeDataKey", new ExtractCompositeDataKeyFunction());
             functionsByName.put("position", new ExtractPositionFunction());
+            functionsByName.put("domain", new ExtractDomainFunction());
+            functionsByName.put("reversed_domain", new ExtractReversedDomainFunction());
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Exception resolving localhost, expressions like #hostname#, #canonical_hostname# or #hostaddress# will not be available", e);
         }
@@ -246,6 +248,30 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
         @Override
         public String evaluate(@Nullable ObjectName objectName, @Nullable String attribute, @Nullable String compositeDataKey, @Nullable Integer position) {
             return position == null ? null : position.toString();
+        }
+    }
+
+    private static class ExtractDomainFunction implements Function {
+        @Override
+        public String evaluate() {
+            return null;
+        }
+
+        @Override
+        public String evaluate(@Nullable ObjectName objectName, @Nullable String attribute, @Nullable String compositeDataKey, @Nullable Integer position) {
+            return objectName == null ? null : objectName.getDomain();
+        }
+    }
+
+    private static class ExtractReversedDomainFunction implements Function {
+        @Override
+        public String evaluate() {
+            return null;
+        }
+
+        @Override
+        public String evaluate(@Nullable ObjectName objectName, @Nullable String attribute, @Nullable String compositeDataKey, @Nullable Integer position) {
+            return objectName == null ? null : StringUtils2.reverseTokens(objectName.getDomain(), ".");
         }
     }
 }
