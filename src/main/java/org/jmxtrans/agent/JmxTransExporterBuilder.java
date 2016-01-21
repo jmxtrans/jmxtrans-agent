@@ -23,17 +23,6 @@
  */
 package org.jmxtrans.agent;
 
-import org.jmxtrans.agent.util.PropertyPlaceholderResolver;
-import org.jmxtrans.agent.util.logging.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.File;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,6 +31,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+
+import org.jmxtrans.agent.util.PropertyPlaceholderResolver;
+import org.jmxtrans.agent.util.logging.Logger;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 /**
  * XML configuration parser.
@@ -54,72 +49,62 @@ public class JmxTransExporterBuilder {
     private Logger logger = Logger.getLogger(getClass().getName());
     private PropertyPlaceholderResolver placeholderResolver = new PropertyPlaceholderResolver();
 
-    public JmxTransExporter build(String configurationFilePath) throws Exception {
-        if (configurationFilePath == null) {
-            throw new NullPointerException("configurationFilePath cannot be null");
-        }
-        DocumentBuilder dBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-
-        Document document;
-        if (configurationFilePath.toLowerCase().startsWith("classpath:")) {
-            String classpathResourcePath = configurationFilePath.substring("classpath:".length());
-            InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(classpathResourcePath);
-            document = dBuilder.parse(in);
-        } else if (configurationFilePath.toLowerCase().startsWith("file://") ||
-                configurationFilePath.toLowerCase().startsWith("http://") ||
-                configurationFilePath.toLowerCase().startsWith("https://")
-                ) {
-            URL url = new URL(configurationFilePath);
-            document = dBuilder.parse(url.openStream());
-        } else {
-            File xmlFile = new File(configurationFilePath);
-            if (!xmlFile.exists()) {
-                throw new IllegalArgumentException("Configuration file '" + xmlFile.getAbsolutePath() + "' not found");
-            }
-            document = dBuilder.parse(xmlFile);
-        }
-
+    public JmxTransExporterConfiguration build(Document document) throws Exception {
         Element rootElement = document.getDocumentElement();
 
-        JmxTransExporter jmxTransExporter = new JmxTransExporter();
+        JmxTransExporterConfiguration jmxTransExporterConfiguration = new JmxTransExporterConfiguration(document);
 
-        NodeList collectIntervalNodeList = rootElement.getElementsByTagName("collectIntervalInSeconds");
-        switch (collectIntervalNodeList.getLength()) {
-            case 0:
-                // nothing to do, use default value
-                break;
-            case 1:
-                Element collectIntervalElement = (Element) collectIntervalNodeList.item(0);
-                String collectIntervalString = placeholderResolver.resolveString(collectIntervalElement.getTextContent());
-                try {
-                    jmxTransExporter.withCollectInterval(Integer.parseInt(collectIntervalString), TimeUnit.SECONDS);
-                } catch (NumberFormatException e) {
-                    throw new IllegalStateException("Invalid <collectIntervalInSeconds> value '" + collectIntervalString + "', integer expected", e);
-                }
-                break;
-            default:
-                logger.warning("More than 1 <collectIntervalInSeconds> element found (" + collectIntervalNodeList.getLength() + "), use latest");
-                Element lastCollectIntervalElement = (Element) collectIntervalNodeList.item(collectIntervalNodeList.getLength() - 1);
-                String lastCollectIntervalString = placeholderResolver.resolveString(lastCollectIntervalElement.getTextContent());
-                try {
-                    jmxTransExporter.withCollectInterval(Integer.parseInt(lastCollectIntervalString), TimeUnit.SECONDS);
-                } catch (NumberFormatException e) {
-                    throw new IllegalStateException("Invalid <collectIntervalInSeconds> value '" + lastCollectIntervalString + "', integer expected", e);
-                }
-                break;
-
+        Integer collectInterval = getIntegerElementValueOrNullIfNotSet(rootElement, "collectIntervalInSeconds");
+        if (collectInterval != null) {
+            jmxTransExporterConfiguration.withCollectInterval(collectInterval, TimeUnit.SECONDS);
+        }
+        Integer reloadConfigInterval = getIntegerElementValueOrNullIfNotSet(rootElement,
+                "reloadConfigurationCheckIntervalInSeconds");
+        if (reloadConfigInterval != null) {
+            jmxTransExporterConfiguration.withConfigReloadInterval(reloadConfigInterval);
         }
 
-        buildResultNameStrategy(rootElement, jmxTransExporter);
-        buildInvocations(rootElement, jmxTransExporter);
-        buildQueries(rootElement, jmxTransExporter);
+        buildResultNameStrategy(rootElement, jmxTransExporterConfiguration);
+        buildInvocations(rootElement, jmxTransExporterConfiguration);
+        buildQueries(rootElement, jmxTransExporterConfiguration);
 
-        buildOutputWriters(rootElement, jmxTransExporter);
+        buildOutputWriters(rootElement, jmxTransExporterConfiguration);
 
-        return jmxTransExporter;
+        return jmxTransExporterConfiguration;
     }
 
-    private void buildQueries(Element rootElement, JmxTransExporter jmxTransExporter) {
+    public JmxTransExporterConfiguration build(ConfigurationDocumentLoader configurationDocumentLoader)
+            throws Exception {
+        Document document = configurationDocumentLoader.loadConfiguration();
+        return build(document);
+    }
+
+    private Integer getIntegerElementValueOrNullIfNotSet(Element rootElement, String elementName) {
+        NodeList nodeList = rootElement.getElementsByTagName(elementName);
+        switch (nodeList.getLength()) {
+            case 0:
+                return null;
+            case 1:
+                Element element = (Element) nodeList.item(0);
+                String stringValue = placeholderResolver.resolveString(element.getTextContent());
+                try {
+                    return Integer.parseInt(stringValue);
+                } catch (NumberFormatException e) {
+                    throw new IllegalStateException("Invalid <" + elementName + "> value '" + stringValue + "', integer expected", e);
+                }
+            default:
+                logger.warning("More than 1 <" + elementName + "> element found (" + nodeList.getLength() + "), use latest");
+                Element lastElement = (Element) nodeList.item(nodeList.getLength() - 1);
+                String lastStringValue = placeholderResolver.resolveString(lastElement.getTextContent());
+                try {
+                    return Integer.parseInt(lastStringValue);
+                } catch (NumberFormatException e) {
+                    throw new IllegalStateException("Invalid <" + elementName +"> value '" + lastStringValue + "', integer expected", e);
+                }
+        }
+    }
+
+    private void buildQueries(Element rootElement, JmxTransExporterConfiguration jmxTransExporterConfiguration) {
         NodeList queries = rootElement.getElementsByTagName("query");
         for (int i = 0; i < queries.getLength(); i++) {
             Element queryElement = (Element) queries.item(i);
@@ -137,7 +122,7 @@ public class JmxTransExporterBuilder {
 
             }
 
-            jmxTransExporter.withQuery(objectName, attributes, key, position, type, resultAlias);
+            jmxTransExporterConfiguration.withQuery(objectName, attributes, key, position, type, resultAlias);
         }
     }
 
@@ -163,7 +148,7 @@ public class JmxTransExporterBuilder {
         }
     }
 
-    private void buildInvocations(Element rootElement, JmxTransExporter jmxTransExporter) {
+    private void buildInvocations(Element rootElement, JmxTransExporterConfiguration jmxTransExporterConfiguration) {
         NodeList invocations = rootElement.getElementsByTagName("invocation");
         for (int i = 0; i < invocations.getLength(); i++) {
             Element invocationElement = (Element) invocations.item(i);
@@ -171,11 +156,11 @@ public class JmxTransExporterBuilder {
             String operation = invocationElement.getAttribute("operation");
             String resultAlias = invocationElement.getAttribute("resultAlias");
 
-            jmxTransExporter.withInvocation(objectName, operation, resultAlias);
+            jmxTransExporterConfiguration.withInvocation(objectName, operation, resultAlias);
         }
     }
 
-    private void buildResultNameStrategy(Element rootElement, JmxTransExporter jmxTransExporter) {
+    private void buildResultNameStrategy(Element rootElement, JmxTransExporterConfiguration jmxTransExporterConfiguration) {
         NodeList resultNameStrategyNodeList = rootElement.getElementsByTagName("resultNameStrategy");
 
         ResultNameStrategy resultNameStrategy;
@@ -207,10 +192,10 @@ public class JmxTransExporterBuilder {
             default:
                 throw new IllegalStateException("More than 1 <resultNameStrategy> element found (" + resultNameStrategyNodeList.getLength() + ")");
         }
-        jmxTransExporter.resultNameStrategy = resultNameStrategy;
+        jmxTransExporterConfiguration.resultNameStrategy = resultNameStrategy;
     }
 
-    private void buildOutputWriters(Element rootElement, JmxTransExporter jmxTransExporter) {
+    private void buildOutputWriters(Element rootElement, JmxTransExporterConfiguration jmxTransExporter) {
         NodeList outputWriterNodeList = rootElement.getElementsByTagName("outputWriter");
         List<OutputWriter> outputWriters = new ArrayList<OutputWriter>();
 

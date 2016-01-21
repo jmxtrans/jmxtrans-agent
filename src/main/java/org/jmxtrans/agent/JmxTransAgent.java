@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -63,17 +62,27 @@ public class JmxTransAgent {
             logger.log(Level.SEVERE, msg);
             throw new IllegalStateException(msg);
         }
-        JmxTransExporter jmxTransExporter;
         try {
-            jmxTransExporter = new JmxTransExporterBuilder().build(configFile);
+            ConfigurationDocumentLoader configLoader = new JmxTransConfigurationDocumentLoader(configFile);
+            JmxTransExporterConfiguration config = new JmxTransExporterBuilder().build(configLoader);
+            JmxTransExporter jmxTransExporter = new JmxTransExporter(config);
             //START
             jmxTransExporter.start();
             logger.info("JmxTransAgent started with configuration '" + configFile + "'");
+             if (config.getConfigReloadInterval() >= 0) {
+                setupConfigReloadWatcher(jmxTransExporter, config, configLoader);
+            }
         } catch (Exception e) {
             String msg = "Exception loading JmxTransExporter from '" + configFile + "'";
             logger.log(Level.SEVERE, msg, e);
             throw new IllegalStateException(msg, e);
         }
+    }
+
+    private static void setupConfigReloadWatcher(JmxTransExporter jmxTransExporter,
+            JmxTransExporterConfiguration initialConfiguration, ConfigurationDocumentLoader configLoader) {
+        ConfigReloadWatcher watcher = new ConfigReloadWatcher(jmxTransExporter, initialConfiguration, configLoader);
+        watcher.start();
     }
 
     public static void dumpDiagnosticInfo() {
