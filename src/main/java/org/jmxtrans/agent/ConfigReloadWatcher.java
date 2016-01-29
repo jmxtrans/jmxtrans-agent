@@ -48,11 +48,15 @@ public final class ConfigReloadWatcher {
      * @param configLoader
      *            This is the configuration source, configuration is loaded from here and compared against the current
      *            configuration.
+     * @param jmxTransExporterBuilder
+     *            The builder to use to build configuration.
      */
     public ConfigReloadWatcher(ConfigurationChangedListener configurationChangedListener,
             JmxTransExporterConfiguration initialConfiguration,
-            ConfigurationDocumentLoader configLoader) {
-        watchThread = new Thread(new WatcherRunnable(configurationChangedListener, initialConfiguration, configLoader));
+            ConfigurationDocumentLoader configLoader,
+            JmxTransExporterBuilder jmxTransExporterBuilder) {
+        watchThread = new Thread(new WatcherRunnable(configurationChangedListener, initialConfiguration, configLoader,
+                jmxTransExporterBuilder));
         watchThread.setDaemon(true);
         watchThread.setName("jmxtrans-agent-config-reload-watcher");
     }
@@ -61,13 +65,16 @@ public final class ConfigReloadWatcher {
         private JmxTransExporterConfiguration currentConfiguration;
         private final ConfigurationChangedListener configurationChangedListener;
         private final ConfigurationDocumentLoader configLoader;
+        private final JmxTransExporterBuilder jmxTransExporterBuilder;
 
         public WatcherRunnable(ConfigurationChangedListener configurationChangedListener,
                 JmxTransExporterConfiguration initialConfiguration,
-                ConfigurationDocumentLoader configLoader) {
+                ConfigurationDocumentLoader configLoader,
+                JmxTransExporterBuilder jmxTransExporterBuilder) {
             this.configurationChangedListener = configurationChangedListener;
             this.currentConfiguration = initialConfiguration;
             this.configLoader = configLoader;
+            this.jmxTransExporterBuilder = jmxTransExporterBuilder;
 
         }
 
@@ -117,7 +124,7 @@ public final class ConfigReloadWatcher {
             logger.log(Level.INFO, "Detected changed configuration, will reload " + configLoader);
             JmxTransExporterConfiguration newConfig;
             try {
-                newConfig = new JmxTransExporterBuilder().build(sourceDocument);
+                newConfig = jmxTransExporterBuilder.build(sourceDocument);
                 configurationChangedListener.configurationChanged(newConfig);
                 currentConfiguration = newConfig;
             } catch (Exception e) {

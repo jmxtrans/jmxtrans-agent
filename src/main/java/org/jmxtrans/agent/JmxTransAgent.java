@@ -24,6 +24,10 @@
 package org.jmxtrans.agent;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import org.jmxtrans.agent.properties.NoPropertiesSourcePropertiesLoader;
+import org.jmxtrans.agent.properties.PropertiesLoader;
+import org.jmxtrans.agent.properties.UrlOrFilePropertiesLoader;
 import org.jmxtrans.agent.util.logging.Logger;
 
 import javax.management.ObjectInstance;
@@ -43,6 +47,8 @@ import java.util.logging.Level;
  */
 public class JmxTransAgent {
     private static Logger logger = Logger.getLogger(JmxTransAgent.class.getName());
+
+    private static final String PROPERTIES_SYSTEM_PROPERTY_NAME = JmxTransAgent.class.getName() + ".properties";
 
     @SuppressFBWarnings("MS_SHOULD_BE_FINAL")
     public static boolean DIAGNOSTIC = Boolean.valueOf(System.getProperty(JmxTransAgent.class.getName() + ".diagnostic", "false"));
@@ -64,13 +70,15 @@ public class JmxTransAgent {
         }
         try {
             ConfigurationDocumentLoader configLoader = new JmxTransConfigurationDocumentLoader(configFile);
-            JmxTransExporterConfiguration config = new JmxTransExporterBuilder().build(configLoader);
+            PropertiesLoader propertiesLoader = createPropertiesLoader();
+            JmxTransExporterBuilder jmxTransExporterBuilder = new JmxTransExporterBuilder(propertiesLoader);
+            JmxTransExporterConfiguration config = jmxTransExporterBuilder.build(configLoader);
             JmxTransExporter jmxTransExporter = new JmxTransExporter(config);
             //START
             jmxTransExporter.start();
             logger.info("JmxTransAgent started with configuration '" + configFile + "'");
              if (config.getConfigReloadInterval() >= 0) {
-                setupConfigReloadWatcher(jmxTransExporter, config, configLoader);
+                setupConfigReloadWatcher(jmxTransExporter, config, configLoader, jmxTransExporterBuilder);
             }
         } catch (Exception e) {
             String msg = "Exception loading JmxTransExporter from '" + configFile + "'";
@@ -79,9 +87,21 @@ public class JmxTransAgent {
         }
     }
 
+    private static PropertiesLoader createPropertiesLoader() {
+        String configuredPath = System.getProperty(PROPERTIES_SYSTEM_PROPERTY_NAME);
+        if (configuredPath == null) {
+            return new NoPropertiesSourcePropertiesLoader();
+        }
+        logger.log(Level.INFO, "Will use properties file '" + configuredPath + "' for resolving placeholders");
+        return new UrlOrFilePropertiesLoader(configuredPath);
+    }
+
     private static void setupConfigReloadWatcher(JmxTransExporter jmxTransExporter,
-            JmxTransExporterConfiguration initialConfiguration, ConfigurationDocumentLoader configLoader) {
-        ConfigReloadWatcher watcher = new ConfigReloadWatcher(jmxTransExporter, initialConfiguration, configLoader);
+            JmxTransExporterConfiguration initialConfiguration,
+            ConfigurationDocumentLoader configLoader,
+            JmxTransExporterBuilder jmxTransExporterBuilder) {
+        ConfigReloadWatcher watcher = new ConfigReloadWatcher(jmxTransExporter, initialConfiguration, configLoader,
+                jmxTransExporterBuilder);
         watcher.start();
     }
 

@@ -26,6 +26,7 @@ package org.jmxtrans.agent;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
+import org.jmxtrans.agent.properties.PropertiesLoader;
 import org.junit.Test;
 
 import javax.management.ObjectName;
@@ -176,6 +177,22 @@ public class JmxTransExporterBuilderTest {
         JmxTransExporterConfiguration config = builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-config-reload-test.xml"));
         assertThat(config.getConfigReloadInterval(), equalTo(2));
         
+    }
+    
+    @Test
+    public void testExternalPropertiesSourceIsUsed() throws Exception {
+        PropertiesLoader loader = new PropertiesLoader() {
+            
+            @Override
+            public Map<String, String> loadProperties() {
+                HashMap<String, String> m = new HashMap<>();
+                m.put("jmxtrans.agent.collect.interval", "999");
+                return m;
+            }
+        };
+        JmxTransExporterBuilder builder = new JmxTransExporterBuilder(loader);
+        JmxTransExporterConfiguration config = builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-external-properties-test.xml"));
+        assertThat(config.getCollectInterval(), equalTo(999));
     }
 
     Map<String, Query> indexQueriesByResultAlias(Iterable<Query> queries) {

@@ -30,8 +30,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 
+import org.jmxtrans.agent.properties.NoPropertiesSourcePropertiesLoader;
+import org.jmxtrans.agent.properties.PropertiesLoader;
 import org.jmxtrans.agent.util.PropertyPlaceholderResolver;
 import org.jmxtrans.agent.util.logging.Logger;
 import org.w3c.dom.Document;
@@ -47,30 +50,53 @@ public class JmxTransExporterBuilder {
 
     private static final Pattern ATTRIBUTE_SPLIT_PATTERN = Pattern.compile("\\s*,\\s*");
     private Logger logger = Logger.getLogger(getClass().getName());
-    private PropertyPlaceholderResolver placeholderResolver = new PropertyPlaceholderResolver();
+    private PropertiesLoader propertiesLoader;
+    
+    public JmxTransExporterBuilder(PropertiesLoader propertiesLoader) {
+        this.propertiesLoader = propertiesLoader;
+    }
+
+    /**
+     * Creates a JmxTransExporterBuilder with a PropertyLoader that does not use an
+     * external properties source.
+     */
+    public JmxTransExporterBuilder() {
+        this.propertiesLoader = new NoPropertiesSourcePropertiesLoader();
+    }
 
     public JmxTransExporterConfiguration build(Document document) throws Exception {
         Element rootElement = document.getDocumentElement();
 
+        Map<String, String> loadedProperties = loadPropertiesOrEmptyOnError();
+        PropertyPlaceholderResolver resolver = new PropertyPlaceholderResolver(loadedProperties);
         JmxTransExporterConfiguration jmxTransExporterConfiguration = new JmxTransExporterConfiguration(document);
 
-        Integer collectInterval = getIntegerElementValueOrNullIfNotSet(rootElement, "collectIntervalInSeconds");
+        Integer collectInterval = getIntegerElementValueOrNullIfNotSet(rootElement, "collectIntervalInSeconds", resolver);
         if (collectInterval != null) {
             jmxTransExporterConfiguration.withCollectInterval(collectInterval, TimeUnit.SECONDS);
         }
         Integer reloadConfigInterval = getIntegerElementValueOrNullIfNotSet(rootElement,
-                "reloadConfigurationCheckIntervalInSeconds");
+                "reloadConfigurationCheckIntervalInSeconds", resolver);
         if (reloadConfigInterval != null) {
             jmxTransExporterConfiguration.withConfigReloadInterval(reloadConfigInterval);
         }
 
-        buildResultNameStrategy(rootElement, jmxTransExporterConfiguration);
+        buildResultNameStrategy(rootElement, jmxTransExporterConfiguration, resolver);
         buildInvocations(rootElement, jmxTransExporterConfiguration);
         buildQueries(rootElement, jmxTransExporterConfiguration);
 
-        buildOutputWriters(rootElement, jmxTransExporterConfiguration);
+        buildOutputWriters(rootElement, jmxTransExporterConfiguration, resolver);
 
         return jmxTransExporterConfiguration;
+    }
+
+    private Map<String, String> loadPropertiesOrEmptyOnError() {
+        try {
+            return propertiesLoader.loadProperties();
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Error when loading properties from loader " + propertiesLoader + ", this source will be ignored", e);
+            return new HashMap<>();
+        }
     }
 
     public JmxTransExporterConfiguration build(ConfigurationDocumentLoader configurationDocumentLoader)
@@ -79,7 +105,7 @@ public class JmxTransExporterBuilder {
         return build(document);
     }
 
-    private Integer getIntegerElementValueOrNullIfNotSet(Element rootElement, String elementName) {
+    private Integer getIntegerElementValueOrNullIfNotSet(Element rootElement, String elementName, PropertyPlaceholderResolver placeholderResolver) {
         NodeList nodeList = rootElement.getElementsByTagName(elementName);
         switch (nodeList.getLength()) {
             case 0:
@@ -160,7 +186,7 @@ public class JmxTransExporterBuilder {
         }
     }
 
-    private void buildResultNameStrategy(Element rootElement, JmxTransExporterConfiguration jmxTransExporterConfiguration) {
+    private void buildResultNameStrategy(Element rootElement, JmxTransExporterConfiguration jmxTransExporterConfiguration, PropertyPlaceholderResolver placeholderResolver) {
         NodeList resultNameStrategyNodeList = rootElement.getElementsByTagName("resultNameStrategy");
 
         ResultNameStrategy resultNameStrategy;
@@ -195,7 +221,7 @@ public class JmxTransExporterBuilder {
         jmxTransExporterConfiguration.resultNameStrategy = resultNameStrategy;
     }
 
-    private void buildOutputWriters(Element rootElement, JmxTransExporterConfiguration jmxTransExporter) {
+    private void buildOutputWriters(Element rootElement, JmxTransExporterConfiguration jmxTransExporter, PropertyPlaceholderResolver placeholderResolver) {
         NodeList outputWriterNodeList = rootElement.getElementsByTagName("outputWriter");
         List<OutputWriter> outputWriters = new ArrayList<OutputWriter>();
 

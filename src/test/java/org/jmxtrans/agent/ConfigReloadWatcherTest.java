@@ -60,7 +60,7 @@ public class ConfigReloadWatcherTest {
        configLoader = new FakeConfigLoader(testXml);
        initialConfiguration = new JmxTransExporterConfiguration(configLoader.loadConfiguration());
        initialConfiguration.withConfigReloadInterval(0);
-       watcher = new ConfigReloadWatcher(listener, initialConfiguration, configLoader); 
+       watcher = new ConfigReloadWatcher(listener, initialConfiguration, configLoader, new JmxTransExporterBuilder()); 
     }
 
     @After
