@@ -278,7 +278,7 @@ if [ "$1" = "jpda" ] ; then
   if [ -z "$JPDA_OPTS" ]; then
     JPDA_OPTS="-agentlib:jdwp=transport=$JPDA_TRANSPORT,address=$JPDA_ADDRESS,server=y,suspend=$JPDA_SUSPEND"
   fi
-  CATALINA_OPTS="$CATALINA_OPTS $JPDA_OPTS"
+  CATALINA_OPTS="$JPDA_OPTS $CATALINA_OPTS"
   shift
 fi
 
@@ -487,10 +487,12 @@ elif [ "$1" = "stop" ] ; then
           sleep 1
         fi
         if [ $SLEEP -eq 0 ]; then
+          echo "Tomcat did not stop in time."
           if [ $FORCE -eq 0 ]; then
-            echo "Tomcat did not stop in time. PID file was not removed. To aid diagnostics a thread dump has been written to standard out."
-            kill -3 `cat "$CATALINA_PID"`
+            echo "PID file was not removed."
           fi
+          echo "To aid diagnostics a thread dump has been written to standard out."
+          kill -3 `cat "$CATALINA_PID"`
         fi
         SLEEP=`expr $SLEEP - 1 `
       done
@@ -517,8 +519,6 @@ elif [ "$1" = "stop" ] ; then
                         echo "The PID file could not be removed."
                     fi
                 fi
-                # Set this to zero else a warning will be issued about the process still running
-                KILL_SLEEP_INTERVAL=0
                 echo "The Tomcat process has been killed."
                 break
             fi
@@ -527,7 +527,7 @@ elif [ "$1" = "stop" ] ; then
             fi
             KILL_SLEEP_INTERVAL=`expr $KILL_SLEEP_INTERVAL - 1 `
         done
-        if [ $KILL_SLEEP_INTERVAL -gt 0 ]; then
+        if [ $KILL_SLEEP_INTERVAL -lt 0 ]; then
             echo "Tomcat has not been killed completely yet. The process might be waiting on some system call or might be UNINTERRUPTIBLE."
         fi
       fi
