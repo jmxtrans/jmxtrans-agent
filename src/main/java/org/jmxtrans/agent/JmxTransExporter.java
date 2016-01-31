@@ -24,10 +24,12 @@
 package org.jmxtrans.agent;
 
 import java.lang.management.ManagementFactory;
+import java.sql.Timestamp;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
@@ -38,7 +40,7 @@ import org.jmxtrans.agent.util.logging.Logger;
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class JmxTransExporter implements ConfigurationChangedListener {
+public class JmxTransExporter {
     private final Logger logger = Logger.getLogger(getClass().getName());
     private ThreadFactory threadFactory = new ThreadFactory() {
         final AtomicInteger counter = new AtomicInteger();
@@ -54,11 +56,12 @@ public class JmxTransExporter implements ConfigurationChangedListener {
     private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, threadFactory);
     private MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
     private ScheduledFuture scheduledFuture;
+    private JmxTransConfigurationLoader configLoader;
     private JmxTransExporterConfiguration config;
-    private volatile JmxTransExporterConfiguration newConfiguration;
 
-    public JmxTransExporter(JmxTransExporterConfiguration config) {
-        this.config = config;
+    public JmxTransExporter(JmxTransConfigurationLoader configLoader) {
+        this.configLoader = configLoader;
+        this.config = configLoader.loadConfiguration();
     }
 
     public void start() {
@@ -82,6 +85,45 @@ public class JmxTransExporter implements ConfigurationChangedListener {
             }
         }, config.getCollectInterval() / 2, config.getCollectInterval(), config.getCollectIntervalTimeUnit());
 
+        if (config.getConfigReloadInterval() >= 0) {
+            Runnable runnable = new Runnable() {
+                private final Logger logger = Logger.getLogger(JmxTransExporter.class.getName() + ".reloader");
+                private long lastModified = configLoader.lastModified();
+
+                @Override
+                public void run() {
+                    long newLastModified = configLoader.lastModified();
+                    if (newLastModified == 0L) {
+                        if (logger.isLoggable(Level.FINER))
+                            logger.finer("Don't reload lastModified=" + lastModified + " / " + new Timestamp(lastModified) +
+                                    ", newLastModified=" + newLastModified);
+                        // ignore new config not found
+                    } else if (newLastModified > lastModified) {
+                        logger.info("jmxtrans-agent configuration has changed. Reload " + configLoader);
+                        if (logger.isLoggable(Level.FINER))
+                            logger.finer("Reload lastModified=" + lastModified + " / " + new Timestamp(lastModified) +
+                                ", newLastModified=" + newLastModified + " / " + new Timestamp(newLastModified));
+
+                        lastModified = newLastModified;
+                        stop();
+                        config = configLoader.loadConfiguration();
+                        start();
+                    } else {
+                        if (logger.isLoggable(Level.FINER))
+                            logger.finer("Don't reload lastModified=" + lastModified + " / " + new Timestamp(lastModified) +
+                                    ", newLastModified=" + newLastModified + " / " + new Timestamp(newLastModified));
+
+                        // ignore, config not modified
+                    }
+
+                }
+            };
+            int configReloadIntervalInSecs = Math.max(config.getConfigReloadInterval(), 5);
+            if (logger.isLoggable(Level.INFO))
+                logger.info("Configuration reload interval: " + configReloadIntervalInSecs + "secs");
+            scheduledExecutorService.scheduleWithFixedDelay(runnable, 0, configReloadIntervalInSecs, TimeUnit.SECONDS);
+        }
+
         logger.fine(getClass().getName() + " started");
     }
 
@@ -99,15 +141,19 @@ public class JmxTransExporter implements ConfigurationChangedListener {
         // wait for stop
         try {
             scheduledExecutorService.awaitTermination(config.getCollectInterval(), config.getCollectIntervalTimeUnit());
+
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }
+        scheduledExecutorService = null;
+
+        config.getOutputWriter().preDestroy();
+
         logger.info(getClass().getName() + " stopped.");
 
     }
 
     protected void collectAndExport() {
-        replaceConfigurationIfChanged();
         OutputWriter outputWriter = config.getOutputWriter();
         try {
             outputWriter.preCollect();
@@ -131,15 +177,6 @@ public class JmxTransExporter implements ConfigurationChangedListener {
         }
     }
 
-    private void replaceConfigurationIfChanged() {
-        if (newConfiguration != null) {
-            logger.log(Level.INFO, "Configuration has changed, destroying the old configuration and replacing with the new");
-            config.destroy();
-            config = newConfiguration;
-            newConfiguration = null;
-        }
-    }
-
     @Override
     public String toString() {
         return "JmxTransExporter{" +
@@ -147,8 +184,9 @@ public class JmxTransExporter implements ConfigurationChangedListener {
                 '}';
     }
 
-    @Override
-    public void configurationChanged(JmxTransExporterConfiguration configuration) {
-        this.newConfiguration = configuration;
+    public void reloadConfiguration(JmxTransExporterConfiguration newConfiguration) {
+        stop();
+        this.config = newConfiguration;
+        start();
     }
 }

@@ -63,26 +63,16 @@ public class JmxTransAgent {
             throw new IllegalStateException(msg);
         }
         try {
-            ConfigurationDocumentLoader configLoader = new JmxTransConfigurationDocumentLoader(configFile);
-            JmxTransExporterConfiguration config = new JmxTransExporterBuilder().build(configLoader);
-            JmxTransExporter jmxTransExporter = new JmxTransExporter(config);
+            JmxTransConfigurationLoader configurationLoader = new JmxTransConfigurationXmlLoader(configFile);
+            JmxTransExporter jmxTransExporter = new JmxTransExporter(configurationLoader);
             //START
             jmxTransExporter.start();
             logger.info("JmxTransAgent started with configuration '" + configFile + "'");
-             if (config.getConfigReloadInterval() >= 0) {
-                setupConfigReloadWatcher(jmxTransExporter, config, configLoader);
-            }
         } catch (Exception e) {
             String msg = "Exception loading JmxTransExporter from '" + configFile + "'";
             logger.log(Level.SEVERE, msg, e);
             throw new IllegalStateException(msg, e);
         }
-    }
-
-    private static void setupConfigReloadWatcher(JmxTransExporter jmxTransExporter,
-            JmxTransExporterConfiguration initialConfiguration, ConfigurationDocumentLoader configLoader) {
-        ConfigReloadWatcher watcher = new ConfigReloadWatcher(jmxTransExporter, initialConfiguration, configLoader);
-        watcher.start();
     }
 
     public static void dumpDiagnosticInfo() {

@@ -32,24 +32,45 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import org.jmxtrans.agent.util.Preconditions2;
 import org.jmxtrans.agent.util.PropertyPlaceholderResolver;
+import org.jmxtrans.agent.util.io.IoUtils;
 import org.jmxtrans.agent.util.logging.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+
+import javax.annotation.Nonnull;
 
 /**
  * XML configuration parser.
  *
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class JmxTransExporterBuilder {
+public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoader {
 
     private static final Pattern ATTRIBUTE_SPLIT_PATTERN = Pattern.compile("\\s*,\\s*");
     private Logger logger = Logger.getLogger(getClass().getName());
     private PropertyPlaceholderResolver placeholderResolver = new PropertyPlaceholderResolver();
 
-    public JmxTransExporterConfiguration build(Document document) throws Exception {
+    @Nonnull
+    private final String configurationFilePath;
+
+    public JmxTransConfigurationXmlLoader(@Nonnull String configurationFilePath) {
+        this.configurationFilePath = Preconditions2.checkNotNull(configurationFilePath, "configurationFilePath can not be null");
+    }
+
+    @Override
+    public JmxTransExporterConfiguration loadConfiguration() {
+        return build(IoUtils.getFileAsDocument(configurationFilePath));
+    }
+
+    @Override
+    public long lastModified() {
+        return IoUtils.getFileLastModificationDate(configurationFilePath);
+    }
+
+    protected JmxTransExporterConfiguration build(Document document) {
         Element rootElement = document.getDocumentElement();
 
         JmxTransExporterConfiguration jmxTransExporterConfiguration = new JmxTransExporterConfiguration(document);
@@ -71,12 +92,6 @@ public class JmxTransExporterBuilder {
         buildOutputWriters(rootElement, jmxTransExporterConfiguration);
 
         return jmxTransExporterConfiguration;
-    }
-
-    public JmxTransExporterConfiguration build(ConfigurationDocumentLoader configurationDocumentLoader)
-            throws Exception {
-        Document document = configurationDocumentLoader.loadConfiguration();
-        return build(document);
     }
 
     private Integer getIntegerElementValueOrNullIfNotSet(Element rootElement, String elementName) {
@@ -104,7 +119,7 @@ public class JmxTransExporterBuilder {
         }
     }
 
-    private void buildQueries(Element rootElement, JmxTransExporterConfiguration jmxTransExporterConfiguration) {
+    private void buildQueries(Element rootElement, JmxTransExporterConfiguration configuration) {
         NodeList queries = rootElement.getElementsByTagName("query");
         for (int i = 0; i < queries.getLength(); i++) {
             Element queryElement = (Element) queries.item(i);
@@ -122,7 +137,7 @@ public class JmxTransExporterBuilder {
 
             }
 
-            jmxTransExporterConfiguration.withQuery(objectName, attributes, key, position, type, resultAlias);
+            configuration.withQuery(objectName, attributes, key, position, type, resultAlias);
         }
     }
 
@@ -148,7 +163,7 @@ public class JmxTransExporterBuilder {
         }
     }
 
-    private void buildInvocations(Element rootElement, JmxTransExporterConfiguration jmxTransExporterConfiguration) {
+    private void buildInvocations(Element rootElement, JmxTransExporterConfiguration configuration) {
         NodeList invocations = rootElement.getElementsByTagName("invocation");
         for (int i = 0; i < invocations.getLength(); i++) {
             Element invocationElement = (Element) invocations.item(i);
@@ -156,11 +171,11 @@ public class JmxTransExporterBuilder {
             String operation = invocationElement.getAttribute("operation");
             String resultAlias = invocationElement.getAttribute("resultAlias");
 
-            jmxTransExporterConfiguration.withInvocation(objectName, operation, resultAlias);
+            configuration.withInvocation(objectName, operation, resultAlias);
         }
     }
 
-    private void buildResultNameStrategy(Element rootElement, JmxTransExporterConfiguration jmxTransExporterConfiguration) {
+    private void buildResultNameStrategy(Element rootElement, JmxTransExporterConfiguration configuration) {
         NodeList resultNameStrategyNodeList = rootElement.getElementsByTagName("resultNameStrategy");
 
         ResultNameStrategy resultNameStrategy;
@@ -192,10 +207,10 @@ public class JmxTransExporterBuilder {
             default:
                 throw new IllegalStateException("More than 1 <resultNameStrategy> element found (" + resultNameStrategyNodeList.getLength() + ")");
         }
-        jmxTransExporterConfiguration.resultNameStrategy = resultNameStrategy;
+        configuration.resultNameStrategy = resultNameStrategy;
     }
 
-    private void buildOutputWriters(Element rootElement, JmxTransExporterConfiguration jmxTransExporter) {
+    private void buildOutputWriters(Element rootElement, JmxTransExporterConfiguration configuration) {
         NodeList outputWriterNodeList = rootElement.getElementsByTagName("outputWriter");
         List<OutputWriter> outputWriters = new ArrayList<OutputWriter>();
 
@@ -228,10 +243,17 @@ public class JmxTransExporterBuilder {
                 logger.warning("No outputwriter defined.");
                 break;
             case 1:
-                jmxTransExporter.withOutputWriter(outputWriters.get(0));
+                configuration.withOutputWriter(outputWriters.get(0));
                 break;
             default:
-                jmxTransExporter.withOutputWriter(new OutputWritersChain(outputWriters));
+                configuration.withOutputWriter(new OutputWritersChain(outputWriters));
         }
+    }
+
+    @Override
+    public String toString() {
+        return "JmxTransConfigurationXmlLoader{" +
+                "configurationFilePath='" + configurationFilePath + '\'' +
+                '}';
     }
 }
