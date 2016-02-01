@@ -195,6 +195,20 @@ public class JmxTransExporterBuilderTest {
         assertThat(config.getCollectInterval(), equalTo(999));
     }
 
+    @Test
+    public void testErrorOnLoadingExternalPropertiesDoesNotPropagate() throws Exception {
+        PropertiesLoader loader = new PropertiesLoader() {
+            
+            @Override
+            public Map<String, String> loadProperties() {
+                throw new RuntimeException("Expected - thrown by test");
+            }
+        };
+        JmxTransExporterBuilder builder = new JmxTransExporterBuilder(loader);
+        JmxTransExporterConfiguration config = builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-external-properties-test.xml"));
+        assertThat(config.getCollectInterval(), equalTo(222));
+    }
+
     Map<String, Query> indexQueriesByResultAlias(Iterable<Query> queries) {
         Map<String, Query> result = new HashMap<String, Query>();
         for (Query query : queries) {

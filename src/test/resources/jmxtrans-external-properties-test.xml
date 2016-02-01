@@ -26,5 +26,5 @@
         <query objectName="java.lang:type=Threading" attributes="ThreadCount ,	TotalStartedThreadCount" resultAlias="jvm.thread"/>
     </queries>
     <outputWriter class="org.jmxtrans.agent.ConsoleOutputWriter" />
-    <collectIntervalInSeconds>${jmxtrans.agent.collect.interval}</collectIntervalInSeconds>
+    <collectIntervalInSeconds>${jmxtrans.agent.collect.interval:222}</collectIntervalInSeconds>
 </jmxtrans-agent>
