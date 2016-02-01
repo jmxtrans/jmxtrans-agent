@@ -26,6 +26,7 @@ package org.jmxtrans.agent;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
+import org.jmxtrans.agent.properties.PropertiesLoader;
 import org.junit.Test;
 
 import javax.management.ObjectName;
@@ -170,6 +171,36 @@ public class JmxTransConfigurationXmlLoaderTest {
         JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-config-reload-test.xml").loadConfiguration();
         assertThat(config.getConfigReloadInterval(), equalTo(2));
         
+    }
+    
+    @Test
+    public void testExternalPropertiesSourceIsUsed() throws Exception {
+        PropertiesLoader propertiesLoader = new PropertiesLoader() {
+            
+            @Override
+            public Map<String, String> loadProperties() {
+                HashMap<String, String> m = new HashMap<>();
+                m.put("jmxtrans.agent.collect.interval", "999");
+                return m;
+            }
+        };
+        JmxTransConfigurationXmlLoader configLoader = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-external-properties-test.xml", propertiesLoader);
+        JmxTransExporterConfiguration config = configLoader.build(configLoader);
+        assertThat(config.getCollectInterval(), equalTo(999));
+    }
+
+    @Test
+    public void testErrorOnLoadingExternalPropertiesDoesNotPropagate() throws Exception {
+        PropertiesLoader propertiesLoader = new PropertiesLoader() {
+            
+            @Override
+            public Map<String, String> loadProperties() {
+                throw new RuntimeException("Expected - thrown by test");
+            }
+        };
+        JmxTransConfigurationXmlLoader configLoader = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-external-properties-test.xml", propertiesLoader);
+        JmxTransExporterConfiguration config = configLoader.build(configLoader);
+        assertThat(config.getCollectInterval(), equalTo(222));
     }
 
     Map<String, Query> indexQueriesByResultAlias(Iterable<Query> queries) {

@@ -30,8 +30,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 
+import org.jmxtrans.agent.properties.NoPropertiesSourcePropertiesLoader;
+import org.jmxtrans.agent.properties.PropertiesLoader;
 import org.jmxtrans.agent.util.Preconditions2;
 import org.jmxtrans.agent.util.PropertyPlaceholderResolver;
 import org.jmxtrans.agent.util.io.IoUtils;
@@ -51,13 +54,22 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
 
     private static final Pattern ATTRIBUTE_SPLIT_PATTERN = Pattern.compile("\\s*,\\s*");
     private Logger logger = Logger.getLogger(getClass().getName());
-    private PropertyPlaceholderResolver placeholderResolver = new PropertyPlaceholderResolver();
-
+    private final PropertiesLoader propertiesLoader;
+    
     @Nonnull
     private final String configurationFilePath;
 
-    public JmxTransConfigurationXmlLoader(@Nonnull String configurationFilePath) {
+    public JmxTransConfigurationXmlLoader(@Nonnull String configurationFilePath, PropertiesLoader propertiesLoader) {
         this.configurationFilePath = Preconditions2.checkNotNull(configurationFilePath, "configurationFilePath can not be null");
+        this.propertiesLoader = propertiesLoader;
+    }
+
+    /**
+     * Creates a JmxTransExporterBuilder with a PropertyLoader that does not use an
+     * external properties source.
+     */
+    public JmxTransConfigurationXmlLoader(@Nonnull String configurationFilePath) {
+        this(configurationFilePath, new NoPropertiesSourcePropertiesLoader());
     }
 
     @Override
@@ -73,28 +85,45 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
     protected JmxTransExporterConfiguration build(Document document) {
         Element rootElement = document.getDocumentElement();
 
+        Map<String, String> loadedProperties = loadPropertiesOrEmptyOnError();
+        PropertyPlaceholderResolver resolver = new PropertyPlaceholderResolver(loadedProperties);
         JmxTransExporterConfiguration jmxTransExporterConfiguration = new JmxTransExporterConfiguration(document);
 
-        Integer collectInterval = getIntegerElementValueOrNullIfNotSet(rootElement, "collectIntervalInSeconds");
+        Integer collectInterval = getIntegerElementValueOrNullIfNotSet(rootElement, "collectIntervalInSeconds", resolver);
         if (collectInterval != null) {
             jmxTransExporterConfiguration.withCollectInterval(collectInterval, TimeUnit.SECONDS);
         }
         Integer reloadConfigInterval = getIntegerElementValueOrNullIfNotSet(rootElement,
-                "reloadConfigurationCheckIntervalInSeconds");
+                "reloadConfigurationCheckIntervalInSeconds", resolver);
         if (reloadConfigInterval != null) {
             jmxTransExporterConfiguration.withConfigReloadInterval(reloadConfigInterval);
         }
 
-        buildResultNameStrategy(rootElement, jmxTransExporterConfiguration);
+        buildResultNameStrategy(rootElement, jmxTransExporterConfiguration, resolver);
         buildInvocations(rootElement, jmxTransExporterConfiguration);
         buildQueries(rootElement, jmxTransExporterConfiguration);
 
-        buildOutputWriters(rootElement, jmxTransExporterConfiguration);
+        buildOutputWriters(rootElement, jmxTransExporterConfiguration, resolver);
 
         return jmxTransExporterConfiguration;
     }
 
-    private Integer getIntegerElementValueOrNullIfNotSet(Element rootElement, String elementName) {
+    private Map<String, String> loadPropertiesOrEmptyOnError() {
+        try {
+            return propertiesLoader.loadProperties();
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Error when loading properties from loader " + propertiesLoader + ", this source will be ignored", e);
+            return new HashMap<>();
+        }
+    }
+
+    public JmxTransExporterConfiguration build(JmxTransConfigurationLoader configurationDocumentLoader)
+            throws Exception {
+        JmxTransExporterConfiguration configuration = configurationDocumentLoader.loadConfiguration();
+        return build(configuration.getDocument());
+    }
+
+    private Integer getIntegerElementValueOrNullIfNotSet(Element rootElement, String elementName, PropertyPlaceholderResolver placeholderResolver) {
         NodeList nodeList = rootElement.getElementsByTagName(elementName);
         switch (nodeList.getLength()) {
             case 0:
@@ -175,7 +204,7 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
         }
     }
 
-    private void buildResultNameStrategy(Element rootElement, JmxTransExporterConfiguration configuration) {
+    private void buildResultNameStrategy(Element rootElement, JmxTransExporterConfiguration configuration, PropertyPlaceholderResolver placeholderResolver) {
         NodeList resultNameStrategyNodeList = rootElement.getElementsByTagName("resultNameStrategy");
 
         ResultNameStrategy resultNameStrategy;
@@ -210,7 +239,7 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
         configuration.resultNameStrategy = resultNameStrategy;
     }
 
-    private void buildOutputWriters(Element rootElement, JmxTransExporterConfiguration configuration) {
+    private void buildOutputWriters(Element rootElement, JmxTransExporterConfiguration configuration, PropertyPlaceholderResolver placeholderResolver) {
         NodeList outputWriterNodeList = rootElement.getElementsByTagName("outputWriter");
         List<OutputWriter> outputWriters = new ArrayList<OutputWriter>();
 

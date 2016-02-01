@@ -24,6 +24,10 @@
 package org.jmxtrans.agent.util;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
 
 /**
  * Inspired by Spring Property placeholder mechanism.
@@ -47,6 +51,15 @@ import java.io.Serializable;
 public class PropertyPlaceholderResolver implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private Map<String, String> externalProperties;
+
+    public PropertyPlaceholderResolver(Map<String, String> externalProperties) {
+        this.externalProperties = Objects.requireNonNull(externalProperties);
+    }
+
+    public PropertyPlaceholderResolver() {
+        this(new HashMap<String, String>());
+    }
 
     /**
      * Parse the given <code>string</code> resolving property placeholders (<code>${my-property[:default-value]}</code>)
@@ -109,9 +122,10 @@ public class PropertyPlaceholderResolver implements Serializable {
         String environmentVariableStyleProperty = property.toUpperCase();
         environmentVariableStyleProperty = environmentVariableStyleProperty.replaceAll("\\.", "_");
 
-
         String result;
-        if (System.getProperties().containsKey(property)) {
+        if (externalProperties.containsKey(property)) {
+            result = externalProperties.get(property);
+        } else if (System.getProperties().containsKey(property)) {
             result = System.getProperty(property);
         } else if (System.getenv().containsKey(property)) {
             result = System.getenv(property);

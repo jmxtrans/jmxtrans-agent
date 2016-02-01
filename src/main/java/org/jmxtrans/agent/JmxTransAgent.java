@@ -24,6 +24,10 @@
 package org.jmxtrans.agent;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import org.jmxtrans.agent.properties.NoPropertiesSourcePropertiesLoader;
+import org.jmxtrans.agent.properties.PropertiesLoader;
+import org.jmxtrans.agent.properties.UrlOrFilePropertiesLoader;
 import org.jmxtrans.agent.util.logging.Logger;
 
 import javax.management.ObjectInstance;
@@ -44,6 +48,8 @@ import java.util.logging.Level;
  */
 public class JmxTransAgent {
     private static Logger logger = Logger.getLogger(JmxTransAgent.class.getName());
+
+    private static final String PROPERTIES_SYSTEM_PROPERTY_NAME = "jmxtrans.agent.properties.file";
 
     @SuppressFBWarnings("MS_SHOULD_BE_FINAL")
     public static boolean DIAGNOSTIC = Boolean.valueOf(System.getProperty(JmxTransAgent.class.getName() + ".diagnostic", "false"));
@@ -81,7 +87,8 @@ public class JmxTransAgent {
             throw new IllegalStateException(msg);
         }
         try {
-            JmxTransConfigurationLoader configurationLoader = new JmxTransConfigurationXmlLoader(configFile);
+            PropertiesLoader propertiesLoader = creatPropertiesLoader();
+            JmxTransConfigurationLoader configurationLoader = new JmxTransConfigurationXmlLoader(configFile, propertiesLoader);
             JmxTransExporter jmxTransExporter = new JmxTransExporter(configurationLoader);
             //START
             jmxTransExporter.start();
@@ -91,6 +98,14 @@ public class JmxTransAgent {
             logger.log(Level.SEVERE, msg, e);
             throw new IllegalStateException(msg, e);
         }
+    }
+
+    private static PropertiesLoader creatPropertiesLoader() {
+        String propertiesFile = System.getProperty(PROPERTIES_SYSTEM_PROPERTY_NAME);
+        if (propertiesFile != null) {
+            return new UrlOrFilePropertiesLoader(propertiesFile);
+        }
+        return new NoPropertiesSourcePropertiesLoader();
     }
 
     public static void dumpDiagnosticInfo() {

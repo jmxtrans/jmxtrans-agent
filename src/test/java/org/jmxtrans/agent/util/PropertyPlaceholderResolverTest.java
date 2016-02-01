@@ -23,10 +23,13 @@
  */
 package org.jmxtrans.agent.util;
 
-import org.junit.Test;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.Test;
 
 /**
  * @author <a href="mailto:cleclerc@xebia.fr">Cyrille Le Clerc</a>
@@ -62,5 +65,25 @@ public class PropertyPlaceholderResolverTest {
         String actual = resolver.resolveString("${graphite.host:localhost}");
         assertThat(actual, is("localhost"));
     }
-
+    
+    @Test
+    public void testPropertiesLoaderValue() throws Exception {
+        Map<String, String> props = new HashMap<>();
+        props.put("foo", "bar");
+        PropertyPlaceholderResolver resolver = new PropertyPlaceholderResolver(props);
+        assertThat(resolver.resolveString("${foo}"), equalTo("bar"));
+    }
+    
+    @Test
+    public void testPropertiesLoaderValueOverridesSystemProperty() throws Exception {
+        Map<String, String> props = new HashMap<>();
+        props.put("foo", "bar");
+        try {
+            System.setProperty("foo", "baz");
+            PropertyPlaceholderResolver resolver = new PropertyPlaceholderResolver(props);
+            assertThat(resolver.resolveString("${foo}"), equalTo("bar"));
+        } finally {
+            System.getProperties().remove("foo");
+        }
+    }
 }
