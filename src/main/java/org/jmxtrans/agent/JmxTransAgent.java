@@ -28,6 +28,7 @@ import org.jmxtrans.agent.util.logging.Logger;
 
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
+
 import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
 import java.sql.Timestamp;
@@ -51,8 +52,25 @@ public class JmxTransAgent {
         initializeAgent(configFile);
     }
 
-    public static void premain(String configFile, Instrumentation inst) {
-        initializeAgent(configFile);
+    public static void premain(final String configFile, Instrumentation inst) {
+        final int delayInSecs = Integer.parseInt(System.getProperty("jmxtrans.agent.premain.delay", "0"));
+        if (delayInSecs > 0) {
+            logger.info("jmxtrans agent initialization delayed by " + delayInSecs + " seconds");
+            new Thread("jmxtrans-agent-delayed-starter-" + delayInSecs + "secs") {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(delayInSecs * 1000);
+                    } catch (InterruptedException e) {
+                        Thread.interrupted();
+                        return;
+                    }
+                    initializeAgent(configFile);
+                }
+            }.start();
+        } else {
+            initializeAgent(configFile);
+        }
     }
 
     private static void initializeAgent(String configFile) {
