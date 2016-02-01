@@ -53,7 +53,7 @@ public class JmxTransExporter {
             return thread;
         }
     };
-    private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, threadFactory);
+    private ScheduledExecutorService scheduledExecutorService;
     private MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
     private ScheduledFuture scheduledFuture;
     private JmxTransConfigurationLoader configLoader;
@@ -71,9 +71,10 @@ public class JmxTransExporter {
             logger.fine("starting " + getClass().getName() + " ...");
         }
 
-        if (scheduledFuture != null) {
-            throw new IllegalArgumentException("Exporter is already started");
-        }
+        if (scheduledExecutorService != null || scheduledFuture != null)
+            throw new IllegalArgumentException("Exporter is already started: scheduledExecutorService=" + scheduledExecutorService + ", scheduledFuture=" + scheduledFuture);
+
+        scheduledExecutorService = Executors.newScheduledThreadPool(1, threadFactory);
 
         if (config.getResultNameStrategy() == null)
             throw new IllegalStateException("resultNameStrategy is not defined, jmxTransExporter is not properly initialised");
