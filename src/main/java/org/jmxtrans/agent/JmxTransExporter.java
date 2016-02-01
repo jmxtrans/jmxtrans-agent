@@ -57,7 +57,7 @@ public class JmxTransExporter {
     private MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
     private ScheduledFuture scheduledFuture;
     private JmxTransConfigurationLoader configLoader;
-    private JmxTransExporterConfiguration config;
+    private volatile JmxTransExporterConfiguration config;
 
     public JmxTransExporter(JmxTransConfigurationLoader configLoader) {
         this.configLoader = configLoader;

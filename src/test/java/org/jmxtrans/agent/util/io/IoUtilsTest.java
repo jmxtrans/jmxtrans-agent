@@ -57,12 +57,21 @@ public class IoUtilsTest {
             assertThat((lastModificationDate - before) + "ms", Math.abs(lastModificationDate - before), lessThan(1000L));
         }
         {
-            String fileUrl = "file://" + filePath;
+            String fileUrl = createFileUrl(filePath);
             long lastModificationDate = IoUtils.getFileLastModificationDate(fileUrl);
             System.out.println(filePath + "\t" + new Timestamp(lastModificationDate) + "\t" + lastModificationDate);
             // the precision of last modified may not very good, take a margin of 1sec
             assertThat((lastModificationDate - before) + "ms", Math.abs(lastModificationDate - before), lessThan(1000L));
         }
+    }
+    
+    private String createFileUrl(String filePath) {
+        // On windows machines we must replace backslashes with forward slashes and add a preceding slash.
+        String res = filePath.replace('\\', '/');
+        if (!res.startsWith("/")) {
+            res = "/" + res;
+        }
+        return "file://" + res;
     }
 
     @Test
@@ -80,7 +89,7 @@ public class IoUtilsTest {
             assertThat(document, notNullValue());
         }
         {
-            String fileUrl = "file://" + filePath;
+            String fileUrl = createFileUrl(filePath);
             System.out.println(fileUrl);
             Document document = IoUtils.getFileAsDocument(fileUrl);
             System.out.println(document.getDocumentElement());
