@@ -19,6 +19,18 @@ export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.1.0.jar=jmxtra
 * java agent jar path can be relative to the working dir
 * `jmxtrans-agent.xml` is the configuration file, can be classpath relative (`classpath:…`), http(s) (`http(s)://...`) or file system system based (relative to the working dir)
 
+### Delayed startup (version >= 1.2.1)
+
+For some application servers like JBoss, delaying premain is needed to start the agent, see [WFLY-3054](https://issues.jboss.org/browse/WFLY-3054)
+This has been confirmed to be needed with JBoss 5.x, 6.x, 7.x and Wildfly 8.x
+
+To add a delay set `jmxtrans.agent.premain.delay` (value in seconds):
+
+```
+# delays calling premain() in jmxtrans agent for 30 seconds
+java -Djmxtrans.agent.premain.delay=30
+```
+
 ## Query configuration
 
 ### Selecting attributes

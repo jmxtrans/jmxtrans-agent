@@ -23,12 +23,20 @@
  */
 package org.jmxtrans.agent;
 
-import org.w3c.dom.Document;
-
 /**
+ * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  * @author Kristoffer Erlandsson
  */
-public interface ConfigurationDocumentLoader {
+public interface JmxTransConfigurationLoader {
 
-    Document loadConfiguration() throws Exception;
+    JmxTransExporterConfiguration loadConfiguration();
+
+    /**
+     *
+     * @return A <code>Long</code> value representing the time the file was
+     *          last modified, measured in milliseconds since the epoch
+     *          (00:00:00 GMT, January 1, 1970), or {@code 0L} if the
+     *          file does not exist or if an I/O error occurs
+     */
+     long lastModified();
 }

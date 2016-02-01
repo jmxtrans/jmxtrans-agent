@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2013 the original author or authors
+ * Copyright (c) 2010-2016 the original author or authors
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,14 +21,31 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-package org.jmxtrans.agent;
+package org.jmxtrans.agent.util.io;
 
-public interface ConfigurationChangedListener {
+import java.io.IOException;
 
-    /**
-     * Will be called when the configuration has been changed, if dynamic config reloading is enabled.
-     * 
-     * @param configuration The new configuration:
-     */
-    void configurationChanged(JmxTransExporterConfiguration configuration);
+/**
+ * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
+ */
+public class IoRuntimeException extends RuntimeException {
+    public IoRuntimeException() {
+        super();
+    }
+
+    public IoRuntimeException(String message) {
+        super(message);
+    }
+
+    public IoRuntimeException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    protected IoRuntimeException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
+
+    public IoRuntimeException(Throwable cause) {
+        super(cause);
+    }
 }

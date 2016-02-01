@@ -35,24 +35,32 @@ import java.util.regex.Pattern;
 
 import org.jmxtrans.agent.properties.NoPropertiesSourcePropertiesLoader;
 import org.jmxtrans.agent.properties.PropertiesLoader;
+import org.jmxtrans.agent.util.Preconditions2;
 import org.jmxtrans.agent.util.PropertyPlaceholderResolver;
+import org.jmxtrans.agent.util.io.IoUtils;
 import org.jmxtrans.agent.util.logging.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+
+import javax.annotation.Nonnull;
 
 /**
  * XML configuration parser.
  *
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class JmxTransExporterBuilder {
+public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoader {
 
     private static final Pattern ATTRIBUTE_SPLIT_PATTERN = Pattern.compile("\\s*,\\s*");
     private Logger logger = Logger.getLogger(getClass().getName());
-    private PropertiesLoader propertiesLoader;
+    private final PropertiesLoader propertiesLoader;
     
-    public JmxTransExporterBuilder(PropertiesLoader propertiesLoader) {
+    @Nonnull
+    private final String configurationFilePath;
+
+    public JmxTransConfigurationXmlLoader(@Nonnull String configurationFilePath, PropertiesLoader propertiesLoader) {
+        this.configurationFilePath = Preconditions2.checkNotNull(configurationFilePath, "configurationFilePath can not be null");
         this.propertiesLoader = propertiesLoader;
     }
 
@@ -60,11 +68,21 @@ public class JmxTransExporterBuilder {
      * Creates a JmxTransExporterBuilder with a PropertyLoader that does not use an
      * external properties source.
      */
-    public JmxTransExporterBuilder() {
-        this.propertiesLoader = new NoPropertiesSourcePropertiesLoader();
+    public JmxTransConfigurationXmlLoader(@Nonnull String configurationFilePath) {
+        this(configurationFilePath, new NoPropertiesSourcePropertiesLoader());
     }
 
-    public JmxTransExporterConfiguration build(Document document) throws Exception {
+    @Override
+    public JmxTransExporterConfiguration loadConfiguration() {
+        return build(IoUtils.getFileAsDocument(configurationFilePath));
+    }
+
+    @Override
+    public long lastModified() {
+        return IoUtils.getFileLastModificationDate(configurationFilePath);
+    }
+
+    protected JmxTransExporterConfiguration build(Document document) {
         Element rootElement = document.getDocumentElement();
 
         Map<String, String> loadedProperties = loadPropertiesOrEmptyOnError();
@@ -99,10 +117,10 @@ public class JmxTransExporterBuilder {
         }
     }
 
-    public JmxTransExporterConfiguration build(ConfigurationDocumentLoader configurationDocumentLoader)
+    public JmxTransExporterConfiguration build(JmxTransConfigurationLoader configurationDocumentLoader)
             throws Exception {
-        Document document = configurationDocumentLoader.loadConfiguration();
-        return build(document);
+        JmxTransExporterConfiguration configuration = configurationDocumentLoader.loadConfiguration();
+        return build(configuration.getDocument());
     }
 
     private Integer getIntegerElementValueOrNullIfNotSet(Element rootElement, String elementName, PropertyPlaceholderResolver placeholderResolver) {
@@ -130,7 +148,7 @@ public class JmxTransExporterBuilder {
         }
     }
 
-    private void buildQueries(Element rootElement, JmxTransExporterConfiguration jmxTransExporterConfiguration) {
+    private void buildQueries(Element rootElement, JmxTransExporterConfiguration configuration) {
         NodeList queries = rootElement.getElementsByTagName("query");
         for (int i = 0; i < queries.getLength(); i++) {
             Element queryElement = (Element) queries.item(i);
@@ -148,7 +166,7 @@ public class JmxTransExporterBuilder {
 
             }
 
-            jmxTransExporterConfiguration.withQuery(objectName, attributes, key, position, type, resultAlias);
+            configuration.withQuery(objectName, attributes, key, position, type, resultAlias);
         }
     }
 
@@ -174,7 +192,7 @@ public class JmxTransExporterBuilder {
         }
     }
 
-    private void buildInvocations(Element rootElement, JmxTransExporterConfiguration jmxTransExporterConfiguration) {
+    private void buildInvocations(Element rootElement, JmxTransExporterConfiguration configuration) {
         NodeList invocations = rootElement.getElementsByTagName("invocation");
         for (int i = 0; i < invocations.getLength(); i++) {
             Element invocationElement = (Element) invocations.item(i);
@@ -182,11 +200,11 @@ public class JmxTransExporterBuilder {
             String operation = invocationElement.getAttribute("operation");
             String resultAlias = invocationElement.getAttribute("resultAlias");
 
-            jmxTransExporterConfiguration.withInvocation(objectName, operation, resultAlias);
+            configuration.withInvocation(objectName, operation, resultAlias);
         }
     }
 
-    private void buildResultNameStrategy(Element rootElement, JmxTransExporterConfiguration jmxTransExporterConfiguration, PropertyPlaceholderResolver placeholderResolver) {
+    private void buildResultNameStrategy(Element rootElement, JmxTransExporterConfiguration configuration, PropertyPlaceholderResolver placeholderResolver) {
         NodeList resultNameStrategyNodeList = rootElement.getElementsByTagName("resultNameStrategy");
 
         ResultNameStrategy resultNameStrategy;
@@ -218,10 +236,10 @@ public class JmxTransExporterBuilder {
             default:
                 throw new IllegalStateException("More than 1 <resultNameStrategy> element found (" + resultNameStrategyNodeList.getLength() + ")");
         }
-        jmxTransExporterConfiguration.resultNameStrategy = resultNameStrategy;
+        configuration.resultNameStrategy = resultNameStrategy;
     }
 
-    private void buildOutputWriters(Element rootElement, JmxTransExporterConfiguration jmxTransExporter, PropertyPlaceholderResolver placeholderResolver) {
+    private void buildOutputWriters(Element rootElement, JmxTransExporterConfiguration configuration, PropertyPlaceholderResolver placeholderResolver) {
         NodeList outputWriterNodeList = rootElement.getElementsByTagName("outputWriter");
         List<OutputWriter> outputWriters = new ArrayList<OutputWriter>();
 
@@ -254,10 +272,17 @@ public class JmxTransExporterBuilder {
                 logger.warning("No outputwriter defined.");
                 break;
             case 1:
-                jmxTransExporter.withOutputWriter(outputWriters.get(0));
+                configuration.withOutputWriter(outputWriters.get(0));
                 break;
             default:
-                jmxTransExporter.withOutputWriter(new OutputWritersChain(outputWriters));
+                configuration.withOutputWriter(new OutputWritersChain(outputWriters));
         }
+    }
+
+    @Override
+    public String toString() {
+        return "JmxTransConfigurationXmlLoader{" +
+                "configurationFilePath='" + configurationFilePath + '\'' +
+                '}';
     }
 }

@@ -39,6 +39,7 @@ import java.util.logging.Level;
 
 
 import org.jmxtrans.agent.graphite.GraphiteMetricMessageBuilder;
+import org.jmxtrans.agent.util.io.IoUtils;
 import org.jmxtrans.agent.util.net.HostAndPort;
 
 /**
@@ -94,22 +95,8 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
     }
 
     private void releaseGraphiteConnection() {
-        if (writer != null) {
-            try {
-                writer.close();
-            } catch (IOException e) {
-                logger.log(Level.WARNING, "Exception closing writer for socket " + socket, e);
-            }
-            writer = null;
-        }
-        if (socket != null) {
-            try {
-                socket.close();
-            } catch (IOException e) {
-                logger.log(Level.WARNING, "Exception closing socket " + socket, e);
-            }
-            socket = null;
-        }
+        IoUtils.closeQuietly(writer);
+        IoUtils.closeQuietly(socket);
     }
 
     private void ensureGraphiteConnection() throws IOException {
@@ -170,7 +157,7 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
     public void preDestroy() {
         super.preDestroy();
         releaseGraphiteConnection();
-    };
+    }
     
     String getMetricPathPrefix() {
         return messageBuilder.getPrefix();

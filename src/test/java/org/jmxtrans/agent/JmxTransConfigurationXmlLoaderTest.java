@@ -37,12 +37,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class JmxTransExporterBuilderTest {
+public class JmxTransConfigurationXmlLoaderTest {
 
     @Test
     public void testParseConfiguration() throws Exception {
-        JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
-        JmxTransExporterConfiguration config = builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-agent.xml"));
+        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-agent.xml").loadConfiguration();
 
         assertThat(config.collectInterval, is(11));
         assertThat(config.collectIntervalTimeUnit, is(TimeUnit.SECONDS));
@@ -90,8 +89,7 @@ public class JmxTransExporterBuilderTest {
 
     @Test
     public void testParseConfiguration2() throws Exception {
-        JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
-        JmxTransExporterConfiguration config = builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-agent-2.xml"));
+        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-agent-2.xml").loadConfiguration();
 
         assertThat(config.collectInterval, is(12));
         assertThat(config.collectIntervalTimeUnit, is(TimeUnit.SECONDS));
@@ -149,8 +147,7 @@ public class JmxTransExporterBuilderTest {
 
     @Test
     public void testParseConfigurationMultipleAttributes() throws Exception {
-        JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
-        JmxTransExporterConfiguration config = builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-multiple-attributes-test.xml"));
+        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-multiple-attributes-test.xml").loadConfiguration();
         assertThat(config.queries, hasSize(1));
         Query query = config.queries.get(0);
         assertThat(query.getAttributes(), contains("ThreadCount", "TotalStartedThreadCount"));
@@ -158,8 +155,7 @@ public class JmxTransExporterBuilderTest {
 
     @Test
     public void testNoAttributesSpecifiedGeneratesWildcardQuery() throws Exception {
-        JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
-        JmxTransExporterConfiguration config = builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-no-attributes-specified-generates-wildcard-query-test.xml"));
+        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-no-attributes-specified-generates-wildcard-query-test.xml").loadConfiguration();
         assertThat(config.queries, hasSize(1));
         Query query = config.queries.get(0);
         assertThat(query.getAttributes(), emptyIterable());
@@ -167,21 +163,19 @@ public class JmxTransExporterBuilderTest {
 
     @Test(expected=IllegalArgumentException.class)
     public void testParseConfigurationAttributeAndAttributesMutuallyExclusive() throws Exception {
-        JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
-        builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-attribute-attributes-exclusive-test.xml"));
+        new JmxTransConfigurationXmlLoader("classpath:jmxtrans-attribute-attributes-exclusive-test.xml").loadConfiguration();
     }
     
     @Test
     public void testParseConfigReload() throws Exception {
-        JmxTransExporterBuilder builder = new JmxTransExporterBuilder();
-        JmxTransExporterConfiguration config = builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-config-reload-test.xml"));
+        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-config-reload-test.xml").loadConfiguration();
         assertThat(config.getConfigReloadInterval(), equalTo(2));
         
     }
     
     @Test
     public void testExternalPropertiesSourceIsUsed() throws Exception {
-        PropertiesLoader loader = new PropertiesLoader() {
+        PropertiesLoader propertiesLoader = new PropertiesLoader() {
             
             @Override
             public Map<String, String> loadProperties() {
@@ -190,22 +184,22 @@ public class JmxTransExporterBuilderTest {
                 return m;
             }
         };
-        JmxTransExporterBuilder builder = new JmxTransExporterBuilder(loader);
-        JmxTransExporterConfiguration config = builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-external-properties-test.xml"));
+        JmxTransConfigurationXmlLoader configLoader = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-external-properties-test.xml", propertiesLoader);
+        JmxTransExporterConfiguration config = configLoader.build(configLoader);
         assertThat(config.getCollectInterval(), equalTo(999));
     }
 
     @Test
     public void testErrorOnLoadingExternalPropertiesDoesNotPropagate() throws Exception {
-        PropertiesLoader loader = new PropertiesLoader() {
+        PropertiesLoader propertiesLoader = new PropertiesLoader() {
             
             @Override
             public Map<String, String> loadProperties() {
                 throw new RuntimeException("Expected - thrown by test");
             }
         };
-        JmxTransExporterBuilder builder = new JmxTransExporterBuilder(loader);
-        JmxTransExporterConfiguration config = builder.build(new JmxTransConfigurationDocumentLoader("classpath:jmxtrans-external-properties-test.xml"));
+        JmxTransConfigurationXmlLoader configLoader = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-external-properties-test.xml", propertiesLoader);
+        JmxTransExporterConfiguration config = configLoader.build(configLoader);
         assertThat(config.getCollectInterval(), equalTo(222));
     }
 

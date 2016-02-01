@@ -21,8 +21,7 @@
  ~ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  ~
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.sonatype.oss</groupId>
@@ -32,13 +31,14 @@
   <groupId>org.jmxtrans.agent</groupId>
   <artifactId>jmxtrans-agent</artifactId>
   <packaging>jar</packaging>
-  <version>1.2.1-SNAPSHOT</version>
+  <version>1.2.3-SNAPSHOT</version>
   <name>JMX metrics exporter agent</name>
   <url>https://github.com/jmxtrans/jmxtrans-agent</url>
   <scm>
     <connection>scm:git:git@github.com:jmxtrans/jmxtrans-agent.git</connection>
     <developerConnection>scm:git:git@github.com:jmxtrans/jmxtrans-agent.git</developerConnection>
     <url>https://github.com/jmxtrans/jmxtrans-agent</url>
+    <tag>HEAD</tag>
   </scm>
   <dependencies>
     <dependency>
@@ -103,7 +103,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.3</version>
+        <version>3.5</version>
         <configuration>
           <source>1.7</source>
           <target>1.7</target>
@@ -112,7 +112,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>findbugs-maven-plugin</artifactId>
-        <version>3.0.2</version>
+        <version>3.0.3</version>
         <executions>
           <execution>
             <phase>verify</phase>
@@ -124,7 +124,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.18.1</version>
+        <version>2.19.1</version>
         <configuration>
           <excludedGroups>org.jmxtrans.agent.IntegrationTest</excludedGroups>
         </configuration>
@@ -132,12 +132,11 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.19</version>
+        <version>2.19.1</version>
         <executions>
           <execution>
             <goals>
               <goal>integration-test</goal>
-              <goal>verify</goal>
             </goals>
           </execution>
         </executions>
@@ -149,9 +148,14 @@
         </configuration>
       </plugin>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.5.3</version>
+      </plugin>
+      <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
-        <version>1.6.5</version>
+        <version>1.6.6</version>
         <extensions>true</extensions>
         <configuration>
           <serverId>sonatype-nexus-staging</serverId>
@@ -179,4 +183,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <github.global.server>github</github.global.server>
   </properties>
+  <prerequisites>
+    <maven>3.3.0</maven>
+  </prerequisites>
+
 </project>
