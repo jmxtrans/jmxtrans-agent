@@ -58,6 +58,8 @@ import javax.xml.parsers.ParserConfigurationException;
 public class IoUtils {
     protected final static Logger logger = Logger.getLogger(IoUtils.class.getName());
 
+    private IoUtils(){}
+
     /**
      * @param filePath can be prefixed by "{@code http://}", "{@code https://}", "{@code file://}". If given value is not prefixed, "{@code file://}" is assumed.
      * @return @return A <code>long</code> value representing the time the file was

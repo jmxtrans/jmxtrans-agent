@@ -36,6 +36,8 @@ import java.util.List;
  */
 public class Iterables2 {
 
+    private Iterables2(){}
+    
     /**
      * Returns the element at the specified position in an iterable.
      *

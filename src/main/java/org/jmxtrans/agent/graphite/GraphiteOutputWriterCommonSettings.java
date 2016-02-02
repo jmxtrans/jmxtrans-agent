@@ -39,6 +39,8 @@ public class GraphiteOutputWriterCommonSettings {
     public static final int SETTING_PORT_DEFAULT_VALUE = 2003;
     public static final String SETTING_NAME_PREFIX = "namePrefix";
     
+    private GraphiteOutputWriterCommonSettings(){}
+    
     public static HostAndPort getHostAndPort(Map<String, String> settings) {
         return new HostAndPort(getString(settings, SETTING_HOST),
                 getInt(settings, SETTING_PORT, SETTING_PORT_DEFAULT_VALUE));
