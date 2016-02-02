@@ -41,11 +41,11 @@ public class JmxTransExporterConfiguration {
     /**
      * visible for test
      */
-    protected List<Query> queries = new ArrayList<Query>();
+    protected List<Query> queries = new ArrayList<>();
     /**
      * visible for test
      */
-    protected List<Invocation> invocations = new ArrayList<Invocation>();
+    protected List<Invocation> invocations = new ArrayList<>();
     /**
      * visible for test
      */

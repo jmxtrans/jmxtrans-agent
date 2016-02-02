@@ -33,7 +33,7 @@ public class EvictingQueue<E> extends ForwardingQueue<E> implements Queue<E> {
     }
 
     public static <E> EvictingQueue<E> create(int maxCapacity) {
-        return new EvictingQueue<E>(maxCapacity);
+        return new EvictingQueue<>(maxCapacity);
     }
 
     @Nonnull

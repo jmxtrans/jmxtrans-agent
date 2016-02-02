@@ -51,7 +51,7 @@ public class LibratoMetricsIntegrationTest {
         config.load(in);
 
         libratoWriter = new LibratoWriter();
-        Map<String, String> settings = new HashMap<String, String>();
+        Map<String, String> settings = new HashMap<>();
         settings.put(LibratoWriter.SETTING_USERNAME,config.getProperty("LIBRATO_USER"));
         settings.put(LibratoWriter.SETTING_TOKEN, config.getProperty("LIBRATO_TOKEN"));
 

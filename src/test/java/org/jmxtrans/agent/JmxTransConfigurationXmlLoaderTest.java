@@ -204,7 +204,7 @@ public class JmxTransConfigurationXmlLoaderTest {
     }
 
     Map<String, Query> indexQueriesByResultAlias(Iterable<Query> queries) {
-        Map<String, Query> result = new HashMap<String, Query>();
+        Map<String, Query> result = new HashMap<>();
         for (Query query : queries) {
             result.put(query.resultAlias, query);
         }

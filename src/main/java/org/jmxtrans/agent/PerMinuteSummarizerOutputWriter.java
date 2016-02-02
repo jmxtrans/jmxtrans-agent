@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 public class PerMinuteSummarizerOutputWriter extends AbstractOutputWriter implements OutputWriter {
 
     protected OutputWriter delegate;
-    protected Map<String, Queue<QueryResult>> previousQueryResultsByMetricName = new HashMap<String, Queue<QueryResult>>();
+    protected Map<String, Queue<QueryResult>> previousQueryResultsByMetricName = new HashMap<>();
 
     public PerMinuteSummarizerOutputWriter() {
     }
@@ -87,7 +87,7 @@ public class PerMinuteSummarizerOutputWriter extends AbstractOutputWriter implem
 
         Queue<QueryResult> queue = previousQueryResultsByMetricName.get(currentResult.getName());
         if (queue == null) {
-            queue = new EvictingQueue<QueryResult>(3);
+            queue = new EvictingQueue<>(3);
             previousQueryResultsByMetricName.put(currentResult.getName(), queue);
         }
         queue.add(currentResult);

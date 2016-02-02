@@ -72,7 +72,7 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
      * Function based evaluators for expressions like '#hostname#' or '#hostname_canonical#'
      */
     @Nonnull
-    private Map<String, Function> functionsByName = new HashMap<String, Function>();
+    private Map<String, Function> functionsByName = new HashMap<>();
 
     /**
      * Replace all the '#' based keywords (e.g. <code>#hostname#</code>) by their value.

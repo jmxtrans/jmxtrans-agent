@@ -35,11 +35,11 @@ public class OutputWritersChain extends AbstractOutputWriter implements OutputWr
     protected final List<OutputWriter> outputWriters;
 
     public OutputWritersChain() {
-        outputWriters = new ArrayList<OutputWriter>();
+        outputWriters = new ArrayList<>();
     }
 
     public OutputWritersChain(List<OutputWriter> outputWriters) {
-        this.outputWriters = new ArrayList<OutputWriter>(outputWriters.size());
+        this.outputWriters = new ArrayList<>(outputWriters.size());
         this.outputWriters.addAll(outputWriters);
     }
 
