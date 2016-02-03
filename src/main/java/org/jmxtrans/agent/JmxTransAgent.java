@@ -51,6 +51,9 @@ public class JmxTransAgent {
 
     private static final String PROPERTIES_SYSTEM_PROPERTY_NAME = "jmxtrans.agent.properties.file";
 
+
+    private JmxTransAgent(){}
+
     @SuppressFBWarnings("MS_SHOULD_BE_FINAL")
     public static boolean DIAGNOSTIC = Boolean.valueOf(System.getProperty(JmxTransAgent.class.getName() + ".diagnostic", "false"));
 

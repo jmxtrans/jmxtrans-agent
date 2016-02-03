@@ -32,6 +32,8 @@ import javax.annotation.Nullable;
  */
 public class Preconditions2 {
 
+    private Preconditions2(){}
+
     public static <T> T checkNotNull(T t) {
         if (t == null)
             throw new NullPointerException();
