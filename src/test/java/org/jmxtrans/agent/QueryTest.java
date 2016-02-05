@@ -213,7 +213,7 @@ public class QueryTest {
     public static class MockOutputWriter extends AbstractOutputWriter {
 
         protected final boolean failOnDuplicateResult;
-        protected final Map<String, Object> resultsByName = new HashMap<String, Object>();
+        protected final Map<String, Object> resultsByName = new HashMap<>();
 
         public MockOutputWriter() {
             this(true);

@@ -50,7 +50,7 @@ public class StringUtils2 {
         }
         String[] splits = delimitedString.split("[,;\\n]");
 
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
 
         for (String split : splits) {
             split = split.trim();
@@ -104,7 +104,7 @@ public class StringUtils2 {
         Preconditions2.checkNotNull(delimiter, "given delimiter can not be null");
 
         StringTokenizer st = new StringTokenizer(str, delimiter);
-        List<String> tokens = new ArrayList<String>();
+        List<String> tokens = new ArrayList<>();
 
         while (st.hasMoreTokens()) {
             tokens.add(st.nextToken());

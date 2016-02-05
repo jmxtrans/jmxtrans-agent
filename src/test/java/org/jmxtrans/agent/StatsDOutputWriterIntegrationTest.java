@@ -16,7 +16,7 @@ public class StatsDOutputWriterIntegrationTest {
     @Ignore
     public void test() throws IOException {
         StatsDOutputWriter writer = new StatsDOutputWriter();
-        Map<String, String> settings = new HashMap<String, String>();
+        Map<String, String> settings = new HashMap<>();
         settings.put(StatsDOutputWriter.SETTING_HOST, "localhost");
         settings.put(StatsDOutputWriter.SETTING_PORT, "8125");
         writer.postConstruct(settings);

@@ -44,20 +44,20 @@ public class Iterables2Test {
 
     @Test
     public void get_on_iterator_return_value() {
-        Set<String> in = new TreeSet<String>(Arrays.asList("val0", "val1", "val2", "val3"));
+        Set<String> in = new TreeSet<>(Arrays.asList("val0", "val1", "val2", "val3"));
         String actual = Iterables2.get(in, 2);
         assertThat(actual, is("val2"));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void get_negative_position_throws_an_exception() {
-        Set<String> in = new HashSet<String>(Arrays.asList("val0", "val1", "val2", "val3"));
+        Set<String> in = new HashSet<>(Arrays.asList("val0", "val1", "val2", "val3"));
         Iterables2.get(in, -1);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void get_out_of_range_position_throws_an_exception() {
-        Set<String> in = new HashSet<String>(Arrays.asList("val0", "val1", "val2", "val3"));
+        Set<String> in = new HashSet<>(Arrays.asList("val0", "val1", "val2", "val3"));
         Iterables2.get(in, 10);
     }
 }

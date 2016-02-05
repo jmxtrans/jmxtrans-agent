@@ -236,7 +236,7 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
 
                 try {
                     resultNameStrategy = (ResultNameStrategy) Class.forName(outputWriterClass).newInstance();
-                    Map<String, String> settings = new HashMap<String, String>();
+                    Map<String, String> settings = new HashMap<>();
                     NodeList settingsNodeList = resultNameStrategyElement.getElementsByTagName("*");
                     for (int j = 0; j < settingsNodeList.getLength(); j++) {
                         Element settingElement = (Element) settingsNodeList.item(j);
@@ -256,7 +256,7 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
 
     private void buildOutputWriters(Element rootElement, JmxTransExporterConfiguration configuration, PropertyPlaceholderResolver placeholderResolver) {
         NodeList outputWriterNodeList = rootElement.getElementsByTagName("outputWriter");
-        List<OutputWriter> outputWriters = new ArrayList<OutputWriter>();
+        List<OutputWriter> outputWriters = new ArrayList<>();
 
         for (int i = 0; i < outputWriterNodeList.getLength(); i++) {
             Element outputWriterElement = (Element) outputWriterNodeList.item(i);
@@ -267,7 +267,7 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
             OutputWriter outputWriter;
             try {
                 outputWriter = (OutputWriter) Class.forName(outputWriterClass).newInstance();
-                Map<String, String> settings = new HashMap<String, String>();
+                Map<String, String> settings = new HashMap<>();
                 NodeList settingsNodeList = outputWriterElement.getElementsByTagName("*");
                 for (int j = 0; j < settingsNodeList.getLength(); j++) {
                     Element settingElement = (Element) settingsNodeList.item(j);
