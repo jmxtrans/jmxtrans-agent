@@ -38,7 +38,7 @@ import java.util.logging.Level;
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class Invocation {
+public class Invocation implements Collector {
 
     @Nullable
     protected final ObjectName objectName;
@@ -51,8 +51,11 @@ public class Invocation {
     @Nonnull
     protected final String[] signature;
     private final Logger logger = Logger.getLogger(getClass().getName());
+    @Nullable
+    private Integer collectInterval;
 
-    public Invocation(@Nullable String objectName, @Nonnull String operationName, @Nonnull Object[] params, @Nonnull String[] signature, @Nullable String resultAlias) {
+    public Invocation(@Nullable String objectName, @Nonnull String operationName, @Nonnull Object[] params, @Nonnull String[] signature, @Nullable String resultAlias,
+            @Nullable Integer collectInterval) {
         try {
             this.objectName = objectName == null ? null : new ObjectName(objectName);
         } catch (MalformedObjectNameException e) {
@@ -62,9 +65,10 @@ public class Invocation {
         this.params = Preconditions2.checkNotNull(params, "params");
         this.signature = Preconditions2.checkNotNull(signature, "signature");
         this.resultAlias = resultAlias;
+        this.collectInterval = collectInterval;
     }
 
-    public void invoke(MBeanServer mbeanServer, OutputWriter outputWriter) {
+    private void invoke(MBeanServer mbeanServer, OutputWriter outputWriter) {
         Set<ObjectName> objectNames = mbeanServer.queryNames(objectName, null);
         for (ObjectName on : objectNames) {
             try {
@@ -85,5 +89,15 @@ public class Invocation {
                 ", params=" + Arrays.toString(params) +
                 ", signature=" + Arrays.toString(signature) +
                 '}';
+    }
+
+    @Override
+    public void collectAndExport(MBeanServer mbeanServer, OutputWriter outputWriter) {
+        invoke(mbeanServer, outputWriter);
+    }
+
+    @Nullable
+    public Integer getCollectIntervalOverrideOrNull() {
+        return collectInterval;
     }
 }

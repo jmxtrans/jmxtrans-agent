@@ -202,7 +202,18 @@ public class JmxTransConfigurationXmlLoaderTest {
         JmxTransExporterConfiguration config = configLoader.build(configLoader);
         assertThat(config.getCollectInterval(), equalTo(222));
     }
-
+    
+    @Test
+    public void collectIntervalOverrideTest() throws Exception {
+        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-collect-interval-override-test.xml").loadConfiguration();
+        Map<String, Query> queriesByResultAlias = indexQueriesByResultAlias(config.queries);
+        assertThat(queriesByResultAlias.get("a").getCollectIntervalOverrideOrNull(), nullValue());
+        assertThat(queriesByResultAlias.get("b").getCollectIntervalOverrideOrNull(), equalTo(3));
+        Map<String, Invocation> invocationsByResultAlias = indexInvocationsByResultAlias(config.invocations);
+        assertThat(invocationsByResultAlias.get("c").getCollectIntervalOverrideOrNull(), nullValue());
+        assertThat(invocationsByResultAlias.get("d").getCollectIntervalOverrideOrNull(), equalTo(5));
+    }
+    
     Map<String, Query> indexQueriesByResultAlias(Iterable<Query> queries) {
         Map<String, Query> result = new HashMap<String, Query>();
         for (Query query : queries) {

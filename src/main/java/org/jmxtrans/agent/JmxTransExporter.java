@@ -24,7 +24,10 @@
 package org.jmxtrans.agent;
 
 import java.lang.management.ManagementFactory;
+import java.math.BigInteger;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -35,6 +38,7 @@ import java.util.logging.Level;
 
 import javax.management.MBeanServer;
 
+import org.jmxtrans.agent.util.GcdCalculator;
 import org.jmxtrans.agent.util.logging.Logger;
 
 /**
@@ -58,10 +62,51 @@ public class JmxTransExporter {
     private ScheduledFuture scheduledFuture;
     private JmxTransConfigurationLoader configLoader;
     private volatile JmxTransExporterConfiguration config;
+    private volatile List<TimeTrackingCollector> collectors;
+    private volatile long runIntervalMillis;
 
     public JmxTransExporter(JmxTransConfigurationLoader configLoader) {
         this.configLoader = configLoader;
+        loadNewConfiguration();
+    }
+
+    private void loadNewConfiguration() {
         this.config = configLoader.loadConfiguration();
+        this.collectors = createTimeTrackingCollectors();
+        this.runIntervalMillis = calculateRunIntervalMillis();
+    }
+
+
+    private List<TimeTrackingCollector> createTimeTrackingCollectors() {
+        List<TimeTrackingCollector> newCollectors = new ArrayList<>();
+        for (Query q : config.getQueries()) {
+            TimeTrackingCollector timeTrackingCollector = createTimeTrackingCollector(q, q.getCollectIntervalOverrideOrNull());
+            newCollectors.add(timeTrackingCollector);
+        }
+        for (Invocation i : config.getInvocations()) {
+            TimeTrackingCollector timeTrackingCollector = createTimeTrackingCollector(i, i.getCollectIntervalOverrideOrNull());
+            newCollectors.add(timeTrackingCollector);
+        }
+        return newCollectors;
+    }
+
+    private TimeTrackingCollector createTimeTrackingCollector(Collector collector, Integer collectIntervalOverride) {
+        int actualCollectInterval = collectIntervalOverride != null ? collectIntervalOverride : config.getCollectInterval();
+        TimeTrackingCollector timeTrackingCollector = new TimeTrackingCollector(collector, TimeUnit.MILLISECONDS.convert(actualCollectInterval, config.getCollectIntervalTimeUnit()));
+        return timeTrackingCollector;
+    }
+
+    private long calculateRunIntervalMillis() {
+        // Use the greatest common divisor of the collect intervals to get period in which we need to collect
+        if (collectors.isEmpty()) {
+            // Ensure that we trigger runs even if there are no queries so that config refresh works.
+            return config.getCollectInterval();
+        }
+        List<Long> collectIntervals = new ArrayList<>();
+        for (TimeTrackingCollector c : collectors) {
+            collectIntervals.add(c.getCollectIntervalMillis());
+        }
+        return GcdCalculator.gcd(collectIntervals);
     }
 
     public void start() {
@@ -84,7 +129,7 @@ public class JmxTransExporter {
             public void run() {
                 collectAndExport();
             }
-        }, config.getCollectInterval() / 2, config.getCollectInterval(), config.getCollectIntervalTimeUnit());
+        }, runIntervalMillis / 2, runIntervalMillis, TimeUnit.MILLISECONDS);
 
         if (config.getConfigReloadInterval() >= 0) {
             Runnable runnable = new Runnable() {
@@ -107,7 +152,7 @@ public class JmxTransExporter {
 
                         lastModified = newLastModified;
                         stop();
-                        config = configLoader.loadConfiguration();
+                        loadNewConfiguration();
                         start();
                     } else {
                         if (logger.isLoggable(Level.FINER))
@@ -141,7 +186,7 @@ public class JmxTransExporter {
 
         // wait for stop
         try {
-            scheduledExecutorService.awaitTermination(config.getCollectInterval(), config.getCollectIntervalTimeUnit());
+            scheduledExecutorService.awaitTermination(runIntervalMillis, TimeUnit.MILLISECONDS);
 
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
@@ -158,18 +203,11 @@ public class JmxTransExporter {
         OutputWriter outputWriter = config.getOutputWriter();
         try {
             outputWriter.preCollect();
-            for (Invocation invocation : config.getInvocations()) {
+            for (TimeTrackingCollector collector : collectors) {
                 try {
-                    invocation.invoke(mbeanServer, outputWriter);
+                    collector.collectIfEnoughTimeHasPassed(mbeanServer, outputWriter);
                 } catch (Exception e) {
-                    logger.log(Level.WARNING, "Ignore exception invoking " + invocation, e);
-                }
-            }
-            for (Query query : config.getQueries()) {
-                try {
-                    query.collectAndExport(mbeanServer, outputWriter);
-                } catch (Exception e) {
-                    logger.log(Level.WARNING, "Ignore exception collecting metrics for " + query, e);
+                    logger.log(Level.WARNING, "Ignore exception collecting with collector " + collector, e);
                 }
             }
             outputWriter.postCollect();
@@ -185,9 +223,4 @@ public class JmxTransExporter {
                 '}';
     }
 
-    public void reloadConfiguration(JmxTransExporterConfiguration newConfiguration) {
-        stop();
-        this.config = newConfiguration;
-        start();
-    }
 }

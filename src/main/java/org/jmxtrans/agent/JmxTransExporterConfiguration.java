@@ -68,17 +68,17 @@ public class JmxTransExporterConfiguration {
     }
 
     public JmxTransExporterConfiguration withQuery(@Nonnull String objectName, @Nonnull List<String> attributes, @Nullable String resultAlias) {
-        return withQuery(objectName, attributes, null, null, null, resultAlias);
+        return withQuery(objectName, attributes, null, null, null, resultAlias, null);
     }
 
     public JmxTransExporterConfiguration withQuery(@Nonnull String objectName, @Nonnull List<String> attributes, @Nullable String key,
-                                      @Nullable Integer position, @Nullable String type, @Nullable String resultAlias) {
-        Query query = new Query(objectName, attributes, key, position, type, resultAlias, this.resultNameStrategy);
+                                      @Nullable Integer position, @Nullable String type, @Nullable String resultAlias, @Nullable Integer collectInterval) {
+        Query query = new Query(objectName, attributes, key, position, type, resultAlias, this.resultNameStrategy, collectInterval);
         queries.add(query);
         return this;
     }
-    public JmxTransExporterConfiguration withInvocation(@Nonnull String objectName, @Nonnull String operation, @Nullable String resultAlias) {
-        invocations.add(new Invocation(objectName, operation, new Object[0], new String[0], resultAlias));
+    public JmxTransExporterConfiguration withInvocation(@Nonnull String objectName, @Nonnull String operation, @Nullable String resultAlias, @Nullable Integer collectInterval) {
+        invocations.add(new Invocation(objectName, operation, new Object[0], new String[0], resultAlias, collectInterval));
         return this;
     }
     public JmxTransExporterConfiguration withOutputWriter(OutputWriter outputWriter) {
@@ -146,4 +146,5 @@ public class JmxTransExporterConfiguration {
     public void destroy() {
         getOutputWriter().preDestroy();
     }
+
 }
