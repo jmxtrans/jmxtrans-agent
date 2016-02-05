@@ -40,7 +40,7 @@ import java.util.logging.Level;
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class Query {
+public class Query implements Collector {
 
     private final Logger logger = Logger.getLogger(getClass().getName());
 
@@ -79,26 +79,38 @@ public class Query {
     @Nullable
     private String type;
 
+    @Nullable
+    private Integer collectInterval;
+
     /**
      * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
      */
     public Query(@Nonnull String objectName, @Nullable String attribute, @Nonnull ResultNameStrategy resultNameStrategy) {
-        this(objectName, attribute, null, null, null, null, resultNameStrategy);
+        this(objectName, attribute, null, null, null, null, resultNameStrategy, null);
     }
 
     /**
      * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
      */
     public Query(@Nonnull String objectName, @Nullable String attribute, int position, @Nonnull ResultNameStrategy resultNameStrategy) {
-        this(objectName, attribute, null, position, null, null, resultNameStrategy);
+        this(objectName, attribute, null, position, null, null, resultNameStrategy, null);
     }
 
     /**
      * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
      */
     public Query(@Nonnull String objectName, @Nullable String attribute, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
-        this(objectName, attribute, null, null, null, resultAlias, resultNameStrategy);
+        this(objectName, attribute, null, null, null, resultAlias, resultNameStrategy, null);
     }
+
+    /**
+     * Creates a Query with no collectInterval overide.
+     */
+    public Query(@Nonnull String objectName, @Nullable String attribute, @Nullable String key, @Nullable Integer position,
+                 @Nullable String type, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
+        this(objectName, attribute, key, position, type, resultAlias, resultNameStrategy, null);
+    }
+
 
     /**
      * @param objectName         The {@link ObjectName} to search for
@@ -113,9 +125,9 @@ public class Query {
      *                           {@link #collectAndExport(javax.management.MBeanServer, OutputWriter)} phase.
      */
     public Query(@Nonnull String objectName, @Nullable String attribute, @Nullable String key, @Nullable Integer position,
-                 @Nullable String type, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
+                 @Nullable String type, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy, @Nullable Integer collectInterval) {
         this(objectName, nullOrEmtpy(attribute) ? Collections.<String>emptyList() : Collections.singletonList(attribute), key, position,
-                type, resultAlias, resultNameStrategy);
+                type, resultAlias, resultNameStrategy, collectInterval);
     }
 
     private static boolean nullOrEmtpy(String attribute) {
@@ -124,11 +136,12 @@ public class Query {
     
     /**
      * Creates a query that accepts a list of attributes to collect. If the list is empty, all attributes will be collected.
+     * @param collectInterval 
      * 
      * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
      */
     public Query(@Nonnull String objectName, @Nonnull List<String> attributes, @Nullable String key, @Nullable Integer position,
-            @Nullable String type, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy) {
+            @Nullable String type, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy, @Nullable Integer collectInterval) {
         try {
             this.objectName = new ObjectName(Preconditions2.checkNotNull(objectName));
         } catch (MalformedObjectNameException e) {
@@ -140,6 +153,7 @@ public class Query {
         this.position = position;
         this.type = type;
         this.resultNameStrategy = Preconditions2.checkNotNull(resultNameStrategy, "resultNameStrategy");
+        this.collectInterval = collectInterval;
     }
 
 
@@ -299,5 +313,10 @@ public class Query {
     @Nullable
     public String getType() {
         return type;
+    }
+
+    @Nullable
+    public Integer getCollectIntervalOverrideOrNull() {
+        return collectInterval;
     }
 }

@@ -52,6 +52,7 @@ import javax.annotation.Nonnull;
  */
 public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoader {
 
+    private static final String COLLECT_INTERVAL_NAME = "collectIntervalInSeconds";
     private static final Pattern ATTRIBUTE_SPLIT_PATTERN = Pattern.compile("\\s*,\\s*");
     private Logger logger = Logger.getLogger(getClass().getName());
     private final PropertiesLoader propertiesLoader;
@@ -89,7 +90,7 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
         PropertyPlaceholderResolver resolver = new PropertyPlaceholderResolver(loadedProperties);
         JmxTransExporterConfiguration jmxTransExporterConfiguration = new JmxTransExporterConfiguration(document);
 
-        Integer collectInterval = getIntegerElementValueOrNullIfNotSet(rootElement, "collectIntervalInSeconds", resolver);
+        Integer collectInterval = getIntegerElementValueOrNullIfNotSet(rootElement, COLLECT_INTERVAL_NAME, resolver);
         if (collectInterval != null) {
             jmxTransExporterConfiguration.withCollectInterval(collectInterval, TimeUnit.SECONDS);
         }
@@ -165,8 +166,9 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
                         ", attributes=" + attributes + ", resultAlias=" + resultAlias);
 
             }
+            Integer collectInterval = intAttributeOrNull(queryElement, COLLECT_INTERVAL_NAME);
 
-            configuration.withQuery(objectName, attributes, key, position, type, resultAlias);
+            configuration.withQuery(objectName, attributes, key, position, type, resultAlias, collectInterval);
         }
     }
 
@@ -199,8 +201,21 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
             String objectName = invocationElement.getAttribute("objectName");
             String operation = invocationElement.getAttribute("operation");
             String resultAlias = invocationElement.getAttribute("resultAlias");
+            Integer collectInterval = intAttributeOrNull(invocationElement, COLLECT_INTERVAL_NAME);
 
-            configuration.withInvocation(objectName, operation, resultAlias);
+            configuration.withInvocation(objectName, operation, resultAlias, collectInterval);
+        }
+    }
+
+    private Integer intAttributeOrNull(Element element, String attributeName) {
+        String value = element.getAttribute(attributeName);
+        if (value.isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(value);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Attribute '" + attributeName + "' must be an integer", e);
         }
     }
 
