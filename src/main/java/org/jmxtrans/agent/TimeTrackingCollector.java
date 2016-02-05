@@ -47,10 +47,6 @@ public class TimeTrackingCollector {
         this.collectIntervalMillis = collectIntervalMillis;
     }
 
-    public void setCollector(Collector collector) {
-        this.collector = collector;
-    }
-
     public void collectIfEnoughTimeHasPassed(MBeanServer mbeanServer, OutputWriter outputWriter) {
         long currentMillis = currentMillis();
         if (currentMillis >= lastRun + collectIntervalMillis) {
