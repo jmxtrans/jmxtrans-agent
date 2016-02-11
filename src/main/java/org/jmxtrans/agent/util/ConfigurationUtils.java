@@ -64,7 +64,7 @@ public class ConfigurationUtils {
     public static int getInt(Map<String, String> settings, String name, int defaultValue) throws IllegalArgumentException {
         if (settings.containsKey(name)) {
 
-            String value = settings.get(name).toString();
+            String value = settings.get(name);
             try {
                 return Integer.parseInt(value);
             } catch (Exception e) {
@@ -88,7 +88,7 @@ public class ConfigurationUtils {
     public static long getLong(Map<String, String> settings, String name, long defaultValue) throws IllegalArgumentException {
         if (settings.containsKey(name)) {
 
-            String value = settings.get(name).toString();
+            String value = settings.get(name);
             try {
                 return Long.parseLong(value);
             } catch (Exception e) {
@@ -111,7 +111,7 @@ public class ConfigurationUtils {
     public static boolean getBoolean(Map<String, String> settings, String name, boolean defaultValue) {
         if (settings.containsKey(name)) {
 
-            String value = settings.get(name).toString();
+            String value = settings.get(name);
             return Boolean.parseBoolean(value);
 
         } else {
@@ -132,7 +132,7 @@ public class ConfigurationUtils {
         if (!settings.containsKey(name)) {
             throw new IllegalArgumentException("No setting '" + name + "' found");
         }
-        return settings.get(name).toString();
+        return settings.get(name);
     }
 
     /**
@@ -146,7 +146,7 @@ public class ConfigurationUtils {
      */
     public static String getString(Map<String, String> settings, String name, String defaultValue) {
         if (settings.containsKey(name)) {
-            return settings.get(name).toString();
+            return settings.get(name);
         } else {
             return defaultValue;
         }
