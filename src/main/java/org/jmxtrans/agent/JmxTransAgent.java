@@ -28,6 +28,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jmxtrans.agent.properties.NoPropertiesSourcePropertiesLoader;
 import org.jmxtrans.agent.properties.PropertiesLoader;
 import org.jmxtrans.agent.properties.UrlOrFilePropertiesLoader;
+import org.jmxtrans.agent.util.io.Resource;
+import org.jmxtrans.agent.util.io.ResourceFactory;
 import org.jmxtrans.agent.util.logging.Logger;
 
 import javax.management.ObjectInstance;
@@ -82,22 +84,23 @@ public class JmxTransAgent {
         }
     }
 
-    private static void initializeAgent(String configFile) {
+    private static void initializeAgent(String configPath) {
         dumpDiagnosticInfo();
-        if (configFile == null || configFile.isEmpty()) {
+        if (configPath == null || configPath.isEmpty()) {
             String msg = "JmxTransExporter configurationFile must be defined";
             logger.log(Level.SEVERE, msg);
             throw new IllegalStateException(msg);
         }
         try {
             PropertiesLoader propertiesLoader = creatPropertiesLoader();
-            JmxTransConfigurationLoader configurationLoader = new JmxTransConfigurationXmlLoader(configFile, propertiesLoader);
+            Resource configuration = ResourceFactory.newResource(configPath);
+            JmxTransConfigurationLoader configurationLoader = new JmxTransConfigurationXmlLoader(configuration, propertiesLoader);
             JmxTransExporter jmxTransExporter = new JmxTransExporter(configurationLoader);
             //START
             jmxTransExporter.start();
-            logger.info("JmxTransAgent started with configuration '" + configFile + "'");
+            logger.info("JmxTransAgent started with configuration '" + configPath + "'");
         } catch (Exception e) {
-            String msg = "Exception loading JmxTransExporter from '" + configFile + "'";
+            String msg = "Exception loading JmxTransExporter from '" + configPath + "'";
             logger.log(Level.SEVERE, msg, e);
             throw new IllegalStateException(msg, e);
         }

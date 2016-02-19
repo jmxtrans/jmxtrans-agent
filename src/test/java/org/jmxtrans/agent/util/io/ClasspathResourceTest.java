@@ -19,56 +19,41 @@
  * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
+
 package org.jmxtrans.agent.util.io;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.w3c.dom.Document;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class IoUtilsTest {
-
-    @Rule
-    public TemporaryFolder tmp = new TemporaryFolder();
-
-    private String createFileUrl(String filePath) {
-        // On windows machines we must replace backslashes with forward slashes and add a preceding slash.
-        String res = filePath.replace('\\', '/');
-        if (!res.startsWith("/")) {
-            res = "/" + res;
-        }
-        return "file://" + res;
-    }
+public class ClasspathResourceTest {
 
     @Test
-    public void getFileAsDocumentFromFile() throws Exception {
-        Path xmlFile = tmp.newFile("b.xml").toPath();
+    public void classpath_resource_exists() throws Exception {
+        ClasspathResource resource = new ClasspathResource("classpath://org/jmxtrans/agent/util/io/classpath-resource.txt");
+        assertThat(resource.exists(), is(true));
 
-        Files.write(xmlFile, "<parent></parent>".getBytes(StandardCharsets.UTF_8));
+        assertThat(resource.lastModified(), greaterThan(0L));
+        File actualFile = resource.getFile();
+        assertThat(actualFile, notNullValue());
 
-        String filePath = xmlFile.toString();
+        String expected = "hello world";
+        InputStream in = resource.getInputStream();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        IoUtils.copy(in, baos);
+        String actual = new String(baos.toByteArray(), StandardCharsets.UTF_8);
+        assertThat(actual, is(expected));
 
-        System.out.println(filePath);
-        Document document = IoUtils.getFileAsDocument(new FileResource(xmlFile.toFile()));
-        System.out.println(document.getDocumentElement());
-        assertThat(document, notNullValue());
-    }
-
-    @Test
-    public void getFileAsDocumentFromClasspath() throws Exception {
-        Document document = IoUtils.getFileAsDocument(new ClasspathResource("classpath:org/jmxtrans/agent/util/io/a.xml"));
-        assertThat(document, notNullValue());
     }
 }
