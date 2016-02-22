@@ -38,6 +38,7 @@ import org.jmxtrans.agent.properties.NoPropertiesSourcePropertiesLoader;
 import org.jmxtrans.agent.properties.PropertiesLoader;
 import org.jmxtrans.agent.util.Preconditions2;
 import org.jmxtrans.agent.util.PropertyPlaceholderResolver;
+import org.jmxtrans.agent.util.io.IoRuntimeException;
 import org.jmxtrans.agent.util.io.IoUtils;
 import org.jmxtrans.agent.util.io.Resource;
 import org.jmxtrans.agent.util.logging.Logger;
@@ -84,7 +85,7 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
     public long lastModified() {
         try {
             return configurationResource.lastModified();
-        } catch (IOException e) {
+        } catch (IoRuntimeException e) {
             return 0L;
         }
     }

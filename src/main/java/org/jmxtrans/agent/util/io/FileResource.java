@@ -27,8 +27,9 @@ import org.jmxtrans.agent.util.Preconditions2;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 
@@ -58,25 +59,33 @@ public class FileResource extends AbstractResource implements Resource {
 
     @Nonnull
     @Override
-    public File getFile() throws IOException {
+    public File getFile() throws IoRuntimeException {
         return this.file;
     }
 
     @Nonnull
     @Override
-    public InputStream getInputStream() throws IOException {
-        return new FileInputStream(this.getFile());
+    public InputStream getInputStream() throws IoRuntimeException {
+        try {
+            return new FileInputStream(this.getFile());
+        } catch (FileNotFoundException e) {
+            throw new FileNotFoundRuntimeException(e);
+        }
     }
 
     @Nonnull
     @Override
-    public URL getURL() throws IOException {
-        return getURI().toURL();
+    public URL getURL() throws IoRuntimeException {
+        try {
+            return getURI().toURL();
+        } catch (MalformedURLException e) {
+            throw IoRuntimeException.propagate(e);
+        }
     }
 
     @Nonnull
     @Override
-    public URI getURI() throws IOException {
+    public URI getURI() throws IoRuntimeException {
         return getFile().toURI();
     }
 

@@ -71,7 +71,7 @@ public class UrlResourceTest {
         try {
             File file = res.getFile();
             fail("File should not exist: " + file);
-        } catch (FileNotFoundException e) {
+        } catch (FileNotFoundRuntimeException e) {
             // expected behavior
         }
 
@@ -94,21 +94,21 @@ public class UrlResourceTest {
         try {
             long lastModified = res.lastModified();
             fail("InputStream should not be returned: " + lastModified);
-        } catch (FileNotFoundException e) {
+        } catch (FileNotFoundRuntimeException e) {
             // expected behavior
         }
 
         try {
             File file = res.getFile();
             fail("File should not exist: " + file);
-        } catch (FileNotFoundException e) {
+        } catch (FileNotFoundRuntimeException e) {
             // expected behavior
         }
 
         try {
             InputStream in = res.getInputStream();
             fail("InputStream should not be returned: " + in);
-        } catch (FileNotFoundException e) {
+        } catch (FileNotFoundRuntimeException e) {
             // expected behavior
         }
     }

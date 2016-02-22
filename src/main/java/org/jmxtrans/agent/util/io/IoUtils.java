@@ -155,8 +155,10 @@ public class IoUtils {
             } catch(FileNotFoundException e) {
                 return dBuilder.parse(resource.getInputStream());
             }
-        } catch (ParserConfigurationException | SAXException | IOException e) {
+        } catch (ParserConfigurationException | SAXException e) {
             throw new IoRuntimeException(e);
+        } catch (IOException e) {
+            throw IoRuntimeException.propagate(e);
         }
     }
 

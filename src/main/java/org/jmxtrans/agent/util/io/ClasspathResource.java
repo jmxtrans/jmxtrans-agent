@@ -58,19 +58,19 @@ public class ClasspathResource extends AbstractResource implements Resource {
 
     @Nonnull
     @Override
-    public URL getURL() throws IOException {
+    public URL getURL() throws IoRuntimeException {
         return classLoader.getResource(path);
     }
 
     @Nonnull
     @Override
-    public File getFile() throws IOException {
+    public File getFile() throws IoRuntimeException {
         return new File(getURI());
     }
 
     @Nonnull
     @Override
-    public InputStream getInputStream() throws IOException {
+    public InputStream getInputStream() throws IoRuntimeException {
         return classLoader.getResourceAsStream(path);
     }
 

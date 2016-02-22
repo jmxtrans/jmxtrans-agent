@@ -40,10 +40,10 @@ import javax.annotation.Nonnull;
 public abstract class AbstractResource  implements Resource {
 
     @Override
-    public long lastModified() throws IOException {
+    public long lastModified() throws IoRuntimeException {
         long lastModified = getFile().lastModified();
         if (lastModified == 0L) {
-            throw new FileNotFoundException(getDescription() +
+            throw new FileNotFoundRuntimeException(getDescription() +
                     " cannot be resolved in the file system for resolving its last-modified timestamp");
         }
         return lastModified;
@@ -51,24 +51,24 @@ public abstract class AbstractResource  implements Resource {
 
     @Nonnull
     @Override
-    public URL getURL() throws IOException {
-        throw new FileNotFoundException(getDescription() + " cannot be resolved to URL");
+    public URL getURL() throws IoRuntimeException {
+        throw new FileNotFoundRuntimeException(getDescription() + " cannot be resolved to URL");
     }
 
     @Nonnull
     @Override
-    public File getFile() throws IOException {
-        throw new FileNotFoundException(getDescription() + " cannot be resolved to absolute file path");
+    public File getFile() throws IoRuntimeException {
+        throw new FileNotFoundRuntimeException(getDescription() + " cannot be resolved to absolute file path");
     }
 
     @Nonnull
     @Override
-    public URI getURI() throws IOException {
+    public URI getURI() throws IoRuntimeException {
         URL url = getURL();
         try {
             return url.toURI();
         } catch (URISyntaxException e) {
-            throw new IOException("Exception parsing the URI of '" + url + "'", e);
+            throw new IoRuntimeException("Exception parsing the URI of '" + url + "'", e);
         }
     }
 
@@ -83,7 +83,7 @@ public abstract class AbstractResource  implements Resource {
         try {
             return getFile().exists();
         }
-        catch (IOException ex) {
+        catch (IoRuntimeException ex) {
             // Fall back to stream existence: can we open the stream?
             try {
                 InputStream is = getInputStream();

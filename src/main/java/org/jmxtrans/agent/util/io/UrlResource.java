@@ -67,7 +67,7 @@ public class UrlResource extends AbstractResource implements Resource {
 
     @Nonnull
     @Override
-    public File getFile() throws IOException {
+    public File getFile() throws IoRuntimeException {
         if (IoUtils.isFileUrl(url)) {
             return new File(uri);
         } else {
@@ -110,7 +110,7 @@ public class UrlResource extends AbstractResource implements Resource {
     }
 
     @Override
-    public long lastModified() throws IOException {
+    public long lastModified() throws IoRuntimeException {
         if (IoUtils.isFileUrl(url)) {
             return super.lastModified();
         } else {
@@ -124,13 +124,13 @@ public class UrlResource extends AbstractResource implements Resource {
                     if (responseCode == HttpURLConnection.HTTP_OK) {
                         return httpConn.getLastModified();
                     } else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-                        throw new FileNotFoundException(getDescription() + " not found: " +
+                        throw new FileNotFoundRuntimeException(getDescription() + " not found: " +
                                 "responseCode=" + responseCode + ", usingProxy=" + httpConn.usingProxy());
                     } else if (responseCode / 100 == 4) {
-                        throw new IOException(getDescription() + " is not accessible: " +
+                        throw new IoRuntimeException(getDescription() + " is not accessible: " +
                                 "responseCode=" + responseCode + ", usingProxy=" + httpConn.usingProxy());
                     } else if (responseCode / 100 == 5) {
-                        throw new IOException(getDescription() + " is not available: " +
+                        throw new IoRuntimeException(getDescription() + " is not available: " +
                                 "responseCode=" + responseCode + ", usingProxy=" + httpConn.usingProxy());
                     } else {
                         return 0; // TODO should we fail?
@@ -138,6 +138,8 @@ public class UrlResource extends AbstractResource implements Resource {
                 } else {
                     return super.lastModified();
                 }
+            } catch (IOException e) {
+                throw IoRuntimeException.propagate(e);
             } finally {
                 IoUtils.closeQuietly(conn);
             }
@@ -160,14 +162,15 @@ public class UrlResource extends AbstractResource implements Resource {
 
     @Nonnull
     @Override
-    public InputStream getInputStream() throws IOException {
-        URLConnection cnn = url.openConnection();
-        configureUrlConnection(cnn);
+    public InputStream getInputStream() throws IoRuntimeException {
+        URLConnection cnn = null;
         try {
+            cnn = url.openConnection();
+            configureUrlConnection(cnn);
             return cnn.getInputStream();
         } catch (IOException e) {
             IoUtils.closeQuietly(cnn);
-            throw e;
+            throw IoRuntimeException.propagate(e);
         }
     }
 

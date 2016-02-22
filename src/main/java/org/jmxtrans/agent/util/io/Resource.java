@@ -23,9 +23,7 @@
 package org.jmxtrans.agent.util.io;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
 
@@ -41,10 +39,10 @@ public interface Resource {
      * Return an {@link InputStream}.
      * <p>It is expected that each call creates a <i>fresh</i> stream.
      * @return the input stream for the underlying resource (must not be {@code null})
-     * @throws IOException if the stream could not be opened
+     * @throws IoRuntimeException if the stream could not be opened
      */
     @Nonnull
-    InputStream getInputStream() throws IOException;
+    InputStream getInputStream() throws IoRuntimeException;
 
     /**
      * Return whether this resource actually exists in physical form.
@@ -56,34 +54,34 @@ public interface Resource {
 
     /**
      * Return a URL handle for this resource.
-     * @throws IOException if the resource cannot be resolved as URL,
+     * @throws IoRuntimeException if the resource cannot be resolved as URL,
      * i.e. if the resource is not available as descriptor
      */
     @Nonnull
-    URL getURL() throws IOException;
+    URL getURL() throws IoRuntimeException;
 
     /**
      * Return a URI handle for this resource.
-     * @throws IOException if the resource cannot be resolved as URI,
+     * @throws IoRuntimeException if the resource cannot be resolved as URI,
      * i.e. if the resource is not available as descriptor
      */
     @Nonnull
-    URI getURI() throws IOException;
+    URI getURI() throws IoRuntimeException;
 
     /**
      * Return a File handle for this resource.
-     * @throws IOException if the resource cannot be resolved as absolute
+     * @throws IoRuntimeException if the resource cannot be resolved as absolute
      * file path, i.e. if the resource is not available in a file system
      */
     @Nonnull
-    File getFile() throws IOException;
+    File getFile() throws IoRuntimeException;
 
     /**
      * Determine the last-modified timestamp for this resource.
-     * @throws IOException if the resource cannot be resolved
+     * @throws IoRuntimeException if the resource cannot be resolved
      * (in the file system or as some other known physical resource type)
      */
-    long lastModified() throws IOException;
+    long lastModified() throws IoRuntimeException;
 
     /**
      * Return a description for this resource,
