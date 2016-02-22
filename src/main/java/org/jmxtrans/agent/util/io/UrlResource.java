@@ -71,7 +71,7 @@ public class UrlResource extends AbstractResource implements Resource {
 
     @Nonnull
     @Override
-    public File getFile() throws IoRuntimeException {
+    public File getFile() {
         if (IoUtils.isFileUrl(url)) {
             return new File(uri);
         } else {
@@ -114,7 +114,7 @@ public class UrlResource extends AbstractResource implements Resource {
     }
 
     @Override
-    public long lastModified() throws IoRuntimeException {
+    public long lastModified() {
         if (IoUtils.isFileUrl(url)) {
             return super.lastModified();
         } else {
@@ -172,7 +172,7 @@ public class UrlResource extends AbstractResource implements Resource {
 
     @Nonnull
     @Override
-    public InputStream getInputStream() throws IoRuntimeException {
+    public InputStream getInputStream() {
         URLConnection cnn = null;
         try {
             cnn = url.openConnection();

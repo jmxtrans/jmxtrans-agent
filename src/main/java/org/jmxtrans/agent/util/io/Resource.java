@@ -42,7 +42,7 @@ public interface Resource {
      * @throws IoRuntimeException if the stream could not be opened
      */
     @Nonnull
-    InputStream getInputStream() throws IoRuntimeException;
+    InputStream getInputStream();
 
     /**
      * Return whether this resource actually exists in physical form.
@@ -58,7 +58,7 @@ public interface Resource {
      * i.e. if the resource is not available as descriptor
      */
     @Nonnull
-    URL getURL() throws IoRuntimeException;
+    URL getURL();
 
     /**
      * Return a URI handle for this resource.
@@ -66,7 +66,7 @@ public interface Resource {
      * i.e. if the resource is not available as descriptor
      */
     @Nonnull
-    URI getURI() throws IoRuntimeException;
+    URI getURI();
 
     /**
      * Return a File handle for this resource.
@@ -74,14 +74,14 @@ public interface Resource {
      * file path, i.e. if the resource is not available in a file system
      */
     @Nonnull
-    File getFile() throws IoRuntimeException;
+    File getFile();
 
     /**
      * Determine the last-modified timestamp for this resource.
      * @throws IoRuntimeException if the resource cannot be resolved
      * (in the file system or as some other known physical resource type)
      */
-    long lastModified() throws IoRuntimeException;
+    long lastModified();
 
     /**
      * Return a description for this resource,

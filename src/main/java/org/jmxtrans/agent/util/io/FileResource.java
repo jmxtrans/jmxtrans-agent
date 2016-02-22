@@ -59,13 +59,13 @@ public class FileResource extends AbstractResource implements Resource {
 
     @Nonnull
     @Override
-    public File getFile() throws IoRuntimeException {
+    public File getFile() {
         return this.file;
     }
 
     @Nonnull
     @Override
-    public InputStream getInputStream() throws IoRuntimeException {
+    public InputStream getInputStream() {
         try {
             return new FileInputStream(this.getFile());
         } catch (FileNotFoundException e) {
@@ -75,7 +75,7 @@ public class FileResource extends AbstractResource implements Resource {
 
     @Nonnull
     @Override
-    public URL getURL() throws IoRuntimeException {
+    public URL getURL() {
         try {
             return getURI().toURL();
         } catch (MalformedURLException e) {
@@ -85,7 +85,7 @@ public class FileResource extends AbstractResource implements Resource {
 
     @Nonnull
     @Override
-    public URI getURI() throws IoRuntimeException {
+    public URI getURI() {
         return getFile().toURI();
     }
 
