@@ -24,6 +24,7 @@
 package org.jmxtrans.agent.util.io;
 
 import org.jmxtrans.agent.util.Preconditions2;
+import org.jmxtrans.agent.util.logging.Logger;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -36,6 +37,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 import javax.annotation.Nonnull;
 
@@ -45,6 +47,8 @@ import javax.annotation.Nonnull;
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public class UrlResource extends AbstractResource implements Resource {
+    protected final Logger logger = Logger.getLogger(getClass().getName());
+
     private final URL url;
     private final URI uri;
 
@@ -126,6 +130,12 @@ public class UrlResource extends AbstractResource implements Resource {
                     } else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
                         throw new FileNotFoundRuntimeException(getDescription() + " not found: " +
                                 "responseCode=" + responseCode + ", usingProxy=" + httpConn.usingProxy());
+                    } else if ((responseCode / 100 == 2) || (responseCode / 100 == 3)) {
+                        long lastModified = httpConn.getLastModified();
+                        if (logger.isLoggable(Level.FINER)) {
+                            logger.finer(getDescription() + " returned an unexpected '" + responseCode + " " + httpConn.getResponseMessage() + "'. lastModified=" + lastModified);
+                        }
+                        return lastModified;
                     } else if (responseCode / 100 == 4) {
                         throw new IoRuntimeException(getDescription() + " is not accessible: " +
                                 "responseCode=" + responseCode + ", usingProxy=" + httpConn.usingProxy());
@@ -133,7 +143,7 @@ public class UrlResource extends AbstractResource implements Resource {
                         throw new IoRuntimeException(getDescription() + " is not available: " +
                                 "responseCode=" + responseCode + ", usingProxy=" + httpConn.usingProxy());
                     } else {
-                        return 0; // TODO should we fail?
+                        throw new IoRuntimeException(getDescription() + "returned an unexpected " + responseCode + " " + httpConn.getResponseMessage());
                     }
                 } else {
                     return super.lastModified();
