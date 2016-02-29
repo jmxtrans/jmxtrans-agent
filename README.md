@@ -111,6 +111,45 @@ Use `position` to specify the value to lookup. Position is `0 based.
 myMBean.myMultiValuedAttributeValue_0`
 ```
 
+## Additional Configuration
+
+### Dynamic configuration reloading
+The configuration can be dynamically reloaded at runtime. To enable this feature, enable it with the `reloadConfigurationCheckIntervalInSeconds` element, e.g.:
+
+```xml
+<reloadConfigurationCheckIntervalInSeconds>60</reloadConfigurationCheckIntervalInSeconds>
+```
+
+### Collection interval
+
+The interval for collecting data using the specified queries and invocations can be specified with the element `collectIntervalInSeconds`, e.g.:
+
+```xml
+<collectIntervalInSeconds>20</collectIntervalInSeconds>
+```
+
+The collect interval can be overridden for a specific query or invocation by setting the `collectIntervalInSeconds` attribute, e.g.:
+
+```xml
+<query objectName="java.lang:type=Threading" attributes="ThreadCount,TotalStartedThreadCount"
+   resultAlias="jvm.threads.#attribute#" collectIntervalInSeconds="5"/>
+```
+
+### ResultNameStrategy
+
+The `ResultNameStrategy` is the component in charge of building the metric name. The default implementation uses the `resultAlias`  if provided
+and otherwise will build the metric name using the `ObjectName`.
+
+You can use your own implementation for the `ResultNameStrategy`
+
+```xml
+<resultNameStrategy class="com.mycompany.jmxtrans.agent.MyResultNameStrategyImpl">
+   <attrA>valA</attrA>
+   <atttrB>valB</atttrB>
+</resultNameStrategy>
+```
+
+You then have to make this implementation available in the classpath (adding it the the jmxtrans-agent jar, adding it to the boot classpath ...)
 
 ## Sample configuration file
 
@@ -176,6 +215,7 @@ Out of the box output writers
   * `host`: Graphite Carbon listener host
   * `port`: Graphite Carbon Plain Text TCP listener port. Optional, default value `2003`
   * `namePrefix`; prefix of the metric name. Optional, default values `servers.#hostname#.` where `#hostname#` is the auto discovered hostname of computer with `.` escaped as `_` (`InetAddress.getLocalHost().getHostName()`).
+* [GraphiteUdpOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/GraphiteUdpOutputWriter.java): output to Graphite Carbon plain text protocol on UDP. Supports the same configuration parameters as the GraphitePlainTextTcpOutputWriter
 * [FileOverwriterOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/FileOverwriterOutputWriter.java): store the last collection of metrics in a file. Configuration parameters:
   * `fileName`: name of the file in which the collected metrics are stored. Optional, default value `jmxtrans-agent.data` (in JVM working dir, for example `$TOMCAT_HOME/bin`)
   * `showTimeStamp`: true or false value that determines if the time stamp is printed with the lines.  Optional tag, default is `false.
@@ -248,25 +288,10 @@ tomcat.bytesReceived 0
 application.activeSessions 0
 ```
 
-## ResultNameStrategy
-
-The `ResultNameStrategy` is the component in charge of building the metric name. The default implementation uses the `resultAlias`  if provided
-and otherwise will build the metric name using the `ObjectName`.
-
-You can use your own implementation for the `ResultNameStrategy`
-
-```xml
-<resultNameStrategy class="com.mycompany.jmxtrans.agent.MyResultNameStrategyImpl">
-   <attrA>valA</attrA>
-   <atttrB>valB</atttrB>
-</resultNameStrategy>
-```
-
-You then have to make this implementation available in the classpath (adding it the the jmxtrans-agent jar, adding it to the boot classpath ...)
 
 # Relase Notes
 
-* [Milestones history](https://github.com/jmxtrans/jmxtrans-agent/issues/milestones?state=closed)
+* [Milestones history](https://github.com/jmxtrans/jmxtrans-agent/milestones?state=closed)
 * [Releases](https://github.com/jmxtrans/jmxtrans-agent/releases)
 
 # Sample ActiveMQ Configuration
