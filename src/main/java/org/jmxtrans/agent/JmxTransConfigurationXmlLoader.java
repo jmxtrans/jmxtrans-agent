@@ -23,6 +23,7 @@
  */
 package org.jmxtrans.agent;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,7 +38,9 @@ import org.jmxtrans.agent.properties.NoPropertiesSourcePropertiesLoader;
 import org.jmxtrans.agent.properties.PropertiesLoader;
 import org.jmxtrans.agent.util.Preconditions2;
 import org.jmxtrans.agent.util.PropertyPlaceholderResolver;
+import org.jmxtrans.agent.util.io.IoRuntimeException;
 import org.jmxtrans.agent.util.io.IoUtils;
+import org.jmxtrans.agent.util.io.Resource;
 import org.jmxtrans.agent.util.logging.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -56,12 +59,12 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
     private static final Pattern ATTRIBUTE_SPLIT_PATTERN = Pattern.compile("\\s*,\\s*");
     private Logger logger = Logger.getLogger(getClass().getName());
     private final PropertiesLoader propertiesLoader;
-    
-    @Nonnull
-    private final String configurationFilePath;
 
-    public JmxTransConfigurationXmlLoader(@Nonnull String configurationFilePath, PropertiesLoader propertiesLoader) {
-        this.configurationFilePath = Preconditions2.checkNotNull(configurationFilePath, "configurationFilePath can not be null");
+    @Nonnull
+    private final Resource configurationResource;
+
+    public JmxTransConfigurationXmlLoader(@Nonnull Resource configurationResource, PropertiesLoader propertiesLoader) {
+        this.configurationResource = Preconditions2.checkNotNull(configurationResource, "configurationResource can not be null");
         this.propertiesLoader = propertiesLoader;
     }
 
@@ -69,18 +72,22 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
      * Creates a JmxTransExporterBuilder with a PropertyLoader that does not use an
      * external properties source.
      */
-    public JmxTransConfigurationXmlLoader(@Nonnull String configurationFilePath) {
-        this(configurationFilePath, new NoPropertiesSourcePropertiesLoader());
+    public JmxTransConfigurationXmlLoader(@Nonnull Resource configurationResource) {
+        this(configurationResource, new NoPropertiesSourcePropertiesLoader());
     }
 
     @Override
     public JmxTransExporterConfiguration loadConfiguration() {
-        return build(IoUtils.getFileAsDocument(configurationFilePath));
+        return build(IoUtils.getFileAsDocument(configurationResource));
     }
 
     @Override
     public long lastModified() {
-        return IoUtils.getFileLastModificationDate(configurationFilePath);
+        try {
+            return configurationResource.lastModified();
+        } catch (IoRuntimeException e) {
+            return 0L;
+        }
     }
 
     protected JmxTransExporterConfiguration build(Document document) {
@@ -144,7 +151,7 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
                 try {
                     return Integer.parseInt(lastStringValue);
                 } catch (NumberFormatException e) {
-                    throw new IllegalStateException("Invalid <" + elementName +"> value '" + lastStringValue + "', integer expected", e);
+                    throw new IllegalStateException("Invalid <" + elementName + "> value '" + lastStringValue + "', integer expected", e);
                 }
         }
     }
@@ -182,8 +189,8 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
         if (!attribute.isEmpty()) {
             return Collections.singletonList(attribute);
         } else {
-           String[] splitAttributes = ATTRIBUTE_SPLIT_PATTERN.split(attributes);
-           return Arrays.asList(splitAttributes);
+            String[] splitAttributes = ATTRIBUTE_SPLIT_PATTERN.split(attributes);
+            return Arrays.asList(splitAttributes);
         }
     }
 
@@ -297,7 +304,7 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
     @Override
     public String toString() {
         return "JmxTransConfigurationXmlLoader{" +
-                "configurationFilePath='" + configurationFilePath + '\'' +
+                "configurationResource='" + configurationResource + '\'' +
                 '}';
     }
 }

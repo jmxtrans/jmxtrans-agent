@@ -19,58 +19,63 @@
  * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
+
 package org.jmxtrans.agent.util.io;
 
-import java.io.FileNotFoundException;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+
+import javax.annotation.Nonnull;
 
 /**
+ * {@link Resource} for {@code classpath://} path.
+ *
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class IoRuntimeException extends RuntimeException {
+public class ClasspathResource extends AbstractResource implements Resource {
 
-    private static final long serialVersionUID = 1L;
+    private final String path;
 
-    /**
-     * This method returns an instance {@link IoRuntimeException}.
-     *
-     * Inspired by {@code com.google.common.base.Throwables#propagate(java.lang.Throwable)}.
-     * <pre>
-     *     try {
-     *         ...
-     *     } catch (IOException e) {
-     *         throw IoRuntimeException.propagate(e);
-     *     }
-     * </pre>
-     * @param e
-     */
-    public static IoRuntimeException propagate(IOException e) {
-        if (e instanceof FileNotFoundException) {
-            return new FileNotFoundRuntimeException(e);
-        } else {
-            return new IoRuntimeException(e);
+    private final transient ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+
+    public ClasspathResource(@Nonnull String path) {
+        if(path.startsWith("classpath://")) {
+            path = path.substring("classpath://".length());
+        } else if (path.startsWith("classpath")){
+            path = path.substring("classpath:".length());
         }
+        this.path = path;
     }
 
-    public IoRuntimeException() {
-        super();
+
+    @Override
+    public boolean exists() {
+        return classLoader.getResource(path) != null;
     }
 
-    public IoRuntimeException(String message) {
-        super(message);
+    @Nonnull
+    @Override
+    public URL getURL() {
+        return classLoader.getResource(path);
     }
 
-    public IoRuntimeException(String message, Throwable cause) {
-        super(message, cause);
+    @Nonnull
+    @Override
+    public File getFile() {
+        return new File(getURI());
     }
 
-    protected IoRuntimeException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
+    @Nonnull
+    @Override
+    public InputStream getInputStream() {
+        return classLoader.getResourceAsStream(path);
     }
 
-    public IoRuntimeException(Throwable cause) {
-        super(cause);
+    @Override
+    public String getDescription() {
+        return "Classpath resource: " + path;
     }
 }

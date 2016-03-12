@@ -19,58 +19,33 @@
  * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
-package org.jmxtrans.agent.util.io;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+package org.jmxtrans.agent.util.io;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class IoRuntimeException extends RuntimeException {
+public class FileNotFoundRuntimeException extends IoRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * This method returns an instance {@link IoRuntimeException}.
-     *
-     * Inspired by {@code com.google.common.base.Throwables#propagate(java.lang.Throwable)}.
-     * <pre>
-     *     try {
-     *         ...
-     *     } catch (IOException e) {
-     *         throw IoRuntimeException.propagate(e);
-     *     }
-     * </pre>
-     * @param e
-     */
-    public static IoRuntimeException propagate(IOException e) {
-        if (e instanceof FileNotFoundException) {
-            return new FileNotFoundRuntimeException(e);
-        } else {
-            return new IoRuntimeException(e);
-        }
+    public FileNotFoundRuntimeException() {
     }
 
-    public IoRuntimeException() {
-        super();
-    }
-
-    public IoRuntimeException(String message) {
+    public FileNotFoundRuntimeException(String message) {
         super(message);
     }
 
-    public IoRuntimeException(String message, Throwable cause) {
+    public FileNotFoundRuntimeException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    protected IoRuntimeException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public FileNotFoundRuntimeException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public IoRuntimeException(Throwable cause) {
+    public FileNotFoundRuntimeException(Throwable cause) {
         super(cause);
     }
 }

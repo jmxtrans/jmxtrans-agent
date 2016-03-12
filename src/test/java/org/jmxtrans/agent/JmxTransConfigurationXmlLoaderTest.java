@@ -27,6 +27,7 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import org.jmxtrans.agent.properties.PropertiesLoader;
+import org.jmxtrans.agent.util.io.ResourceFactory;
 import org.junit.Test;
 
 import javax.management.ObjectName;
@@ -41,7 +42,7 @@ public class JmxTransConfigurationXmlLoaderTest {
 
     @Test
     public void testParseConfiguration() throws Exception {
-        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-agent.xml").loadConfiguration();
+        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader(ResourceFactory.newResource("classpath:jmxtrans-agent.xml")).loadConfiguration();
 
         assertThat(config.collectInterval, is(11));
         assertThat(config.collectIntervalTimeUnit, is(TimeUnit.SECONDS));
@@ -89,7 +90,7 @@ public class JmxTransConfigurationXmlLoaderTest {
 
     @Test
     public void testParseConfiguration2() throws Exception {
-        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-agent-2.xml").loadConfiguration();
+        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader(ResourceFactory.newResource("classpath:jmxtrans-agent-2.xml")).loadConfiguration();
 
         assertThat(config.collectInterval, is(12));
         assertThat(config.collectIntervalTimeUnit, is(TimeUnit.SECONDS));
@@ -147,7 +148,7 @@ public class JmxTransConfigurationXmlLoaderTest {
 
     @Test
     public void testParseConfigurationMultipleAttributes() throws Exception {
-        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-multiple-attributes-test.xml").loadConfiguration();
+        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader(ResourceFactory.newResource("classpath:jmxtrans-multiple-attributes-test.xml")).loadConfiguration();
         assertThat(config.queries, hasSize(1));
         Query query = config.queries.get(0);
         assertThat(query.getAttributes(), contains("ThreadCount", "TotalStartedThreadCount"));
@@ -155,7 +156,7 @@ public class JmxTransConfigurationXmlLoaderTest {
 
     @Test
     public void testNoAttributesSpecifiedGeneratesWildcardQuery() throws Exception {
-        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-no-attributes-specified-generates-wildcard-query-test.xml").loadConfiguration();
+        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader(ResourceFactory.newResource("classpath:jmxtrans-no-attributes-specified-generates-wildcard-query-test.xml")).loadConfiguration();
         assertThat(config.queries, hasSize(1));
         Query query = config.queries.get(0);
         assertThat(query.getAttributes(), emptyIterable());
@@ -163,12 +164,12 @@ public class JmxTransConfigurationXmlLoaderTest {
 
     @Test(expected=IllegalArgumentException.class)
     public void testParseConfigurationAttributeAndAttributesMutuallyExclusive() throws Exception {
-        new JmxTransConfigurationXmlLoader("classpath:jmxtrans-attribute-attributes-exclusive-test.xml").loadConfiguration();
+        new JmxTransConfigurationXmlLoader(ResourceFactory.newResource("classpath:jmxtrans-attribute-attributes-exclusive-test.xml")).loadConfiguration();
     }
     
     @Test
     public void testParseConfigReload() throws Exception {
-        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-config-reload-test.xml").loadConfiguration();
+        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader(ResourceFactory.newResource("classpath:jmxtrans-config-reload-test.xml")).loadConfiguration();
         assertThat(config.getConfigReloadInterval(), equalTo(2));
         
     }
@@ -184,7 +185,7 @@ public class JmxTransConfigurationXmlLoaderTest {
                 return m;
             }
         };
-        JmxTransConfigurationXmlLoader configLoader = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-external-properties-test.xml", propertiesLoader);
+        JmxTransConfigurationXmlLoader configLoader = new JmxTransConfigurationXmlLoader(ResourceFactory.newResource("classpath:jmxtrans-external-properties-test.xml"), propertiesLoader);
         JmxTransExporterConfiguration config = configLoader.build(configLoader);
         assertThat(config.getCollectInterval(), equalTo(999));
     }
@@ -198,14 +199,14 @@ public class JmxTransConfigurationXmlLoaderTest {
                 throw new RuntimeException("Expected - thrown by test");
             }
         };
-        JmxTransConfigurationXmlLoader configLoader = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-external-properties-test.xml", propertiesLoader);
+        JmxTransConfigurationXmlLoader configLoader = new JmxTransConfigurationXmlLoader(ResourceFactory.newResource("classpath:jmxtrans-external-properties-test.xml"), propertiesLoader);
         JmxTransExporterConfiguration config = configLoader.build(configLoader);
         assertThat(config.getCollectInterval(), equalTo(222));
     }
     
     @Test
     public void collectIntervalOverrideTest() throws Exception {
-        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader("classpath:jmxtrans-collect-interval-override-test.xml").loadConfiguration();
+        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader(ResourceFactory.newResource("classpath:jmxtrans-collect-interval-override-test.xml")).loadConfiguration();
         Map<String, Query> queriesByResultAlias = indexQueriesByResultAlias(config.queries);
         assertThat(queriesByResultAlias.get("a").getCollectIntervalOverrideOrNull(), nullValue());
         assertThat(queriesByResultAlias.get("b").getCollectIntervalOverrideOrNull(), equalTo(3));

@@ -35,10 +35,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Writer;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -138,34 +141,24 @@ public class IoUtils {
     }
 
     @Nonnull
-    public static Document getFileAsDocument(@Nonnull String configurationFilePath) throws IoRuntimeException {
-        if (configurationFilePath == null)
-            throw new IoRuntimeException(new NullPointerException("configurationFilePath cannot be null"));
+    public static Document getFileAsDocument(@Nonnull Resource resource) throws IoRuntimeException {
+        if (resource == null)
+            throw new IoRuntimeException(new NullPointerException("resource cannot be null"));
 
         DocumentBuilder dBuilder;
         try {
             dBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 
-
-            if (configurationFilePath.toLowerCase().startsWith("classpath:")) {
-                String classpathResourcePath = configurationFilePath.substring("classpath:".length());
-                InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(classpathResourcePath);
-                return dBuilder.parse(in);
-            } else if (configurationFilePath.toLowerCase().startsWith("file://") ||
-                    configurationFilePath.toLowerCase().startsWith("http://") ||
-                    configurationFilePath.toLowerCase().startsWith("https://")
-                    ) {
-                URL url = new URL(configurationFilePath);
-                return dBuilder.parse(url.openStream());
-            } else {
-                File xmlFile = new File(configurationFilePath);
-                if (!xmlFile.exists()) {
-                    throw new IllegalArgumentException("Configuration file '" + xmlFile.getAbsolutePath() + "' not found");
-                }
-                return dBuilder.parse(xmlFile);
+            try {
+                File configurationFile = resource.getFile();
+                return dBuilder.parse(configurationFile);
+            } catch(FileNotFoundException e) {
+                return dBuilder.parse(resource.getInputStream());
             }
-        } catch (ParserConfigurationException | SAXException | IOException e) {
+        } catch (ParserConfigurationException | SAXException e) {
             throw new IoRuntimeException(e);
+        } catch (IOException e) {
+            throw IoRuntimeException.propagate(e);
         }
     }
 
@@ -204,6 +197,23 @@ public class IoUtils {
 
     }
 
+    public static boolean isFileUrl(URL url){
+        if (url.getProtocol().equals("file")) {
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+    public static void closeQuietly (URLConnection cnn) {
+        if (cnn == null) {
+            return;
+        } else if (cnn instanceof HttpURLConnection) {
+            ((HttpURLConnection) cnn).disconnect();
+        } else {
+            // do nothing
+        }
+    }
     public static void closeQuietly(Closeable closeable) {
         if (closeable == null)
             return;
@@ -343,6 +353,14 @@ public class IoUtils {
         boolean deleted = destination.delete();
         if (!deleted) {
             logger.warning("Failure to delete file " + destination);
+        }
+    }
+
+    public static void copy(InputStream in, OutputStream out) throws IOException{
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = in.read(buffer)) >= 0) {
+            out.write(buffer, 0,length);
         }
     }
 }

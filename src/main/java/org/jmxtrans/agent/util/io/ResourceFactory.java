@@ -19,58 +19,32 @@
  * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
+
 package org.jmxtrans.agent.util.io;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import org.jmxtrans.agent.util.Preconditions2;
+
+import javax.annotation.Nonnull;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
-public class IoRuntimeException extends RuntimeException {
+public class ResourceFactory {
 
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * This method returns an instance {@link IoRuntimeException}.
-     *
-     * Inspired by {@code com.google.common.base.Throwables#propagate(java.lang.Throwable)}.
-     * <pre>
-     *     try {
-     *         ...
-     *     } catch (IOException e) {
-     *         throw IoRuntimeException.propagate(e);
-     *     }
-     * </pre>
-     * @param e
-     */
-    public static IoRuntimeException propagate(IOException e) {
-        if (e instanceof FileNotFoundException) {
-            return new FileNotFoundRuntimeException(e);
+    @Nonnull
+    public static Resource newResource(@Nonnull String path) {
+        Preconditions2.checkNotNull(path, "Given 'path' cannot be null");
+        if (path.startsWith("classpath:")) {
+            return new ClasspathResource(path);
+        } else if (path.contains("://")) {
+            return new UrlResource(path);
         } else {
-            return new IoRuntimeException(e);
+            return new FileResource(path);
         }
     }
 
-    public IoRuntimeException() {
-        super();
-    }
+    private ResourceFactory() {
 
-    public IoRuntimeException(String message) {
-        super(message);
-    }
-
-    public IoRuntimeException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    protected IoRuntimeException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
-
-    public IoRuntimeException(Throwable cause) {
-        super(cause);
     }
 }
