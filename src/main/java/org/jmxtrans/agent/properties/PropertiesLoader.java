@@ -25,7 +25,8 @@ package org.jmxtrans.agent.properties;
 
 import java.util.Map;
 
-import org.jmxtrans.agent.properties.UrlOrFilePropertiesLoader.FailedToLoadPropertiesException;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 
 /**
  * @author Kristoffer Erlandsson
@@ -35,10 +36,17 @@ public interface PropertiesLoader {
     /**
      * Loads properties.
      * 
-     * @throws FailedToLoadPropertiesException
+     * @throws org.jmxtrans.agent.util.io.IoRuntimeException
      *             if properties file to load.
      * @return A map with property keys and values.
      */
+    @Nonnull
     Map<String, String> loadProperties();
+
+    /**
+     * Properties loader description for better log messages
+     */
+    @CheckForNull
+    String getDescription();
 
 }

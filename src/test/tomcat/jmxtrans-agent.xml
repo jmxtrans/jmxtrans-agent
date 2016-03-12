@@ -36,10 +36,12 @@
   <outputWriter class="org.jmxtrans.agent.GraphitePlainTextTcpOutputWriter">
     <host>localhost</host>
     <port>2003</port>
-    <namePrefix>app_123456.servers.i876543.</namePrefix>
+    <namePrefix>${server-prefix}</namePrefix>
   </outputWriter>
   -->
-  <outputWriter class="org.jmxtrans.agent.ConsoleOutputWriter"/>
+  <outputWriter class="org.jmxtrans.agent.ConsoleOutputWriter">
+    <namePrefix>${server-prefix}</namePrefix>
+  </outputWriter>
   <collectIntervalInSeconds>20</collectIntervalInSeconds>
   <reloadConfigurationCheckIntervalInSeconds>5</reloadConfigurationCheckIntervalInSeconds>
 </jmxtrans-agent>

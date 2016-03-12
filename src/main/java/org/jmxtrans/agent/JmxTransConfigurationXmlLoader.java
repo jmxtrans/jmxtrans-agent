@@ -23,7 +23,6 @@
  */
 package org.jmxtrans.agent;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -93,7 +92,7 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
     protected JmxTransExporterConfiguration build(Document document) {
         Element rootElement = document.getDocumentElement();
 
-        Map<String, String> loadedProperties = loadPropertiesOrEmptyOnError();
+        Map<String, String> loadedProperties = loadPropertiesOrEmptyOnException();
         PropertyPlaceholderResolver resolver = new PropertyPlaceholderResolver(loadedProperties);
         JmxTransExporterConfiguration jmxTransExporterConfiguration = new JmxTransExporterConfiguration(document);
 
@@ -116,7 +115,8 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
         return jmxTransExporterConfiguration;
     }
 
-    private Map<String, String> loadPropertiesOrEmptyOnError() {
+    @Nonnull
+    private Map<String, String> loadPropertiesOrEmptyOnException() {
         try {
             return propertiesLoader.loadProperties();
         } catch (Exception e) {
