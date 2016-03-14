@@ -27,7 +27,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import org.jmxtrans.agent.properties.NoPropertiesSourcePropertiesLoader;
 import org.jmxtrans.agent.properties.PropertiesLoader;
-import org.jmxtrans.agent.properties.PropertiesLoaderImpl;
+import org.jmxtrans.agent.properties.ResourcePropertiesLoader;
 import org.jmxtrans.agent.util.StringUtils2;
 import org.jmxtrans.agent.util.io.Resource;
 import org.jmxtrans.agent.util.io.ResourceFactory;
@@ -113,7 +113,7 @@ public class JmxTransAgent {
         if (StringUtils2.isNullOrEmpty(propertiesFile)) {
             result = new NoPropertiesSourcePropertiesLoader();
         } else {
-            result = new PropertiesLoaderImpl(propertiesFile);
+            result = new ResourcePropertiesLoader(propertiesFile);
         }
         logger.info("PropertiesLoader: " + result.getDescription());
         return result;

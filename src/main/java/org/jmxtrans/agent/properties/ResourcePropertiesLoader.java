@@ -42,27 +42,27 @@ import javax.annotation.Nonnull;
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  * @author Kristoffer Erlandsson
  */
-public class PropertiesLoaderImpl implements PropertiesLoader {
+public class ResourcePropertiesLoader implements PropertiesLoader {
 
-    private final Resource resources;
+    private final Resource resource;
 
-    public PropertiesLoaderImpl(@Nonnull Resource resources) {
-        this.resources = Preconditions2.checkNotNull(resources, "resources");
+    public ResourcePropertiesLoader(@Nonnull Resource resource) {
+        this.resource = Preconditions2.checkNotNull(resource, "resources");
     }
 
-    public PropertiesLoaderImpl(@Nonnull String resourcesPath) {
-        this.resources = ResourceFactory.newResource(resourcesPath);
+    public ResourcePropertiesLoader(@Nonnull String resourcesPath) {
+        this.resource = ResourceFactory.newResource(resourcesPath);
     }
 
     @Override
     public Map<String, String> loadProperties() {
         Properties properties = new Properties();
 
-        InputStream in = resources.getInputStream();
+        InputStream in = resource.getInputStream();
         try {
             properties.load(in);
         } catch (IOException e) {
-            throw new IoRuntimeException("Exception loading properties from " + resources, e);
+            throw new IoRuntimeException("Exception loading properties from " + resource, e);
         }
 
         Map<String, String> result = new HashMap<>(properties.size());
@@ -74,13 +74,13 @@ public class PropertiesLoaderImpl implements PropertiesLoader {
 
     @Override
     public String toString() {
-        return "PropertiesLoaderImpl{" +
-                "resources=" + resources +
+        return "ResourcePropertiesLoader{" +
+                "resource=" + resource +
                 '}';
     }
 
     @Override
     public String getDescription() {
-        return "PropertiesLoader for " + resources.getDescription();
+        return "PropertiesLoader for " + resource.getDescription();
     }
 }

@@ -40,11 +40,11 @@ import org.junit.Test;
 /**
  * @author Kristoffer Erlandsson
  */
-public class PropertiesLoaderImplTest {
+public class ResourcePropertiesLoaderTest {
 
     @Test
     public void loadFromClasspath() throws Exception {
-        PropertiesLoader loader = new PropertiesLoaderImpl("classpath:PropertiesLoaderImplTest.properties");
+        PropertiesLoader loader = new ResourcePropertiesLoader("classpath:ResourcePropertiesLoaderTest.properties");
         Map<String, String> properties = loader.loadProperties();
         assertThat(properties.size(), equalTo(2));
         assertThat(properties, allOf(hasEntry("foo", "bar"), hasEntry("foobar", "baz")));
@@ -53,7 +53,7 @@ public class PropertiesLoaderImplTest {
     @Test
     public void loadFromFileUrl() throws Exception {
         File file = createTempTestFile();
-        PropertiesLoader loader = new PropertiesLoaderImpl("file://" + addSlashIfMissing(file.getAbsolutePath()));
+        PropertiesLoader loader = new ResourcePropertiesLoader("file://" + addSlashIfMissing(file.getAbsolutePath()));
         Map<String, String> properties = loader.loadProperties();
         assertThat(properties.size(), equalTo(1));
         assertThat(properties, hasEntry("test", "testvalue"));
@@ -62,7 +62,7 @@ public class PropertiesLoaderImplTest {
     @Test
     public void loadFromFile() throws Exception {
         File file = createTempTestFile();
-        PropertiesLoader loader = new PropertiesLoaderImpl(addSlashIfMissing(file.getAbsolutePath()));
+        PropertiesLoader loader = new ResourcePropertiesLoader(addSlashIfMissing(file.getAbsolutePath()));
         Map<String, String> properties = loader.loadProperties();
         assertThat(properties.size(), equalTo(1));
         assertThat(properties, hasEntry("test", "testvalue"));
@@ -70,19 +70,19 @@ public class PropertiesLoaderImplTest {
 
     @Test(expected=IoRuntimeException.class)
     public void loadFromUrlNotFound() throws Exception {
-        PropertiesLoader loader = new PropertiesLoaderImpl("file:///zvvfds43423ffDSZVFDSAFSDSDFFDSAFVCX");
+        PropertiesLoader loader = new ResourcePropertiesLoader("file:///zvvfds43423ffDSZVFDSAFSDSDFFDSAFVCX");
         loader.loadProperties();
     }
     
     @Test(expected=IoRuntimeException.class)
     public void loadFromFileNotFound() throws Exception {
-        PropertiesLoader loader = new PropertiesLoaderImpl("/fsdfdsvcvzcfdsjkgljl12341");
+        PropertiesLoader loader = new ResourcePropertiesLoader("/fsdfdsvcvzcfdsjkgljl12341");
         loader.loadProperties();
     }
 
     @Test(expected=IoRuntimeException.class)
     public void loadFromClasspathNotFound() throws Exception {
-        PropertiesLoader loader = new PropertiesLoaderImpl("classpath:fsdfdsvcvzcfdsjkgljl12341");
+        PropertiesLoader loader = new ResourcePropertiesLoader("classpath:fsdfdsvcvzcfdsjkgljl12341");
         loader.loadProperties();
     }
     
