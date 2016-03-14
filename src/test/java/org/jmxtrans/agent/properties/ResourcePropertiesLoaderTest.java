@@ -34,17 +34,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-import org.jmxtrans.agent.properties.UrlOrFilePropertiesLoader.FailedToLoadPropertiesException;
+import org.jmxtrans.agent.util.io.IoRuntimeException;
 import org.junit.Test;
 
 /**
  * @author Kristoffer Erlandsson
  */
-public class UrlOrFilePropertiesLoaderTest {
+public class ResourcePropertiesLoaderTest {
 
     @Test
     public void loadFromClasspath() throws Exception {
-        PropertiesLoader loader = new UrlOrFilePropertiesLoader("classpath:UrlOrFilePropertiesLoaderTest.properties");
+        PropertiesLoader loader = new ResourcePropertiesLoader("classpath:ResourcePropertiesLoaderTest.properties");
         Map<String, String> properties = loader.loadProperties();
         assertThat(properties.size(), equalTo(2));
         assertThat(properties, allOf(hasEntry("foo", "bar"), hasEntry("foobar", "baz")));
@@ -53,7 +53,7 @@ public class UrlOrFilePropertiesLoaderTest {
     @Test
     public void loadFromFileUrl() throws Exception {
         File file = createTempTestFile();
-        PropertiesLoader loader = new UrlOrFilePropertiesLoader("file://" + addSlashIfMissing(file.getAbsolutePath()));
+        PropertiesLoader loader = new ResourcePropertiesLoader("file://" + addSlashIfMissing(file.getAbsolutePath()));
         Map<String, String> properties = loader.loadProperties();
         assertThat(properties.size(), equalTo(1));
         assertThat(properties, hasEntry("test", "testvalue"));
@@ -62,27 +62,27 @@ public class UrlOrFilePropertiesLoaderTest {
     @Test
     public void loadFromFile() throws Exception {
         File file = createTempTestFile();
-        PropertiesLoader loader = new UrlOrFilePropertiesLoader(addSlashIfMissing(file.getAbsolutePath()));
+        PropertiesLoader loader = new ResourcePropertiesLoader(addSlashIfMissing(file.getAbsolutePath()));
         Map<String, String> properties = loader.loadProperties();
         assertThat(properties.size(), equalTo(1));
         assertThat(properties, hasEntry("test", "testvalue"));
     }
 
-    @Test(expected=FailedToLoadPropertiesException.class)
+    @Test(expected=IoRuntimeException.class)
     public void loadFromUrlNotFound() throws Exception {
-        PropertiesLoader loader = new UrlOrFilePropertiesLoader("file:///zvvfds43423ffDSZVFDSAFSDSDFFDSAFVCX");
+        PropertiesLoader loader = new ResourcePropertiesLoader("file:///zvvfds43423ffDSZVFDSAFSDSDFFDSAFVCX");
         loader.loadProperties();
     }
     
-    @Test(expected=FailedToLoadPropertiesException.class)
+    @Test(expected=IoRuntimeException.class)
     public void loadFromFileNotFound() throws Exception {
-        PropertiesLoader loader = new UrlOrFilePropertiesLoader("/fsdfdsvcvzcfdsjkgljl12341");
+        PropertiesLoader loader = new ResourcePropertiesLoader("/fsdfdsvcvzcfdsjkgljl12341");
         loader.loadProperties();
     }
 
-    @Test(expected=FailedToLoadPropertiesException.class)
+    @Test(expected=IoRuntimeException.class)
     public void loadFromClasspathNotFound() throws Exception {
-        PropertiesLoader loader = new UrlOrFilePropertiesLoader("classpath:fsdfdsvcvzcfdsjkgljl12341");
+        PropertiesLoader loader = new ResourcePropertiesLoader("classpath:fsdfdsvcvzcfdsjkgljl12341");
         loader.loadProperties();
     }
     

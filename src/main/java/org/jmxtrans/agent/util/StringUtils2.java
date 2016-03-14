@@ -173,4 +173,20 @@ public class StringUtils2 {
             return str.substring(0, max - 3) + "...";
         }
     }
+
+    /**
+     * if the given string is {@code null}, return {@code ""}, else return {@link String#trim()}.
+     *
+     * @param str the string to trim
+     * @return the trimmed string
+     */
+    @Nonnull
+    public static String trimToEmpty(@Nullable String str) {
+        if (str == null) {
+            return "";
+        } else {
+            return str.trim();
+        }
+    }
+
 }

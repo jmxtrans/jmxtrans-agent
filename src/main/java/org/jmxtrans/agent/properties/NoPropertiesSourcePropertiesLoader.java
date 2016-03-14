@@ -40,5 +40,9 @@ public class NoPropertiesSourcePropertiesLoader implements PropertiesLoader {
     public Map<String, String> loadProperties() {
         return new HashMap<>();
     }
-    
+
+    @Override
+    public String getDescription() {
+        return "Empty Properties Loader";
+    }
 }

@@ -23,9 +23,12 @@
  */
 package org.jmxtrans.agent;
 
+import org.jmxtrans.agent.util.StringUtils2;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -33,13 +36,21 @@ import java.util.concurrent.TimeUnit;
  */
 public class ConsoleOutputWriter extends AbstractOutputWriter implements OutputWriter {
 
+    private String metricPathPrefix;
+
+    @Override
+    public void postConstruct(@Nonnull Map<String, String> settings) {
+
+        this.metricPathPrefix = StringUtils2.trimToEmpty(settings.get("namePrefix"));
+    }
+
     @Override
     public void writeQueryResult(@Nonnull String name, @Nullable String type, @Nullable Object value) {
-        System.out.println(name + " " + value + " " + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+        System.out.println(metricPathPrefix + name + " " + value + " " + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
     }
 
     @Override
     public void writeInvocationResult(@Nonnull String invocationName, @Nullable Object value) throws IOException {
-        System.out.println(invocationName + " " + value + " " + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+        System.out.println(metricPathPrefix + invocationName + " " + value + " " + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
     }
 }

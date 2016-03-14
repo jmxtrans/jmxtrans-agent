@@ -27,7 +27,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import org.jmxtrans.agent.properties.NoPropertiesSourcePropertiesLoader;
 import org.jmxtrans.agent.properties.PropertiesLoader;
-import org.jmxtrans.agent.properties.UrlOrFilePropertiesLoader;
+import org.jmxtrans.agent.properties.ResourcePropertiesLoader;
+import org.jmxtrans.agent.util.StringUtils2;
 import org.jmxtrans.agent.util.io.Resource;
 import org.jmxtrans.agent.util.io.ResourceFactory;
 import org.jmxtrans.agent.util.logging.Logger;
@@ -92,7 +93,7 @@ public class JmxTransAgent {
             throw new IllegalStateException(msg);
         }
         try {
-            PropertiesLoader propertiesLoader = creatPropertiesLoader();
+            PropertiesLoader propertiesLoader = createPropertiesLoader();
             Resource configuration = ResourceFactory.newResource(configPath);
             JmxTransConfigurationLoader configurationLoader = new JmxTransConfigurationXmlLoader(configuration, propertiesLoader);
             JmxTransExporter jmxTransExporter = new JmxTransExporter(configurationLoader);
@@ -106,12 +107,16 @@ public class JmxTransAgent {
         }
     }
 
-    private static PropertiesLoader creatPropertiesLoader() {
+    private static PropertiesLoader createPropertiesLoader() {
         String propertiesFile = System.getProperty(PROPERTIES_SYSTEM_PROPERTY_NAME);
-        if (propertiesFile != null) {
-            return new UrlOrFilePropertiesLoader(propertiesFile);
+        PropertiesLoader result;
+        if (StringUtils2.isNullOrEmpty(propertiesFile)) {
+            result = new NoPropertiesSourcePropertiesLoader();
+        } else {
+            result = new ResourcePropertiesLoader(propertiesFile);
         }
-        return new NoPropertiesSourcePropertiesLoader();
+        logger.info("PropertiesLoader: " + result.getDescription());
+        return result;
     }
 
     public static void dumpDiagnosticInfo() {

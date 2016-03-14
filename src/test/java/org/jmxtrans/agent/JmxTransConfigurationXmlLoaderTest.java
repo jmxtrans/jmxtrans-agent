@@ -184,6 +184,11 @@ public class JmxTransConfigurationXmlLoaderTest {
                 m.put("jmxtrans.agent.collect.interval", "999");
                 return m;
             }
+
+            @Override
+            public String getDescription() {
+                return "Test loader";
+            }
         };
         JmxTransConfigurationXmlLoader configLoader = new JmxTransConfigurationXmlLoader(ResourceFactory.newResource("classpath:jmxtrans-external-properties-test.xml"), propertiesLoader);
         JmxTransExporterConfiguration config = configLoader.build(configLoader);
@@ -197,6 +202,11 @@ public class JmxTransConfigurationXmlLoaderTest {
             @Override
             public Map<String, String> loadProperties() {
                 throw new RuntimeException("Expected - thrown by test");
+            }
+
+            @Override
+            public String getDescription() {
+                return "Test loader";
             }
         };
         JmxTransConfigurationXmlLoader configLoader = new JmxTransConfigurationXmlLoader(ResourceFactory.newResource("classpath:jmxtrans-external-properties-test.xml"), propertiesLoader);

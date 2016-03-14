@@ -71,7 +71,11 @@ public class ClasspathResource extends AbstractResource implements Resource {
     @Nonnull
     @Override
     public InputStream getInputStream() {
-        return classLoader.getResourceAsStream(path);
+        InputStream resourceAsStream = classLoader.getResourceAsStream(path);
+        if (resourceAsStream == null) {
+            throw new FileNotFoundRuntimeException(this.toString());
+        }
+        return resourceAsStream;
     }
 
     @Override
