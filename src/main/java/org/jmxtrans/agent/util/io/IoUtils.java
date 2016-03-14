@@ -152,7 +152,7 @@ public class IoUtils {
             try {
                 File configurationFile = resource.getFile();
                 return dBuilder.parse(configurationFile);
-            } catch(FileNotFoundException e) {
+            } catch(FileNotFoundRuntimeException e) {
                 return dBuilder.parse(resource.getInputStream());
             }
         } catch (ParserConfigurationException | SAXException e) {
