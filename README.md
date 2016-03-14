@@ -37,7 +37,7 @@ java -Djmxtrans.agent.premain.delay=30
 
 To select which attributes to collect, use the `attribute` or `attributes` attribute on the `query` element. `attribute` accepts a
 single attribute while `attributes` accepts a comma-separated list of attributes to collect. If you do not specify any attributes, all attributes
-of the MBean will be dynamically discovered and collected. Use the expression language `#attribute#` in the `resultAlias`
+of the MBean will be dynamically discovered and collected. Use the [expression language](https://github.com/jmxtrans/jmxtrans-agent/wiki/Expression-Language) `#attribute#` in the `resultAlias`
 to use the attribute name in the metric name when collecting many attributes.
 
 Example - collect the `ThreadCount` attribute from the Threading MBean:
@@ -82,7 +82,7 @@ Use `key` to specify the key of the CompositeData. See `javax.management.openmbe
 ```
 
 * You can collect all the keys of the composite data omitting `key` in the `<query />` declaration.
-* Use the expression language `#key#` (or its synonym `#compositeDataKey#`) in the `resultAlias` to use the composite data key in the metric name. Sample:
+* Use the [expression language](https://github.com/jmxtrans/jmxtrans-agent/wiki/Expression-Language) `#key#` (or its synonym `#compositeDataKey#`) in the `resultAlias` to use the composite data key in the metric name. Sample:
 
 ```xml
  <query objectName="java.lang:type=Memory" attribute="HeapMemoryUsage" resultAlias="jvm.heapMemoryUsage.#key#"/>
@@ -99,7 +99,7 @@ Use `position` to specify the value to lookup. Position is `0 based.
 
 * `position` is 0 based
 * You can collect all the entries of the multi-valued data omitting `position` in the `<query />` declaration.
-* Use the expression language `#position#` in the `resultAlias` to use the multi-valued data position in the metric name. Sample:
+* Use the [expression language](https://github.com/jmxtrans/jmxtrans-agent/wiki/Expression-Language) `#position#` in the `resultAlias` to use the multi-valued data position in the metric name. Sample:
 
        ```xml
  <query objectName="MyApp:type=MyMBean" attribute="MyMultiValuedAttribute" resultAlias="myMBean.myMultiValuedAttributeValue"/>
@@ -232,7 +232,7 @@ Out of the box output writers
   * `metricName`: metric name prefix. Optional, default value is machine hostname or IP (all `.` are scaped as `_`).
   * `bufferSize`: max buffer size. Holds data to be sent. Optional, default value is 1024.
 
-Output writers configuration support  an expression language based on property placeholders with the `{prop-name[:default-value]}` syntax (e.g. "`${graphite.host:2003}`").
+Output writers configuration support an [expression language](https://github.com/jmxtrans/jmxtrans-agent/wiki/Expression-Language) based on property placeholders with the `{prop-name[:default-value]}` syntax (e.g. "`${graphite.host:2003}`").
 
 The `default-value` is optional. An exception is raised if no default value is defined and the property placeholder is not found.
 
