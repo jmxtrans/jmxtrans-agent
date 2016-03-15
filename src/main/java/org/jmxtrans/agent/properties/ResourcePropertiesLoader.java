@@ -58,8 +58,7 @@ public class ResourcePropertiesLoader implements PropertiesLoader {
     public Map<String, String> loadProperties() {
         Properties properties = new Properties();
 
-        InputStream in = resource.getInputStream();
-        try {
+        try (InputStream in = resource.getInputStream()) {
             properties.load(in);
         } catch (IOException e) {
             throw new IoRuntimeException("Exception loading properties from " + resource, e);

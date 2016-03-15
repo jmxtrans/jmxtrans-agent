@@ -153,7 +153,9 @@ public class IoUtils {
                 File configurationFile = resource.getFile();
                 return dBuilder.parse(configurationFile);
             } catch(FileNotFoundRuntimeException e) {
-                return dBuilder.parse(resource.getInputStream());
+                try (InputStream in = resource.getInputStream()) {
+                	return dBuilder.parse(in);
+                }
             }
         } catch (ParserConfigurationException | SAXException e) {
             throw new IoRuntimeException(e);

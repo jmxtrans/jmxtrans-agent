@@ -86,9 +86,9 @@ public abstract class AbstractResource  implements Resource {
         catch (IoRuntimeException ex) {
             // Fall back to stream existence: can we open the stream?
             try {
-                InputStream is = getInputStream();
-                is.close();
-                return true;
+                try (InputStream is = getInputStream()) {
+                	return true;
+                }
             }
             catch (Throwable isEx) {
                 return false;
