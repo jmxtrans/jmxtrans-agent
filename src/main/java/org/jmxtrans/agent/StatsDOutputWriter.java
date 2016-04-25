@@ -110,14 +110,15 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
 
     @Override
     public synchronized void writeQueryResult(String metricName, String metricType, Object value) throws IOException {
-        String stats = metricNamePrefix + "." + metricName + ":" + value + "|c\n";
+        String type = "gauge".equalsIgnoreCase(metricType) || "g".equalsIgnoreCase(metricType) ? "g" : "c";
+        String stats = metricNamePrefix + "." + metricName + ":" + value + "|" + type + "\n";
         if (logger.isLoggable(getDebugLevel())) {
             logger.log(getDebugLevel(), "Sending msg: " + stats);
         }
         doSend(stats);
     }
 
-    private synchronized boolean doSend(String stat) {
+    protected synchronized boolean doSend(String stat) {
         try {
             final byte[] data = stat.getBytes("utf-8");
 
