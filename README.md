@@ -102,7 +102,7 @@ Use `position` to specify the value to lookup. Position is `0 based.
 * Use the [expression language](https://github.com/jmxtrans/jmxtrans-agent/wiki/Expression-Language) `#position#` in the `resultAlias` to use the multi-valued data position in the metric name. Sample:
 
        ```xml
- <query objectName="MyApp:type=MyMBean" attribute="MyMultiValuedAttribute" resultAlias="myMBean.myMultiValuedAttributeValue"/>
+ <query objectName="MyApp:type=MyMBean" attribute="MyMultiValuedAttribute" resultAlias="myMBean.myMultiValuedAttributeValue.#position#"/>
 ```
 
 * If no `resultAlias` is specified, the generated metric name is suffixed by `_#position#`. Sample:
@@ -145,7 +145,7 @@ You can use your own implementation for the `ResultNameStrategy`
 ```xml
 <resultNameStrategy class="com.mycompany.jmxtrans.agent.MyResultNameStrategyImpl">
    <attrA>valA</attrA>
-   <atttrB>valB</atttrB>
+   <attrB>valB</attrB>
 </resultNameStrategy>
 ```
 
@@ -200,7 +200,7 @@ Sample `jmxtrans-agent.xml` configuration file for Tomcat:
 </jmxtrans-agent>
 ```
 
-**Note** why xml and not json ? because XML parsing is out of the box in the JVM when json requires additional libraries.
+**Note** why XML and not JSON ? because XML parsing is out of the box in the JVM when JSON requires additional libraries.
 
 
 
@@ -208,7 +208,7 @@ Sample `jmxtrans-agent.xml` configuration file for Tomcat:
 
 OutputWriters are very simple to develop, you just have to extend [AbstractOutputWriter.java](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/AbstractOutputWriter.java) or to implement [OutputWriter.java](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/OutputWriter.java).
 
-Out of the box output writers
+Out of the box output writers:
 
 * [GraphitePlainTextTcpOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/GraphitePlainTextTcpOutputWriter.java): output to Graphite Carbon plain text protocol on TCP. Configuration parameters:
   * `enabled`: to enable/disable the output writer. Optional, default value `true`
@@ -226,7 +226,7 @@ Out of the box output writers
   * `fileName`: name of the file in which the collected metrics are stored. Optional, default value `jmxtrans-agent.data` (in JVM working dir, for example `$TOMCAT_HOME/bin`)
   * `maxFileSize`: Maximum file size in MB before file is rolled. Optional, default is `10`
   * `maxBackupIndex`: Maximum number of files. Optional, default is `5
-* [StatsDOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/StatsDOutputWriter.java): output to StatD. Configuration parameters:
+* [StatsDOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/StatsDOutputWriter.java): output to StatD using the counter metric type. Configuration parameters:
   * `host`: StatsD listener host
   * `port`: StatsD listener port
   * `metricName`: metric name prefix. Optional, default value is machine hostname or IP (all `.` are scaped as `_`).
@@ -289,7 +289,7 @@ application.activeSessions 0
 ```
 
 
-# Relase Notes
+# Release Notes
 
 * [Milestones history](https://github.com/jmxtrans/jmxtrans-agent/milestones?state=closed)
 * [Releases](https://github.com/jmxtrans/jmxtrans-agent/releases)
