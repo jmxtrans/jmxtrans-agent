@@ -25,6 +25,9 @@ public class StatsDOutputWriterIntegrationTest {
             for (int metricIndex = 0; metricIndex < 5; metricIndex++) {
                 writer.writeQueryResult("jmxtrans-agent-test-metric-" + metricIndex, "counter", Integer.valueOf(10 * measureIndex + metricIndex));
             }
+            for (int metricIndex = 0; metricIndex < 5; metricIndex++) {
+                writer.writeQueryResult("jmxtrans-agent-test-metric-" + metricIndex, "gauge", Integer.valueOf(10 * measureIndex + metricIndex));
+            }
         }
 
     }
