@@ -8,7 +8,7 @@ jmxtrans-agent is a version of [jmxtrans](http://jmxtrans.org/) intended to be u
 
 ## Java Agent Declaration
 
-Download [jmxtrans-agent-1.2.0.jar](http://repo1.maven.org/maven2/org/jmxtrans/agent/jmxtrans-agent/1.2.0/jmxtrans-agent-1.2.0.jar)
+Download the [latest release](https://github.com/jmxtrans/jmxtrans-agent/releases/latest) of `jmxtrans-agent-<version>.jar` 
 
 Sample `setenv.sh` for Apache Tomcat
 
@@ -17,7 +17,7 @@ export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.1.0.jar=jmxtra
 ```
 
 * java agent jar path can be relative to the working dir
-* `jmxtrans-agent.xml` is the configuration file, can be classpath relative (`classpath:…`), http(s) (`http(s)://...`) or file system system based (relative to the working dir)
+* `jmxtrans-agent.xml` is the configuration file, can be classpath relative (`classpath:…`), http(s) (`http(s)://...`) or file system based (relative to the working dir)
 
 ### Delayed startup (version >= 1.2.1)
 
