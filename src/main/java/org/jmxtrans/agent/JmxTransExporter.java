@@ -72,6 +72,7 @@ public class JmxTransExporter {
 
     private void loadNewConfiguration() {
         this.config = configLoader.loadConfiguration();
+        logger.finest("Configuration loaded: " + config);
         this.collectors = createTimeTrackingCollectors();
         this.runIntervalMillis = calculateRunIntervalMillis();
     }

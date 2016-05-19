@@ -132,6 +132,7 @@ public class JmxTransExporterConfiguration {
                 ", outputWriter=" + outputWriter +
                 ", collectInterval=" + collectInterval +
                 " " + collectIntervalTimeUnit +
+                ", configReloadInterval=" + configReloadInterval +
                 '}';
     }
 
