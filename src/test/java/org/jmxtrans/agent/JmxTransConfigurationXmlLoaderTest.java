@@ -31,6 +31,8 @@ import org.jmxtrans.agent.util.io.ResourceFactory;
 import org.junit.Test;
 
 import javax.management.ObjectName;
+
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -223,6 +225,14 @@ public class JmxTransConfigurationXmlLoaderTest {
         Map<String, Invocation> invocationsByResultAlias = indexInvocationsByResultAlias(config.invocations);
         assertThat(invocationsByResultAlias.get("c").getCollectIntervalOverrideOrNull(), nullValue());
         assertThat(invocationsByResultAlias.get("d").getCollectIntervalOverrideOrNull(), equalTo(5));
+    }
+
+    @Test
+    public void testExpressionInOutputWriterConfig() throws Exception {
+        JmxTransExporterConfiguration config = new JmxTransConfigurationXmlLoader(ResourceFactory.newResource("classpath:jmxtrans-expression-in-output-writer-test.xml")).loadConfiguration();
+        OutputWriterCircuitBreakerDecorator circuitBreakerDecorator = (OutputWriterCircuitBreakerDecorator) config.outputWriter;
+        GraphitePlainTextTcpOutputWriter writer = (GraphitePlainTextTcpOutputWriter)circuitBreakerDecorator.delegate;
+        assertThat(writer.graphiteServerHostAndPort.getHost(), equalTo(InetAddress.getLocalHost().getHostName()));
     }
     
     Map<String, Query> indexQueriesByResultAlias(Iterable<Query> queries) {

@@ -98,7 +98,18 @@ public class ResultNameStrategyImpl implements ResultNameStrategy {
 
     protected final Logger logger = Logger.getLogger(getClass().getName());
 
-    private ExpressionLanguageEngine expressionLanguageEngine = new ExpressionLanguageEngineImpl();
+    private ExpressionLanguageEngine expressionLanguageEngine;
+
+    /**
+     * Create with default expression language engine.
+     */
+    public ResultNameStrategyImpl() {
+        expressionLanguageEngine = new ExpressionLanguageEngineImpl();
+	}
+
+    public ResultNameStrategyImpl(ExpressionLanguageEngine expressionLanguageEngine) {
+        this.expressionLanguageEngine = expressionLanguageEngine;
+	}
 
     @Nonnull
     @Override

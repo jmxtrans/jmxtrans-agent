@@ -95,7 +95,8 @@ public class JmxTransAgent {
         try {
             PropertiesLoader propertiesLoader = createPropertiesLoader();
             Resource configuration = ResourceFactory.newResource(configPath);
-            JmxTransConfigurationLoader configurationLoader = new JmxTransConfigurationXmlLoader(configuration, propertiesLoader);
+            ExpressionLanguageEngine expressionLanguageEngine = new ExpressionLanguageEngineImpl();
+            JmxTransConfigurationLoader configurationLoader = new JmxTransConfigurationXmlLoader(configuration, propertiesLoader, expressionLanguageEngine);
             JmxTransExporter jmxTransExporter = new JmxTransExporter(configurationLoader);
             //START
             jmxTransExporter.start();

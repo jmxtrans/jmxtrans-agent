@@ -61,19 +61,31 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
 
     @Nonnull
     private final Resource configurationResource;
+    private ExpressionLanguageEngine expressionLanguageEngine;
 
-    public JmxTransConfigurationXmlLoader(@Nonnull Resource configurationResource, PropertiesLoader propertiesLoader) {
+    public JmxTransConfigurationXmlLoader(@Nonnull Resource configurationResource, @Nonnull PropertiesLoader propertiesLoader,
+			@Nonnull ExpressionLanguageEngine expressionLanguageEngine) {
         this.configurationResource = Preconditions2.checkNotNull(configurationResource, "configurationResource can not be null");
-        this.propertiesLoader = propertiesLoader;
+        this.propertiesLoader = Preconditions2.checkNotNull(propertiesLoader, "propertiesLoader can not be null");
+        this.expressionLanguageEngine = Preconditions2.checkNotNull(expressionLanguageEngine, "expressionLanguageEngine can not be null");
     }
 
     /**
      * Creates a JmxTransExporterBuilder with a PropertyLoader that does not use an
      * external properties source.
      */
-    public JmxTransConfigurationXmlLoader(@Nonnull Resource configurationResource) {
-        this(configurationResource, new NoPropertiesSourcePropertiesLoader());
+    JmxTransConfigurationXmlLoader(@Nonnull Resource configurationResource, PropertiesLoader propertiesLoader) {
+        this(configurationResource, propertiesLoader, new ExpressionLanguageEngineImpl());
     }
+
+    /**
+     * Creates a JmxTransExporterBuilder with a PropertyLoader that does not use an
+     * external properties source and uses the default ExpressionLanguageEngine.
+     */
+    JmxTransConfigurationXmlLoader(@Nonnull Resource configurationResource) {
+        this(configurationResource, new NoPropertiesSourcePropertiesLoader(), new ExpressionLanguageEngineImpl());
+    }
+
 
     @Override
     public JmxTransExporterConfiguration loadConfiguration() {
@@ -233,7 +245,7 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
         switch (resultNameStrategyNodeList.getLength()) {
             case 0:
                 // nothing to do, use default value
-                resultNameStrategy = new ResultNameStrategyImpl();
+                resultNameStrategy = new ResultNameStrategyImpl(expressionLanguageEngine);
                 break;
             case 1:
                 Element resultNameStrategyElement = (Element) resultNameStrategyNodeList.item(0);
@@ -278,7 +290,10 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
                 NodeList settingsNodeList = outputWriterElement.getElementsByTagName("*");
                 for (int j = 0; j < settingsNodeList.getLength(); j++) {
                     Element settingElement = (Element) settingsNodeList.item(j);
-                    settings.put(settingElement.getNodeName(), placeholderResolver.resolveString(settingElement.getTextContent()));
+                    String settingText = settingElement.getTextContent();
+                    String settingWithPlaceholdersResolved = placeholderResolver.resolveString(settingText);
+                    String settingWithFunctionsApplied = expressionLanguageEngine.resolveExpression(settingWithPlaceholdersResolved);
+                    settings.put(settingElement.getNodeName(), settingWithFunctionsApplied);
                 }
                 outputWriter = new OutputWriterCircuitBreakerDecorator(outputWriter);
                 outputWriter.postConstruct(settings);
