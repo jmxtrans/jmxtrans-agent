@@ -231,6 +231,16 @@ Out of the box output writers:
   * `port`: StatsD listener port
   * `metricName`: metric name prefix. Optional, default value is machine hostname or IP (all `.` are scaped as `_`).
   * `bufferSize`: max buffer size. Holds data to be sent. Optional, default value is 1024.
+* [InfluxDbOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/influxdb/InfluxDbOutputWriter.java): output to InfluxDb. **This writer is currently experimental** - behavior and options might change. See [InfluxDbOutputWriter Details](#influxdboutputwriter-details) for more details. Configuration parameters:
+  * `url`: url to the influxdb server, e.g. `<url>http://influx.company.com:8086</url>` - required
+  * `database`: name of the database to write to - required
+  * `user`: username for authentication - optional
+  * `password`: password for authentication - optional
+  * `tags`: additional tags to use for all metrics on `n1=v1,n2=v2` format, e.g. `<tags>#hostname#</tags>` - optional
+  * `retentionPolicy`: retention policy to use - optional
+  * `connectTimeoutMillis`: connect timeout for the HTTP connection to influx - optional, defaults to 3000
+  * `readTimeoutMillis`: read timeout for the HTTP connection to influx - optional, defaults to 5000
+  
 
 Output writers configuration support an [expression language](https://github.com/jmxtrans/jmxtrans-agent/wiki/Expression-Language) based on property placeholders with the `{prop-name[:default-value]}` syntax (e.g. "`${graphite.port:2003}`").
 
@@ -241,6 +251,37 @@ Environment variables are looked-up in the following order:
 1. JVM system properties (```System.getProperty("graphite.host")```)
 1. JVM environment variables (```System.getenv("graphite.host")```)
 1. JVM environment variables after a "to-upper-case + dot-to-underscore" transformation (```System.getenv("GRAPHITE_HOST")```)
+
+### InfluxDbOutputWriter Details
+
+**This writer is currently in beta, it might have bugs and the behavior and options might change**.
+
+When using the `InfluxDbOutputWriter`, the queries' `resultAlias` have special semantics. The result alias is a comma-separated list where the first 
+item is the name of the measurement and the rest of the items are tags to add to metrics collected by the query. For example, the query
+
+```xml
+<query objectName="java.lang:type=GarbageCollector,name=*"
+	attributes="CollectionTime,CollectionCount"
+	resultAlias="#attribute#,garbageCollector=%name%,myTag=foo" />
+```
+
+will result in measurements named as the attributes collected (`CollectionTime` and `CollectionCount`).
+The additional tag `garbageCollector` will be added which will correspond to the
+name attribute of the object name. In addition, a tag called `myTag` with value `foo` will be added.
+
+All measurements sent to InfluxDb will have only one field called `value`. Multiple fields are currently not supported.
+
+Example complete output writer configuration:
+```xml
+<outputWriter class="org.jmxtrans.agent.influxdb.InfluxDbOutputWriter">
+	<url>http://localhost:8086</url> 
+	<database>mydb</database>
+	<user>admin</user>
+	<password>shadow</password>
+	<tags>host=#hostname#</tags> 
+</outputWriter>
+```
+
 
 ### Sample of ConsoleOutputWriter
 
