@@ -60,7 +60,7 @@ public class GraphitePlainTextTcpOutputWriterTest {
 		writeTestMetric(graphiteWriter);
 		// Write one metric and verify that it is received
 		writeTestMetric(graphiteWriter);
-		assertEventuallyReceived(tcpLineServer, hasSize(1));
+		assertEventuallyReceived(tcpLineServer, hasSize(greaterThan(1)));
 	}
 
 	private void waitForErrorToBeDetectedByGraphiteWriter(GraphitePlainTextTcpOutputWriter writer) {
