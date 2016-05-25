@@ -37,6 +37,8 @@ import java.util.logging.Level;
 
 import org.jmxtrans.agent.graphite.GraphiteMetricMessageBuilder;
 import org.jmxtrans.agent.util.net.HostAndPort;
+import org.jmxtrans.agent.util.time.Clock;
+import org.jmxtrans.agent.util.time.SystemCurrentTimeMillisClock;
 
 /**
  * Output writer for writing to Graphite using UDP.
@@ -69,7 +71,7 @@ public class GraphiteUdpOutputWriter extends AbstractOutputWriter {
 
     @Override
     public void writeQueryResult(String metricName, String metricType, Object value) throws IOException {
-        String msg = messageBuilder.buildMessage(metricName, value, clock.getCurrentInTimeSeconds());
+        String msg = messageBuilder.buildMessage(metricName, value, TimeUnit.SECONDS.convert(clock.getCurrentTimeMillis(), TimeUnit.MILLISECONDS));
         logMessageIfTraceLoggable(msg);
         tryWriteMsg(msg + "\n");
     }
@@ -140,15 +142,4 @@ public class GraphiteUdpOutputWriter extends AbstractOutputWriter {
         }
     }
 
-    interface Clock {
-        long getCurrentInTimeSeconds();
-    }
-
-    private static class SystemCurrentTimeMillisClock implements Clock {
-
-        @Override
-        public long getCurrentInTimeSeconds() {
-            return TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-        }
-    }
 }

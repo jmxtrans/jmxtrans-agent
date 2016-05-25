@@ -37,7 +37,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.hamcrest.Matcher;
-import org.jmxtrans.agent.GraphiteUdpOutputWriter.Clock;
+import org.jmxtrans.agent.testutils.FixedTimeClock;
+import org.jmxtrans.agent.util.time.Clock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -56,7 +57,7 @@ public class GraphiteUdpOutputWriterTest {
     @Rule
     public UdpServer udpServer = new UdpServer();
 
-    private Clock clock = new FakeClock(1111);
+    private Clock clock = new FixedTimeClock(33000);
 
     private GraphiteUdpOutputWriter writer;
 
@@ -70,7 +71,7 @@ public class GraphiteUdpOutputWriterTest {
     @Test
     public void oneQueryResult() throws Exception {
         writer.writeQueryResult("metric", "type", 1);
-        assertEventuallyReceived(udpServer, contains("foo.metric 1 1111\n"));
+        assertEventuallyReceived(udpServer, contains("foo.metric 1 33\n"));
     }
 
     @Test
@@ -79,13 +80,13 @@ public class GraphiteUdpOutputWriterTest {
         writer.writeQueryResult("metric.2", "type", 2);
         writer.writeQueryResult("metric.3", "type", 3);
         assertEventuallyReceived(udpServer,
-                containsInAnyOrder("foo.metric 1 1111\n", "foo.metric.2 2 1111\n", "foo.metric.3 3 1111\n"));
+                containsInAnyOrder("foo.metric 1 33\n", "foo.metric.2 2 33\n", "foo.metric.3 3 33\n"));
     }
 
     @Test
     public void oneInvocationResult() throws Exception {
         writer.writeInvocationResult("invoke", 123);
-        assertEventuallyReceived(udpServer, contains("foo.invoke 123 1111\n"));
+        assertEventuallyReceived(udpServer, contains("foo.invoke 123 33\n"));
     }
 
     @After
@@ -114,21 +115,6 @@ public class GraphiteUdpOutputWriterTest {
             Thread.sleep(10);
         }
         assertThat(server.getReceivedMessages(), matcher);
-    }
-
-    private static class FakeClock implements Clock {
-
-        private final long constantTime;
-
-        public FakeClock(long constantTime) {
-            this.constantTime = constantTime;
-        }
-
-        @Override
-        public long getCurrentInTimeSeconds() {
-            return constantTime;
-        }
-
     }
 
     private static class UdpServer implements TestRule {
