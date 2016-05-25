@@ -41,6 +41,8 @@ import org.jmxtrans.agent.AbstractOutputWriter;
 import org.jmxtrans.agent.util.ConfigurationUtils;
 import org.jmxtrans.agent.util.io.IoRuntimeException;
 import org.jmxtrans.agent.util.io.IoUtils;
+import org.jmxtrans.agent.util.time.Clock;
+import org.jmxtrans.agent.util.time.SystemCurrentTimeMillisClock;
 
 /**
  * Output writer for InfluxDb.
@@ -139,6 +141,14 @@ public class InfluxDbOutputWriter extends AbstractOutputWriter {
 
     private void sendMetrics(String queryString, String body) throws IOException {
         HttpURLConnection conn = createAndConfigureConnection();
+        try {
+            sendMetrics(body, conn);
+        } finally {
+            IoUtils.closeQuietly(conn);
+        }
+    }
+
+    private void sendMetrics(String body, HttpURLConnection conn) throws IOException {
         writeMetrics(conn, body);
         int responseCode = conn.getResponseCode();
         if (responseCode / 100 != 2) {
@@ -205,18 +215,6 @@ public class InfluxDbOutputWriter extends AbstractOutputWriter {
             }
         }
         return sb.toString();
-    }
-
-    interface Clock {
-        long getCurrentTimeMillis();
-    }
-
-    private static class SystemCurrentTimeMillisClock implements Clock {
-
-        @Override
-        public long getCurrentTimeMillis() {
-            return System.currentTimeMillis();
-        }
     }
 
 }

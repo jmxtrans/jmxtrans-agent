@@ -28,7 +28,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jmxtrans.agent.influxdb.InfluxDbOutputWriter.Clock;
+import org.jmxtrans.agent.testutils.FixedTimeClock;
+import org.jmxtrans.agent.util.time.Clock;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -39,7 +40,7 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
  */
 public class InfluxDbOutputWriterTest {
 
-    private final static long FIXED_TIME = 1234l;
+    private final static Clock FAKE_CLOCK = new FixedTimeClock(1234l);
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(0);
@@ -50,7 +51,7 @@ public class InfluxDbOutputWriterTest {
         s.put("url", "http://localhost:" + wireMockRule.port());
         s.put("database", "test-db");
         stubFor(post(urlPathEqualTo("/write")).willReturn(aResponse().withStatus(200)));
-        InfluxDbOutputWriter writer = new InfluxDbOutputWriter(new FakeClock());
+        InfluxDbOutputWriter writer = new InfluxDbOutputWriter(FAKE_CLOCK);
         writer.postConstruct(s);
         writer.writeQueryResult("foo", null, 1);
         writer.postCollect();
@@ -72,7 +73,7 @@ public class InfluxDbOutputWriterTest {
         s.put("connectTimeoutMillis", "1000");
         s.put("readTimeoutMillis", "5000");
         stubFor(post(urlPathEqualTo("/write")).willReturn(aResponse().withStatus(200)));
-        InfluxDbOutputWriter writer = new InfluxDbOutputWriter(new FakeClock());
+        InfluxDbOutputWriter writer = new InfluxDbOutputWriter(FAKE_CLOCK);
         writer.postConstruct(s);
         writer.writeQueryResult("foo", null, 1);
         writer.postCollect();
@@ -91,7 +92,7 @@ public class InfluxDbOutputWriterTest {
         s.put("url", "http://localhost:" + wireMockRule.port());
         s.put("database", "test-db");
         stubFor(post(urlPathEqualTo("/write")).willReturn(aResponse().withStatus(200)));
-        InfluxDbOutputWriter writer = new InfluxDbOutputWriter(new FakeClock());
+        InfluxDbOutputWriter writer = new InfluxDbOutputWriter(FAKE_CLOCK);
         writer.postConstruct(s);
         writer.writeQueryResult("foo,tag=tagValue", null, 1);
         writer.postCollect();
@@ -107,7 +108,7 @@ public class InfluxDbOutputWriterTest {
         s.put("url", "http://localhost:" + wireMockRule.port());
         s.put("database", "test-db");
         stubFor(post(urlPathEqualTo("/write")).willReturn(aResponse().withStatus(200)));
-        InfluxDbOutputWriter writer = new InfluxDbOutputWriter(new FakeClock());
+        InfluxDbOutputWriter writer = new InfluxDbOutputWriter(FAKE_CLOCK);
         writer.postConstruct(s);
         writer.writeQueryResult("foo", null, 1);
         writer.writeQueryResult("foo2", null, 2.0);
@@ -118,12 +119,4 @@ public class InfluxDbOutputWriterTest {
                 .withRequestBody(equalTo("foo value=1i 1234\nfoo2 value=2.0 1234")));
     }
 
-    private static class FakeClock implements Clock {
-
-        @Override
-        public long getCurrentTimeMillis() {
-            return FIXED_TIME;
-        }
-
-    }
 }
