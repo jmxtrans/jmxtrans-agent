@@ -33,6 +33,7 @@ import org.jmxtrans.agent.util.io.Resource;
 import org.jmxtrans.agent.util.io.ResourceFactory;
 import org.jmxtrans.agent.util.logging.Logger;
 
+import javax.annotation.Nonnull;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 
@@ -85,6 +86,25 @@ public class JmxTransAgent {
         }
     }
 
+    public static void main(String[] args) {
+        System.out.println(getVersionInfo());
+    }
+
+    /**
+     * Human readable name and version.
+     *
+     * @return project name and version or "{@code jmxtrans-agent}" if package information not found
+     */
+    @Nonnull
+    public static String getVersionInfo() {
+        Package pkg = JmxTransAgent.class.getPackage();
+        if (pkg == null) {
+            return "jmxtrans-agent";
+        } else {
+            return pkg.getImplementationTitle() + ": " + pkg.getImplementationVersion();
+        }
+    }
+
     private static void initializeAgent(String configPath) {
         dumpDiagnosticInfo();
         if (configPath == null || configPath.isEmpty()) {
@@ -93,6 +113,8 @@ public class JmxTransAgent {
             throw new IllegalStateException(msg);
         }
         try {
+            logger.info("Starting '" + getVersionInfo() + "' with configuration '" + configPath + "'...");
+
             PropertiesLoader propertiesLoader = createPropertiesLoader();
             Resource configuration = ResourceFactory.newResource(configPath);
             ExpressionLanguageEngine expressionLanguageEngine = new ExpressionLanguageEngineImpl();

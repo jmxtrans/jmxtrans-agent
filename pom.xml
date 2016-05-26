@@ -99,7 +99,12 @@
         <version>2.6</version>
         <configuration>
           <archive>
+            <manifest>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+            </manifest>
             <manifestEntries>
+              <Main-Class>org.jmxtrans.agent.JmxTransAgent</Main-Class>
               <Premain-Class>org.jmxtrans.agent.JmxTransAgent</Premain-Class>
               <Agent-Class>org.jmxtrans.agent.JmxTransAgent</Agent-Class>
             </manifestEntries>
