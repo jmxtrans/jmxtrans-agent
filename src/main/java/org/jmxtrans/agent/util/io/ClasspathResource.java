@@ -26,6 +26,7 @@ package org.jmxtrans.agent.util.io;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 
 import javax.annotation.Nonnull;
@@ -59,13 +60,22 @@ public class ClasspathResource extends AbstractResource implements Resource {
     @Nonnull
     @Override
     public URL getURL() {
-        return classLoader.getResource(path);
+        URL resource = classLoader.getResource(path);
+        if (resource == null) {
+            throw new NullPointerException("No resource '" + path + "' found in classloader " + classLoader);
+        }
+        return resource;
     }
 
     @Nonnull
     @Override
     public File getFile() {
-        return new File(getURI());
+        URI uri = getURI();
+        try {
+            return new File(uri);
+        } catch (RuntimeException e) {
+            throw new FileNotFoundRuntimeException("Resource '" + uri + "' can not be resolved as a file", e);
+        }
     }
 
     @Nonnull
