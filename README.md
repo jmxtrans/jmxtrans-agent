@@ -8,12 +8,12 @@ jmxtrans-agent is a version of [jmxtrans](http://jmxtrans.org/) intended to be u
 
 ## Java Agent Declaration
 
-Download the [latest release](https://github.com/jmxtrans/jmxtrans-agent/releases/latest) of `jmxtrans-agent-<version>.jar` 
+Download the [latest release](https://github.com/jmxtrans/jmxtrans-agent/releases/latest) of `jmxtrans-agent-<version>.jar`
 
 Sample `setenv.sh` for Apache Tomcat
 
 ```
-export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.1.0.jar=jmxtrans-agent.xml"
+export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.2.4.jar=jmxtrans-agent.xml"
 ```
 
 * java agent jar path can be relative to the working dir
@@ -240,7 +240,7 @@ Out of the box output writers:
   * `retentionPolicy`: retention policy to use - optional
   * `connectTimeoutMillis`: connect timeout for the HTTP connection to influx - optional, defaults to 3000
   * `readTimeoutMillis`: read timeout for the HTTP connection to influx - optional, defaults to 5000
-  
+
 
 Output writers configuration support an [expression language](https://github.com/jmxtrans/jmxtrans-agent/wiki/Expression-Language) based on property placeholders with the `{prop-name[:default-value]}` syntax (e.g. "`${graphite.port:2003}`").
 
@@ -256,7 +256,7 @@ Environment variables are looked-up in the following order:
 
 **This writer is currently in beta, it might have bugs and the behavior and options might change**.
 
-When using the `InfluxDbOutputWriter`, the queries' `resultAlias` have special semantics. The result alias is a comma-separated list where the first 
+When using the `InfluxDbOutputWriter`, the queries' `resultAlias` have special semantics. The result alias is a comma-separated list where the first
 item is the name of the measurement and the rest of the items are tags to add to metrics collected by the query. For example, the query
 
 ```xml
@@ -274,11 +274,11 @@ All measurements sent to InfluxDb will have only one field called `value`. Multi
 Example complete output writer configuration:
 ```xml
 <outputWriter class="org.jmxtrans.agent.influxdb.InfluxDbOutputWriter">
-	<url>http://localhost:8086</url> 
+	<url>http://localhost:8086</url>
 	<database>mydb</database>
 	<user>admin</user>
 	<password>shadow</password>
-	<tags>host=#hostname#</tags> 
+	<tags>host=#hostname#</tags>
 </outputWriter>
 ```
 
@@ -338,10 +338,10 @@ application.activeSessions 0
 # Sample ActiveMQ Configuration
 
 * Create directory `${ACTIVEMQ_HOME}/jmxtrans-agent/`
-* Copy `jmxtrans-agent-1.1.0.jar` under `${ACTIVEMQ_HOME}/jmxtrans-agent/`
+* Copy `jmxtrans-agent-1.2.4.jar` under `${ACTIVEMQ_HOME}/jmxtrans-agent/`
 * Update `${ACTIVEMQ_HOME}/bin/activemq`, add in `invoke_start()` and `invoke_console()`:
     ```
-JMXTRANS_AGENT="-javaagent:${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-1.1.0.jar=${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-activemq.xml"
+JMXTRANS_AGENT="-javaagent:${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-1.2.4.jar=${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-activemq.xml"
 ACTIVEMQ_OPTS="$ACTIVEMQ_OPTS $JMXTRANS_AGENT"
 ```
 * Copy to `${ACTIVEMQ_HOME}/jmxtrans-agent/` a config file similar to
