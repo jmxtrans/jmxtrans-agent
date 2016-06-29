@@ -31,7 +31,7 @@
     <groupId>org.jmxtrans.agent</groupId>
     <artifactId>jmxtrans-agent</artifactId>
     <packaging>jar</packaging>
-    <version>1.1.1-SNAPSHOT</version>
+    <version>1.1.1-transwarp</version>
     <name>JMX metrics exporter agent</name>
     <url>https://github.com/jmxtrans/jmxtrans-agent</url>
     <scm>
@@ -40,16 +40,6 @@
         <url>https://github.com/jmxtrans/jmxtrans-agent</url>
     </scm>
     <dependencies>
-        <dependency>
-	    <groupId>com.fasterxml.jackson.core</groupId>
-	    <artifactId>jackson-annotations</artifactId>
-            <version>2.6.0</version>
-	</dependency>
-	<dependency>
-	    <groupId>com.fasterxml.jackson.core</groupId>
-	    <artifactId>jackson-core</artifactId>
-            <version>2.6.0</version>
-	</dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>
@@ -117,27 +107,6 @@
                     </execution>
                 </executions>
             </plugin>
-<plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-          </descriptorRefs>
-                    <archive>
-                        <manifestEntries>
-                            <Premain-Class>org.jmxtrans.agent.JmxTransAgent</Premain-Class>
-                        </manifestEntries>
-                    </archive>
-        </configuration>
-      </plugin>
         </plugins>
     </build>
     <developers>
