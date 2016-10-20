@@ -49,7 +49,7 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
     public final static long SETTING_MAX_FILE_SIZE_DEFAULT_VALUE=10;
     public final static String SETTING_MAX_BACKUP_INDEX = "maxBackupIndex";
     public final static int SETTING_MAX_BACKUP_INDEX_DEFAULT_VALUE = 5; 
-    private static DateFormat dfISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+    private static DateFormat dfISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     
     protected Writer temporaryFileWriter;
     protected File temporaryFile;

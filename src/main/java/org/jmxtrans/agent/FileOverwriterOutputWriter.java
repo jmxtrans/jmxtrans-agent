@@ -52,8 +52,7 @@ public class FileOverwriterOutputWriter extends AbstractOutputWriter {
     protected File temporaryFile;
     protected File file = new File(SETTING_FILE_NAME_DEFAULT_VALUE);
     protected Boolean showTimeStamp;
-    private static Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-    private static DateFormat dfISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+    private static DateFormat dfISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     
     @Override
     public synchronized void postConstruct(Map<String, String> settings) {
