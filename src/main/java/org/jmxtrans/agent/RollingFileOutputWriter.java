@@ -48,7 +48,9 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
     public final static String SETTING_MAX_FILE_SIZE = "maxFileSize";
     public final static long SETTING_MAX_FILE_SIZE_DEFAULT_VALUE=10;
     public final static String SETTING_MAX_BACKUP_INDEX = "maxBackupIndex";
-    public final static int SETTING_MAX_BACKUP_INDEX_DEFAULT_VALUE = 5; 
+    public final static int SETTING_MAX_BACKUP_INDEX_DEFAULT_VALUE = 5;
+    public final static String SETTING_SINGLE_LINE = "singleLine";
+    public final static boolean SETTING_SINGLE_LINE_DEFAULT_VALUE = false;
     private static DateFormat dfISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     
     protected Writer temporaryFileWriter;
@@ -56,6 +58,8 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
     protected File file = new File(SETTING_FILE_NAME_DEFAULT_VALUE);
     protected long maxFileSize;
     protected int maxBackupIndex;
+    protected boolean singleLine;
+    protected boolean firstResult;
 
     @Override
     public synchronized void postConstruct(Map<String, String> settings) {
@@ -65,8 +69,11 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
         file = new File(getString(settings, SETTING_FILE_NAME, SETTING_FILE_NAME_DEFAULT_VALUE));
         maxFileSize = getLong(settings, SETTING_MAX_FILE_SIZE, SETTING_MAX_FILE_SIZE_DEFAULT_VALUE);
         maxBackupIndex = getInt(settings, SETTING_MAX_BACKUP_INDEX, SETTING_MAX_BACKUP_INDEX_DEFAULT_VALUE);
+        singleLine = getBoolean(settings, SETTING_SINGLE_LINE, SETTING_SINGLE_LINE_DEFAULT_VALUE);
         // Performance related after 10mb the Filechanel output.transferTo() performs badly
-        if (maxFileSize > 10 || maxFileSize < 0) maxFileSize = 10;
+        if (maxFileSize > 10 || maxFileSize < 0) {
+            maxFileSize = 10;
+        }
         maxFileSize = maxFileSize * 1000000; //converts to bytes.
         logger.log(getInfoLevel(), "RollingFileOutputWriter configured with file " + file.getAbsolutePath());
     }
@@ -94,7 +101,16 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
 
     public synchronized void writeQueryResult(@Nonnull String name, @Nullable String type, @Nullable Object value) throws IOException {
         try {
-            getTemporaryFileWriter().write("["+dfISO8601.format(Calendar.getInstance().getTime()) +"] "+name + " " + value + "\n");
+            if (singleLine) {
+                if (firstResult) {
+                    firstResult = false;
+                } else {
+                    getTemporaryFileWriter().write(", ");
+                }
+                getTemporaryFileWriter().write(name + "=" + value);
+            } else {
+                getTemporaryFileWriter().write("["+dfISO8601.format(Calendar.getInstance().getTime()) +"] "+name + " " + value + "\n");
+            }
         } catch (IOException e) {
             releaseTemporaryWriter();
             throw e;
@@ -118,8 +134,19 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
     }
 
     @Override
+    public synchronized void preCollect() throws IOException {
+        if (singleLine) {
+            firstResult = true;
+            getTemporaryFileWriter().write("["+dfISO8601.format(Calendar.getInstance().getTime()) +"] ");
+        }
+    }
+
+    @Override
     public synchronized void postCollect() throws IOException {
         try {
+            if (singleLine) {
+                getTemporaryFileWriter().write("\n");
+            }
             getTemporaryFileWriter().close();
             if (logger.isLoggable(getDebugLevel()))
                 logger.log(getDebugLevel(), "Overwrite " + file.getAbsolutePath() + " by " + temporaryFile.getAbsolutePath());
