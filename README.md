@@ -47,6 +47,12 @@ Example - collect the `ThreadCount` attribute from the Threading MBean:
    resultAlias="jvm.thread.count"/>
 ```
 
+Example - collect the `SystemLoadAverage` gauge attribute from the OperatingSystem MBean:
+
+<query objectName="java.lang:type=OperatingSystem" attributes="SystemLoadAverage" type="gauge" resultAlias="#attribute#"/>
+
+(i) Note that the `type` attribute is customizable. Output writers such as the [LibratoWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/jmxtrans-agent-1.2.4/src/main/java/org/jmxtrans/agent/LibratoWriter.java), [StatsDOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/jmxtrans-agent-1.2.4/src/main/java/org/jmxtrans/agent/StatsDOutputWriter.java) and [PerMinuteSummarizerOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/jmxtrans-agent-1.2.4/src/main/java/org/jmxtrans/agent/PerMinuteSummarizerOutputWriter.java) are aware of the `type`s `counter` and `gauge` and assume that non defined `type`means `counter`.
+
 Example - collect `ThreadCount` and `TotalStartedThreadCount` from the Threading MBean:
 
 ```xml
