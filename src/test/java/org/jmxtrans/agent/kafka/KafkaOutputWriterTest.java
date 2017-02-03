@@ -76,7 +76,6 @@ public class KafkaOutputWriterTest {
         s.put("bootstrap.servers", kafkaUnitRule.getKafkaUnit().getKafkaConnect());
         s.put("metadata.broker.list", kafkaUnitRule.getKafkaUnit().getKafkaConnect());
         s.put("zk.connect", String.valueOf(kafkaUnitRule.getKafkaUnit().getZkPort()));
-        s.put("serializer.class", StringSerializer.class.getCanonicalName());
         s.put("key.serializer", StringSerializer.class.getCanonicalName());
         s.put("value.serializer", StringSerializer.class.getCanonicalName());
         s.put("topic", topicName);

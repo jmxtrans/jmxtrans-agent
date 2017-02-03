@@ -54,7 +54,6 @@ public class KafkaOutputWriter extends AbstractOutputWriter {
         final String bootstrapServers = ConfigurationUtils.getString(settings, "bootstrap.servers");
         final String brokerList = ConfigurationUtils.getString(settings, "metadata.broker.list");
         final String zkConnect = ConfigurationUtils.getString(settings, "zk.connect");
-        final String serializerClass = ConfigurationUtils.getString(settings, "serializer.class");
         final String keySerializer = ConfigurationUtils.getString(settings, "key.serializer");
         final String valueSerializer = ConfigurationUtils.getString(settings, "value.serializer");
 
@@ -63,14 +62,16 @@ public class KafkaOutputWriter extends AbstractOutputWriter {
         kafkaProperties.setProperty("boostrap.servers", bootstrapServers);
         kafkaProperties.setProperty("metadata.broker.list", brokerList);
         kafkaProperties.setProperty("zk.connect", zkConnect);
-        kafkaProperties.setProperty("serializer.class", serializerClass);
         kafkaProperties.setProperty("key.serializer", keySerializer);
         kafkaProperties.setProperty("value.serializer", valueSerializer);
 
-        logger.log(getInfoLevel(), "KafkaOutputWriter is configured with "
-            + "metadata.broker.list=" + brokerList
-            + ", zk.connect=" + zkConnect
-            + ", serializer.class=" + serializerClass
+        logger.log(getInfoLevel(),
+                "KafkaOutputWriter is configured with "
+                        + "bootstrap.servers=" + bootstrapServers
+                        + "metadata.broker.list=" + brokerList
+                        + "zk.connect=" + zkConnect
+                        + "key.serializer=" + keySerializer
+                        + "value.serializer=" + valueSerializer
         );
     }
 
