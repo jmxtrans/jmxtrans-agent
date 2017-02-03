@@ -74,7 +74,6 @@ public class KafkaOutputWriterTest {
     private Map<String, String> createConfiguration(final String topicName) {
         Map<String, String> s = new HashMap<>();
         s.put("bootstrap.servers", kafkaUnitRule.getKafkaUnit().getKafkaConnect());
-        s.put("metadata.broker.list", kafkaUnitRule.getKafkaUnit().getKafkaConnect());
         s.put("zk.connect", String.valueOf(kafkaUnitRule.getKafkaUnit().getZkPort()));
         s.put("key.serializer", StringSerializer.class.getCanonicalName());
         s.put("value.serializer", StringSerializer.class.getCanonicalName());

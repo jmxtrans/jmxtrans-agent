@@ -247,6 +247,12 @@ Out of the box output writers:
   * `retentionPolicy`: retention policy to use - optional
   * `connectTimeoutMillis`: connect timeout for the HTTP connection to influx - optional, defaults to 3000
   * `readTimeoutMillis`: read timeout for the HTTP connection to influx - optional, defaults to 5000
+* [KafkaOutputWriter](https://github.com/bowlofstew/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/influxdb/InfluxDbOutputWriter.java): output to InfluxDb. **This writer is currently experimental** - behavior and options might change. See [InfluxDbOutputWriter Details](#influxdboutputwriter-details) for more details. Configuration parameters:
+  * `bootstrap.servers`: Kafka bootstrap server list.  Either this or the zk.connect needs to be specified
+  * `zk.connect`: Specifies the zookeeper connection string in the form hostname:port/chroot. Here the chroot is a base directory which is prepended to all path operations (this effectively namespaces all kafka znodes to allow sharing with other applications on the same zookeeper cluster)
+  * `key.serializer`:  instruct how to turn the key and value objects the user provides with their ProducerRecord into bytes
+  * `value.serializer`:  instruct how to turn the key and value objects the user provides with their ProducerRecord into bytes
+  * `topic`: Kafka topic to write too
 
 
 Output writers configuration support an [expression language](https://github.com/jmxtrans/jmxtrans-agent/wiki/Expression-Language) based on property placeholders with the `{prop-name[:default-value]}` syntax (e.g. "`${graphite.port:2003}`").
