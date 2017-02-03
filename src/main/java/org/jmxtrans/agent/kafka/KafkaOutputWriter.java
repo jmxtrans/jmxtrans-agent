@@ -74,6 +74,7 @@ public class KafkaOutputWriter extends AbstractOutputWriter {
 
     @Override
     public void writeInvocationResult(String invocationName, Object value) throws IOException {
+        writeQueryResult(invocationName, null, value);
     }
 
     @Override
