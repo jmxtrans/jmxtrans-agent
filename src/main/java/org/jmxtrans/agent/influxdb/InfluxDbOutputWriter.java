@@ -44,6 +44,8 @@ import org.jmxtrans.agent.util.io.IoUtils;
 import org.jmxtrans.agent.util.time.Clock;
 import org.jmxtrans.agent.util.time.SystemCurrentTimeMillisClock;
 
+import static org.jmxtrans.agent.util.ConfigurationUtils.getBoolean;
+
 /**
  * Output writer for InfluxDb.
  * 
@@ -61,6 +63,8 @@ public class InfluxDbOutputWriter extends AbstractOutputWriter {
     private int connectTimeoutMillis;
     private int readTimeoutMillis;
     private final Clock clock;
+    private boolean enabled;
+    public final static String SETTING_ENABLED = "enabled";
 
     public InfluxDbOutputWriter() {
         this.clock = new SystemCurrentTimeMillisClock();
@@ -75,6 +79,7 @@ public class InfluxDbOutputWriter extends AbstractOutputWriter {
 
     @Override
     public void postConstruct(Map<String, String> settings) {
+        enabled = getBoolean(settings, SETTING_ENABLED, true);
         String urlStr = ConfigurationUtils.getString(settings, "url");
         database = ConfigurationUtils.getString(settings, "database");
         user = ConfigurationUtils.getString(settings, "user", null);
@@ -118,11 +123,13 @@ public class InfluxDbOutputWriter extends AbstractOutputWriter {
 
     @Override
     public void writeInvocationResult(String invocationName, Object value) throws IOException {
+        if(!enabled) return;
         writeQueryResult(invocationName, null, value);
     }
 
     @Override
     public void writeQueryResult(String metricName, String metricType, Object value) throws IOException {
+        if(!enabled) return;
         InfluxMetric metric = InfluxMetricConverter.convertToInfluxMetric(metricName, value, tags,
                 clock.getCurrentTimeMillis());
         batchedMetrics.add(metric);
@@ -130,6 +137,7 @@ public class InfluxDbOutputWriter extends AbstractOutputWriter {
 
     @Override
     public void postCollect() throws IOException {
+        if(!enabled) return;
         String body = convertMetricsToLines(batchedMetrics);
         String queryString = buildQueryString();
         if (logger.isLoggable(getTraceLevel())) {
