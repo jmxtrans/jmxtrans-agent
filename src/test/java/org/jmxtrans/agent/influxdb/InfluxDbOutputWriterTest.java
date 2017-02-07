@@ -119,4 +119,39 @@ public class InfluxDbOutputWriterTest {
                 .withRequestBody(equalTo("foo value=1i 1234\nfoo2 value=2.0 1234")));
     }
 
+    @Test
+    public void requestWhenDisabled() throws Exception {
+        Map<String, String> s = new HashMap<>();
+        s.put("url", "http://localhost:" + wireMockRule.port());
+        s.put("database", "test-db");
+        s.put("enabled", "false");
+        // NOTE: This is a workaround as I didn't see a clean method to assert that Wiremocks is not called.
+        stubFor(any(urlPathEqualTo("/write"))
+                .atPriority(10)
+                .willReturn(aResponse()
+                        .withStatus(404)
+                        .withBody("{\"status\":\"Error\",\"message\":\"Should not be called\"}")));
+        InfluxDbOutputWriter writer = new InfluxDbOutputWriter(FAKE_CLOCK);
+        writer.postConstruct(s);
+        writer.writeQueryResult("foo", null, 1);
+        writer.postCollect();
+    }
+
+    @Test
+    public void requestWhenEnabled() throws Exception {
+        Map<String, String> s = new HashMap<>();
+        s.put("url", "http://localhost:" + wireMockRule.port());
+        s.put("database", "test-db");
+        s.put("enabled", "true");
+        stubFor(post(urlPathEqualTo("/write")).willReturn(aResponse().withStatus(200)));
+        InfluxDbOutputWriter writer = new InfluxDbOutputWriter(FAKE_CLOCK);
+        writer.postConstruct(s);
+        writer.writeQueryResult("foo", null, 1);
+        writer.postCollect();
+        verify(postRequestedFor(urlPathEqualTo("/write"))
+                .withQueryParam("db", equalTo("test-db"))
+                .withQueryParam("precision", equalTo("ms"))
+                .withRequestBody(equalTo("foo value=1i 1234")));
+    }
+
 }
