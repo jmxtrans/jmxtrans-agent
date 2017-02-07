@@ -125,11 +125,11 @@ public class InfluxDbOutputWriterTest {
         s.put("url", "http://localhost:" + wireMockRule.port());
         s.put("database", "test-db");
         s.put("enabled", "false");
-        verify(exactly(0), getRequestedFor(urlEqualTo("/write")));
         InfluxDbOutputWriter writer = new InfluxDbOutputWriter(FAKE_CLOCK);
         writer.postConstruct(s);
         writer.writeQueryResult("foo", null, 1);
         writer.postCollect();
+        verify(exactly(0), getRequestedFor(urlEqualTo("/write")));
     }
 
     @Test
