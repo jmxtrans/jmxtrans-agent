@@ -125,12 +125,7 @@ public class InfluxDbOutputWriterTest {
         s.put("url", "http://localhost:" + wireMockRule.port());
         s.put("database", "test-db");
         s.put("enabled", "false");
-        // NOTE: This is a workaround as I didn't see a clean method to assert that Wiremocks is not called.
-        stubFor(any(urlPathEqualTo("/write"))
-                .atPriority(10)
-                .willReturn(aResponse()
-                        .withStatus(404)
-                        .withBody("{\"status\":\"Error\",\"message\":\"Should not be called\"}")));
+        verify(exactly(0), getRequestedFor(urlEqualTo("/write")));
         InfluxDbOutputWriter writer = new InfluxDbOutputWriter(FAKE_CLOCK);
         writer.postConstruct(s);
         writer.writeQueryResult("foo", null, 1);
