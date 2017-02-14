@@ -119,4 +119,34 @@ public class InfluxDbOutputWriterTest {
                 .withRequestBody(equalTo("foo value=1i 1234\nfoo2 value=2.0 1234")));
     }
 
+    @Test
+    public void requestWhenDisabled() throws Exception {
+        Map<String, String> s = new HashMap<>();
+        s.put("url", "http://localhost:" + wireMockRule.port());
+        s.put("database", "test-db");
+        s.put("enabled", "false");
+        InfluxDbOutputWriter writer = new InfluxDbOutputWriter(FAKE_CLOCK);
+        writer.postConstruct(s);
+        writer.writeQueryResult("foo", null, 1);
+        writer.postCollect();
+        verify(exactly(0), getRequestedFor(urlEqualTo("/write")));
+    }
+
+    @Test
+    public void requestWhenEnabled() throws Exception {
+        Map<String, String> s = new HashMap<>();
+        s.put("url", "http://localhost:" + wireMockRule.port());
+        s.put("database", "test-db");
+        s.put("enabled", "true");
+        stubFor(post(urlPathEqualTo("/write")).willReturn(aResponse().withStatus(200)));
+        InfluxDbOutputWriter writer = new InfluxDbOutputWriter(FAKE_CLOCK);
+        writer.postConstruct(s);
+        writer.writeQueryResult("foo", null, 1);
+        writer.postCollect();
+        verify(postRequestedFor(urlPathEqualTo("/write"))
+                .withQueryParam("db", equalTo("test-db"))
+                .withQueryParam("precision", equalTo("ms"))
+                .withRequestBody(equalTo("foo value=1i 1234")));
+    }
+
 }
