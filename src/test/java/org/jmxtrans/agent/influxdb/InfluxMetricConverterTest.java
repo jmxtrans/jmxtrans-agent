@@ -83,6 +83,16 @@ public class InfluxMetricConverterTest {
         assertThat(metric.toInfluxFormat(), equalTo("foo value=1i 2123"));
     }
 
+    /**
+     * A very big float will get formatted with an exponent
+     * See https://github.com/jmxtrans/jmxtrans-agent/issues/91
+     */
+    @Test
+    public void toInfluxFormatBigFloat() throws Exception {
+        InfluxMetric metric = new InfluxMetric("foo", EMPTY_TAG_LIST, 123_456_789.012_345, 2123l);
+        assertThat(metric.toInfluxFormat(), equalTo("foo value=1.23456789012345E8 2123"));
+    }
+
     @Test
     public void toInfluxFormatLong() throws Exception {
         InfluxMetric metric = new InfluxMetric("foo", EMPTY_TAG_LIST, 1l, 2123l);
