@@ -90,7 +90,7 @@ public class InfluxMetricConverterTest {
     @Test
     public void toInfluxFormatBigFloat() throws Exception {
         InfluxMetric metric = new InfluxMetric("foo", EMPTY_TAG_LIST, 123_456_789.012_345, 2123l);
-        assertThat(metric.toInfluxFormat(), equalTo("foo value=1.23456789012345E8 2123"));
+        assertThat(metric.toInfluxFormat(), equalTo("foo value=123456789.012345 2123"));
     }
 
     @Test
