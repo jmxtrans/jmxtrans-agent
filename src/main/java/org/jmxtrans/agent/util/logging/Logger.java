@@ -24,8 +24,11 @@
 package org.jmxtrans.agent.util.logging;
 
 import edu.umd.cs.findbugs.annotations.*;
+import org.jmxtrans.agent.JmxTransAgent;
 
 import javax.annotation.Nullable;
+
+import java.io.PrintStream;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +44,18 @@ public class Logger {
     }
 
     private final String name;
+
+    @SuppressFBWarnings("MS_SHOULD_BE_REFACTORED_TO_BE_FINAL")
+    public static PrintStream out;
+
+    static {
+        if ("stderr".equalsIgnoreCase(System.getenv("JMX_TRANS_AGENT_CONSOLE")) ||
+                "stderr".equalsIgnoreCase(System.getProperty(Logger.class.getName() + ".console"))) {
+            Logger.out = System.err;
+        } else {
+            Logger.out = System.out;
+        }
+    }
 
     @SuppressFBWarnings("MS_SHOULD_BE_REFACTORED_TO_BE_FINAL")
     public static Level level = Level.INFO;
@@ -87,9 +102,9 @@ public class Logger {
         if (!isLoggable(level)) {
             return;
         }
-        System.out.println(new Timestamp(System.currentTimeMillis()) + " " + level + " [" + Thread.currentThread().getName() + "] " + name + " - " + msg);
+        Logger.out.println(new Timestamp(System.currentTimeMillis()) + " " + level + " [" + Thread.currentThread().getName() + "] " + name + " - " + msg);
         if (thrown != null) {
-            thrown.printStackTrace(System.out);
+            thrown.printStackTrace(Logger.out);
         }
     }
 

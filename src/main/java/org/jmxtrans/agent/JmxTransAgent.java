@@ -87,7 +87,7 @@ public class JmxTransAgent {
     }
 
     public static void main(String[] args) {
-        System.out.println(getVersionInfo());
+        Logger.out.println(getVersionInfo());
     }
 
     /**
@@ -153,10 +153,10 @@ public class JmxTransAgent {
                 while (JmxTransAgent.DIAGNOSTIC) {
 
                     String prefix = new Timestamp(System.currentTimeMillis()) + " [jmxtrans-agent] ";
-                    System.out.println(prefix + "JMXTRANS-AGENT DIAGNOSTIC INFO");
+                    Logger.out.println(prefix + "JMXTRANS-AGENT DIAGNOSTIC INFO");
 
                     // CONTEXT
-                    System.out.println(prefix + "Logger level: " + Logger.level);
+                    Logger.out.println(prefix + "Logger level: " + Logger.level);
 
                     // MBEANS
                     Set<ObjectInstance> objectInstances = ManagementFactory.getPlatformMBeanServer().queryMBeans(null, null);
@@ -165,12 +165,12 @@ public class JmxTransAgent {
                         objectNames.add(objectInstance.getObjectName());
                     }
                     Collections.sort(objectNames);
-                    System.out.println(prefix + "ManagementFactory.getPlatformMBeanServer().queryMBeans(null, null)");
+                    Logger.out.println(prefix + "ManagementFactory.getPlatformMBeanServer().queryMBeans(null, null)");
                     for (ObjectName objectName : objectNames) {
-                        System.out.println(prefix + "\t" + objectName);
+                        Logger.out.println(prefix + "\t" + objectName);
                     }
 
-                    System.out.println(prefix + "ENF OF JMXTRANS-AGENT DIAGNOSING INFO");
+                    Logger.out.println(prefix + "ENF OF JMXTRANS-AGENT DIAGNOSING INFO");
                     try {
                         Thread.sleep(TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS));
                     } catch (InterruptedException e) {
