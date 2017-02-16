@@ -23,11 +23,17 @@
  */
 package org.jmxtrans.agent.influxdb;
 
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 import org.jmxtrans.agent.util.StringUtils2;
+
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * @author Kristoffer Erlandsson
@@ -35,6 +41,17 @@ import org.jmxtrans.agent.util.StringUtils2;
 public class InfluxMetric {
 
     private static final String FIELD_NAME = "value";
+
+    /*
+     * See https://github.com/influxdata/influxdb-java/blob/influxdb-java-2.5/src/main/java/org/influxdb/dto/Point.java#L321
+     */
+    protected final static NumberFormat NUMBER_FORMAT;
+    static {
+        NUMBER_FORMAT = NumberFormat.getInstance(Locale.ENGLISH);
+        NUMBER_FORMAT.setMaximumFractionDigits(340);
+        NUMBER_FORMAT.setGroupingUsed(false);
+        NUMBER_FORMAT.setMinimumFractionDigits(1);
+    }
     private final long timestampMillis;
     private final List<InfluxTag> tags;
     private final String measurement;
@@ -82,6 +99,11 @@ public class InfluxMetric {
     private String valueAsStr() {
         if (value instanceof Integer || value instanceof Long) {
             return value.toString() + "i";
+        }
+        if (value instanceof Float || value instanceof Double || value instanceof BigDecimal) {
+            synchronized (NUMBER_FORMAT) {
+                return NUMBER_FORMAT.format(value);
+            }
         }
         return value.toString();
     }
