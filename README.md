@@ -1,6 +1,11 @@
 # Jmxtrans Agent
 
-[![Build Status](https://travis-ci.org/jmxtrans/jmxtrans-agent.svg?branch=master)](https://travis-ci.org/jmxtrans/jmxtrans-agent)
+[![Travis](https://img.shields.io/travis/jmxtrans/jmxtrans-agent.svg)]()
+[![GitHub issues](https://img.shields.io/github/issues/jmxtrans/jmxtrans-agent.svg)](https://github.com/jmxtrans/jmxtrans-agent/issues)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jmxtrans/jmxtrans-agent/master/LICENSE)
+[![GitHub forks](https://img.shields.io/github/forks/jmxtrans/jmxtrans-agent.svg)](https://github.com/jmxtrans/jmxtrans-agent/network)
+[![GitHub stars](https://img.shields.io/github/stars/jmxtrans/jmxtrans-agent.svg)](https://github.com/jmxtrans/jmxtrans-agent/stargazers)
+
 
 ## What is jmxtrans-agent ?
 
