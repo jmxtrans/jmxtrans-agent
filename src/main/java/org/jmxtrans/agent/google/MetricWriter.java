@@ -56,7 +56,7 @@ public class MetricWriter {
     private Map<String, String> staticLabels = new LinkedHashMap<>();
 
     private Map<String, String> metricDescriptors = new HashMap<>();
-    private String cumulativePeriodStart = getNow();
+    private String cumulativePeriodStart;
 
     static MetricWriter getMetricWriter(@Nonnull Map<String, String> settings) {
         MetricWriter writer = new MetricWriter();
@@ -68,6 +68,7 @@ public class MetricWriter {
     private boolean init(@Nonnull Map<String, String> settings) {
 
         rfc3339.setTimeZone(TimeZone.getTimeZone("UTC"));
+        cumulativePeriodStart = getNow();
 
         String projectId = StringUtils2.trimToEmpty(settings.get("projectId"));
         if (StringUtils2.isNullOrEmpty(projectId)) {
