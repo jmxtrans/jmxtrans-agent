@@ -46,17 +46,9 @@ public class MetricWriter {
             new String[]{"projectid", "serviceaccount", "serviceaccountkey", "applicationcredentials", "separator", "nameprefix", "hostname"};
     private static final Set<String> RESERVED_KEYWORDS = new HashSet<String>(Arrays.asList(SET_VALUES));
 
-    private static SimpleDateFormat rfc3339 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'");
-
-    static {
-        rfc3339.setTimeZone(TimeZone.getTimeZone("UTC"));
-    }
-
-    private static String getNow() {
-        return rfc3339.format(new Date());
-    }
-
     private final Logger logger = Logger.getLogger(this.getClass().getName());
+
+    private SimpleDateFormat rfc3339 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'");
 
     private String separator;
     private String namePrefix = "";
@@ -75,10 +67,12 @@ public class MetricWriter {
 
     private boolean init(@Nonnull Map<String, String> settings) {
 
+        rfc3339.setTimeZone(TimeZone.getTimeZone("UTC"));
+
         String projectId = StringUtils2.trimToEmpty(settings.get("projectId"));
         if (StringUtils2.isNullOrEmpty(projectId)) {
             logger.info("Metrics Project ID is not set. Attempting to source project id from GKE.");
-            projectId = getGkeProjectId();
+            projectId = getGoogleProjectId();
         }
 
         if (StringUtils2.isNullOrEmpty(projectId)) {
@@ -102,6 +96,10 @@ public class MetricWriter {
         return ApiFacade.initConnection(projectId, serviceAccount, serviceAccountKey, applicationCredentials);
     }
 
+    private String getNow() {
+        return rfc3339.format(new Date());
+    }
+
     private void initStaticLabels(Map<String, String> settings) {
 
         String hostname = StringUtils2.trimToEmpty(settings.get("hostname"));
@@ -113,26 +111,35 @@ public class MetricWriter {
 
         this.staticLabels.put("hostname", hostname);
 
-        for (String key : settings.keySet()) {
-            String value = StringUtils2.trimToEmpty(settings.get(key));
-            if (StringUtils2.isNullOrEmpty(value) || RESERVED_KEYWORDS.contains(key.toLowerCase().trim())) {
+        for (Map.Entry<String,String> entry : settings.entrySet()) {
+            String value = StringUtils2.trimToEmpty(settings.get(entry.getKey()));
+            if (StringUtils2.isNullOrEmpty(value) || RESERVED_KEYWORDS.contains(entry.getKey().toLowerCase().trim())) {
                 continue;
             }
-            this.staticLabels.put(key, value);
-            logger.log(Level.INFO, "Static label : " + key + " : " + value);
+            this.staticLabels.put(entry.getKey(), value);
+            logger.log(Level.INFO, "Static label : " + entry.getKey() + " : " + value);
         }
     }
 
-    private String getGkeProjectId() {
+    private String getGoogleProjectId() {
+        BufferedReader in = null;
         try {
             URLConnection yc = new URL("http://metadata.google.internal/computeMetadata/v1/project/project-id")
                     .openConnection();
             yc.setRequestProperty("Metadata-Flavor", "Google");
-            BufferedReader in = new BufferedReader(new InputStreamReader(yc.getInputStream()));
+            in = new BufferedReader(new InputStreamReader(yc.getInputStream(), "UTF-8"));
             return in.readLine();
         } catch (Exception e) {
             logger.log(Level.INFO, "Failed to source project id from GCP. Do we run in GCP? ", e);
+        } finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (Exception e) {
+            }
         }
+
         return null;
     }
 
@@ -190,18 +197,18 @@ public class MetricWriter {
             metricKind = typeParts[0];
             if (typeParts.length > 1) {
                 metricUnit = typeParts[1];
-            }else{
-                metricUnit="1";
+            } else {
+                metricUnit = "1";
             }
             if (typeParts.length > 2) {
                 valueType = typeParts[2];
             }
-        }else{
-            metricKind="GAUGE";
-            metricUnit="1";
+        } else {
+            metricKind = "GAUGE";
+            metricUnit = "1";
         }
 
-        if (null == valueType){
+        if (null == valueType) {
             valueType = selectValueType(value);
         }
 

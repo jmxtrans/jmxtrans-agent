@@ -33,6 +33,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.Signature;
@@ -99,7 +100,7 @@ public class Connection {
 
     private void setFromFile(String credentialsFileLocation){
         try {
-            JsonObject object = Json.parse(new InputStreamReader(new FileInputStream(credentialsFileLocation))).asObject();
+            JsonObject object = Json.parse(new InputStreamReader(new FileInputStream(credentialsFileLocation), "UTF-8")).asObject();
             this.serviceAccount = object.get("client_email").asString();
             this.privateKey = getPrivateKeyFromString(object.get("private_key").asString());
         } catch (IOException e) {
@@ -131,77 +132,84 @@ public class Connection {
     }
 
     private String getGoogleApiToken() {
-        if (isNullOrEmpty(token) || expiry == null || (System.currentTimeMillis() + 30000L) > expiry.getTime())
+        if (isNullOrEmpty(token) ||
+                expiry == null ||
+                (System.currentTimeMillis() + 30000L) > expiry.getTime())
             prepareApiToken();
         return token;
     }
 
-    private synchronized void prepareApiToken() {
+    Object tokenLock = new Object();
+//    private synchronized void prepareApiToken() {
+    private void prepareApiToken() {
 
-        if (!isNullOrEmpty(token) && expiry != null && (System.currentTimeMillis() + 30000L) <= expiry.getTime())
-            return;
-
-        try {
-            // Header
-            JsonObject header = new JsonObject();
-            header.add("alg", "RS256");
-            header.add("typ", "JWT");
-
-            // Claim
-            long utcSeconds = (System.currentTimeMillis() / 1000);
-
-            JsonObject claim = new JsonObject();
-            claim.add("aud", AUTH_URL);
-            claim.add("exp", utcSeconds + 3600l);
-            claim.add("iat", utcSeconds);
-            claim.add("iss", serviceAccount);
-            claim.add("scope", SCOPE);
-
-            // Assertion
-            String payload = encodeBase64Url(header.toString().getBytes()) +
-                    "." +
-                    encodeBase64Url(claim.toString().getBytes());
-            String assertion = payload + "." + encodeBase64Url(signSHA256withRSA(payload));
-
-            LinkedHashMap<String, String> postParameters = new LinkedHashMap<>();
-            postParameters.put("grant_type", GRANT_TYPE);
-            postParameters.put("assertion", assertion);
-
-            String content = convertMapToContent(postParameters);
-
-            // Get token
-            String response = httpCall(AUTH_URL, "GET", content, null);
-
-            String newToken = null;
-            Date newExpiry = null;
-
-            JsonObject json = Json.parse(response).asObject();
-            if (json != null && json.get("access_token") != null) {
-                newToken = json.get("access_token").asString();
-                newExpiry = new Date(utcSeconds * 1000 + json.get("expires_in").asInt() * 1000);
+        synchronized (tokenLock) {
+            if (!isNullOrEmpty(token) && expiry != null && (System.currentTimeMillis() + 30000L) <= expiry.getTime()) {
+                return;
             }
 
-            JsonValue error = json.get("error");
-            if (error != null) {
-                logger.log(Level.SEVERE, error.toString());
-            }
+            try {
+                // Header
+                JsonObject header = new JsonObject();
+                header.add("alg", "RS256");
+                header.add("typ", "JWT");
 
-            JsonValue errorDesc = json.get("error_description");
-            if (errorDesc != null) {
-                logger.log(Level.SEVERE, errorDesc.toString());
-            }
+                // Claim
+                long utcSeconds = (System.currentTimeMillis() / 1000);
 
-            if (!isNullOrEmpty(newToken) && newExpiry != null && System.currentTimeMillis() < newExpiry.getTime()) {
-                token = newToken;
-                expiry = newExpiry;
-                logger.log(Level.FINE,"Token : " + token);
-                logger.info("Refreshed token. New expiry instant : " + expiry);
-            } else {
-                logger.log(Level.WARNING,"Token refresh failed. Token : " + token + " Expiry : " + expiry);
-            }
+                JsonObject claim = new JsonObject();
+                claim.add("aud", AUTH_URL);
+                claim.add("exp", utcSeconds + 3600l);
+                claim.add("iat", utcSeconds);
+                claim.add("iss", serviceAccount);
+                claim.add("scope", SCOPE);
 
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE,"Token refresh failed " + ex.getMessage(), ex);
+                // Assertion
+                String payload = encodeBase64Url(header.toString().getBytes(Charset.forName("UTF-8"))) +
+                        "." +
+                        encodeBase64Url(claim.toString().getBytes(Charset.forName("UTF-8")));
+                String assertion = payload + "." + encodeBase64Url(signSHA256withRSA(payload));
+
+                LinkedHashMap<String, String> postParameters = new LinkedHashMap<>();
+                postParameters.put("grant_type", GRANT_TYPE);
+                postParameters.put("assertion", assertion);
+
+                String content = convertMapToContent(postParameters);
+
+                // Get token
+                String response = httpCall(AUTH_URL, "GET", content, null);
+
+                String newToken = null;
+                Date newExpiry = null;
+
+                JsonObject json = Json.parse(response).asObject();
+                if (json != null && json.get("access_token") != null) {
+                    newToken = json.get("access_token").asString();
+                    newExpiry = new Date(utcSeconds * 1000 + json.get("expires_in").asInt() * 1000);
+                }
+
+                JsonValue error = json.get("error");
+                if (error != null) {
+                    logger.log(Level.SEVERE, error.toString());
+                }
+
+                JsonValue errorDesc = json.get("error_description");
+                if (errorDesc != null) {
+                    logger.log(Level.SEVERE, errorDesc.toString());
+                }
+
+                if (!isNullOrEmpty(newToken) && newExpiry != null && System.currentTimeMillis() < newExpiry.getTime()) {
+                    token = newToken;
+                    expiry = newExpiry;
+                    logger.log(Level.FINE, "Token : " + token);
+                    logger.info("Refreshed token. New expiry instant : " + expiry);
+                } else {
+                    logger.log(Level.WARNING, "Token refresh failed. Token : " + token + " Expiry : " + expiry);
+                }
+
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Token refresh failed " + ex.getMessage(), ex);
+            }
         }
     }
 
@@ -210,7 +218,7 @@ public class Connection {
         try {
             Signature signature = Signature.getInstance("SHA256withRSA");
             signature.initSign(this.privateKey);
-            signature.update(value.getBytes());
+            signature.update(value.getBytes(Charset.forName("UTF-8")));
             result = signature.sign();
         } catch (Exception var7) {
             logger.log(Level.SEVERE,var7.getMessage(), var7);
@@ -287,7 +295,7 @@ public class Connection {
         conn.connect();
         if (!isNullOrEmpty(content)) {
             OutputStream output = conn.getOutputStream();
-            output.write(content.getBytes());
+            output.write(content.getBytes(Charset.forName("UTF-8")));
             output.flush();
         }
 

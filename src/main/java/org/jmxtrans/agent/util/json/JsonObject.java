@@ -69,8 +69,9 @@ import org.jmxtrans.agent.util.json.JsonObject.Member;
  * This class is <strong>not supposed to be extended</strong> by clients.
  * </p>
  */
-@SuppressWarnings("serial") // use default serial UID
 public class JsonObject extends org.jmxtrans.agent.util.json.JsonValue implements Iterable<Member> {
+
+  private static final long serialVersionUID = 19981017L;
 
   private final List<String> names;
   private final List<org.jmxtrans.agent.util.json.JsonValue> values;
@@ -791,7 +792,7 @@ public class JsonObject extends org.jmxtrans.agent.util.json.JsonValue implement
     return names.lastIndexOf(name);
   }
 
-  private synchronized void readObject(ObjectInputStream inputStream)
+  private void readObject(ObjectInputStream inputStream)
       throws IOException, ClassNotFoundException
   {
     inputStream.defaultReadObject();
