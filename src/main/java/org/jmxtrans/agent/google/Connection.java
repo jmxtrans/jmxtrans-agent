@@ -140,7 +140,6 @@ public class Connection {
     }
 
     Object tokenLock = new Object();
-//    private synchronized void prepareApiToken() {
     private void prepareApiToken() {
 
         synchronized (tokenLock) {
@@ -202,7 +201,7 @@ public class Connection {
                     token = newToken;
                     expiry = newExpiry;
                     logger.log(Level.FINE, "Token : " + token);
-                    logger.info("Refreshed token. New expiry instant : " + expiry);
+                    logger.fine("Refreshed token. New expiry instant : " + expiry);
                 } else {
                     logger.log(Level.WARNING, "Token refresh failed. Token : " + token + " Expiry : " + expiry);
                 }
