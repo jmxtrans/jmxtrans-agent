@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.Map;
@@ -167,11 +168,12 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
                         address.getHostName(), address.getPort(), nbSentBytes, sizeOfBuffer));
                 return false;
             }
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) { // RuntimeException can by BufferOverflowException...
             addressReference.purge();
             logger.log(Level.SEVERE,
                     String.format("Could not send stat %s to host %s:%d", sendBuffer.toString(), address.getHostName(),
                             address.getPort()), e);
+            sendBuffer.clear();
             return false;
         }
     }

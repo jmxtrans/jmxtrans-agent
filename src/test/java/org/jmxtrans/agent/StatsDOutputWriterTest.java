@@ -61,6 +61,23 @@ public class StatsDOutputWriterTest {
 
     }
 
+    /**
+     * https://github.com/jmxtrans/jmxtrans-agent/issues/98
+     */
+    @Test
+    public void test_BufferOverflowException() throws IOException {
+        StatsDOutputWriter writer = new StatsDOutputWriter();
+        Map<String, String> config = new HashMap<>();
+        config.put(StatsDOutputWriter.SETTING_HOST, "host-does-not-exist.local");
+        config.put(StatsDOutputWriter.SETTING_PORT, "8125");
+        config.put(StatsDOutputWriter.SETTING_ROOT_PREFIX, "");
+
+        writer.postConstruct(config);
+
+        for (int i = 0; i < 100; i++) {
+            writer.writeQueryResult("the.answer", "counter", i);
+        }
+    }
     public class StatsDOutputWriterMock extends StatsDOutputWriter {
         public String receivedStat;
 
