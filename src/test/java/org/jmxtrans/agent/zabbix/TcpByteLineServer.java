@@ -32,19 +32,18 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.jmxtrans.agent.GraphitePlainTextTcpOutputWriter;
 import org.junit.rules.ExternalResource;
 
 /**
- * A server that listens on a TCP port and remembers received plain text lines.
- * Suitable for testing output writers that write plain text lines such as {@link GraphitePlainTextTcpOutputWriter}.
+ * A server that listens on a TCP port and remembers received plain byte arrays.
+ * Used to test the {@link ZabbixTcpOutputWriter}.
  * Can be used as a JUnit rule for automatic start/stop:
  * 
  * <pre>{@code @Rule
- * public TcpLineServer server = new TcpLineServer();
+ * public TcpByteLineServer server = new TcpByteLineServer();
  * }</pre>
  * 
- * @author Kristoffer Erlandsson
+ * @author Steve McDuff
  */
 public class TcpByteLineServer extends ExternalResource {
 
