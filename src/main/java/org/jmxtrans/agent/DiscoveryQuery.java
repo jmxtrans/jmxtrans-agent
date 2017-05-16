@@ -52,7 +52,7 @@ import org.jmxtrans.agent.util.logging.Logger;
  *    
  *  &lt;query objectName="java.lang:type=GarbageCollector,name=*"
  *    attributes="CollectionTime,CollectionCount"
- *    resultAlias="trapper[GarbageCollector.%name%.#attribute#]" /&gt;
+ *    resultAlias="discovery[GarbageCollector.%name%.#attribute#]" /&gt;
  * </pre>
  * 
  * May yield the following discovery output (formatted for readability) :
