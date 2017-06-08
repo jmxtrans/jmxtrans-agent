@@ -121,6 +121,7 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
         buildResultNameStrategy(rootElement, jmxTransExporterConfiguration, resolver);
         buildInvocations(rootElement, jmxTransExporterConfiguration);
         buildQueries(rootElement, jmxTransExporterConfiguration);
+        buildDiscoveryQueries(rootElement, jmxTransExporterConfiguration);
 
         buildOutputWriters(rootElement, jmxTransExporterConfiguration, resolver);
 
@@ -190,6 +191,29 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
             configuration.withQuery(objectName, attributes, key, position, type, resultAlias, collectInterval);
         }
     }
+    
+    private void buildDiscoveryQueries(Element rootElement, JmxTransExporterConfiguration configuration) {
+        NodeList queries = rootElement.getElementsByTagName("discoveryQuery");
+        for (int i = 0; i < queries.getLength(); i++) {
+            Element queryElement = (Element) queries.item(i);
+            String objectName = queryElement.getAttribute("objectName");
+            List<String> attributes = getAttributes(queryElement, objectName);
+            String key = queryElement.hasAttribute("key") ? queryElement.getAttribute("key") : null;
+            String resultAlias = queryElement.getAttribute("resultAlias");
+            String type = queryElement.getAttribute("type");
+            Integer position;
+            try {
+                position = queryElement.hasAttribute("position") ? Integer.parseInt(queryElement.getAttribute("position")) : null;
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid 'position' attribute for query objectName=" + objectName +
+                        ", attributes=" + attributes + ", resultAlias=" + resultAlias);
+
+            }
+            Integer collectInterval = intAttributeOrNull(queryElement, COLLECT_INTERVAL_NAME);
+
+            configuration.withDiscoveryQuery(objectName, attributes, key, position, type, resultAlias, collectInterval);
+        }
+    }    
 
     private List<String> getAttributes(Element queryElement, String objectName) {
         String attribute = queryElement.getAttribute("attribute");

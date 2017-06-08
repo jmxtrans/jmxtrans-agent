@@ -84,7 +84,7 @@ public class ZabbixTcpOutputWriter extends AbstractOutputWriter implements Outpu
         logger.log(getInfoLevel(),
             "ZabbixTcpOutputWriter is configured with " + zabbixServerHostAndPort + ", serverName=" +
                 messageBuilder.getHostName() + ", socketConnectTimeoutInMillis=" + socketConnectTimeoutInMillis +
-                ", mmetricBatchSize=" + metricBatchSize);
+                ", metricBatchSize=" + metricBatchSize);
     }
 
     @Override

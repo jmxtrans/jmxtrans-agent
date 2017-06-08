@@ -49,12 +49,12 @@ public class ZabbixTcpOutputWriterTest
         super();
     }
 
-
     @Rule
     public TcpByteLineServer tcpByteServer = new TcpByteLineServer();
 
     @Test
-    public void reconnectsAfterServerClosesConnection() throws Exception {
+    public void reconnectsAfterServerClosesConnection() throws Exception
+    {
         ZabbixTcpOutputWriter zabbixWriter = new ZabbixTcpOutputWriter();
         Map<String, String> config = new HashMap<>();
         config.put(ZabbixOutputWriterCommonSettings.SETTING_HOST, "127.0.0.1");
@@ -68,55 +68,49 @@ public class ZabbixTcpOutputWriterTest
         // Write one metric and verify that it is received
         writeTestMetric(zabbixWriter);
         assertEventuallyReceived(tcpByteServer, hasSize(greaterThan(1)));
-        
+
         tcpByteServer.stop();
     }
-     
 
-    public void testZabbixTrapper() throws Exception {
-        ZabbixTcpOutputWriter zabbixWriter = new ZabbixTcpOutputWriter();
-        Map<String, String> config = new HashMap<>();
-        config.put(ZabbixOutputWriterCommonSettings.SETTING_HOST, "myhost");
-        config.put(ZabbixOutputWriterCommonSettings.SETTING_PORT, "10051");
-        config.put(ZabbixOutputWriterCommonSettings.SETTING_SERVER_NAME, "jmxtransagenttest");
-        zabbixWriter.postConstruct(config);
-        // Write one metric to see it is received
-        
-        for( int i=0;i<100;++i) {
-            writeTestMetric(zabbixWriter);
-            Thread.sleep(10000);
-        }
-    }
+    public int value = 1;
 
-    public int value=1;
-    
-    public void switchValue() {
-        if( value < 10 ) {
+    public void switchValue()
+    {
+        if (value < 10)
+        {
             value += 1;
         }
-        else {
+        else
+        {
             value = 1;
         }
     }
 
-    private void writeTestMetric(AbstractOutputWriter writer) {
+    private void writeTestMetric(AbstractOutputWriter writer)
+    {
         switchValue();
-        try {
-             writer.writeQueryResult("jmxtransagentinputtest", null, value);
-             writer.writeQueryResult("second", null, value+20);
-             
-             tcpByteServer.readResponse ="ZBXA100000000{\"result\":\"success\"}".getBytes(StandardCharsets.UTF_8);
+        try
+        {
+            writer.writeQueryResult("jmxtransagentinputtest", null, value);
+            writer.writeQueryResult("second", null, value + 20);
+
+            tcpByteServer.readResponse = "ZBXA100000000{\"result\":\"success\"}".getBytes(StandardCharsets.UTF_8);
 
             writer.postCollect();
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             e.printStackTrace();
         }
     }
 
     public void assertEventuallyReceived(TcpByteLineServer server, Matcher<Collection<? extends Object>> matcher)
-            throws Exception {
-        for (int i = 0; i < 100; i++) {
-            if (matcher.matches(server.getReceivedLines())) {
+        throws Exception
+    {
+        for (int i = 0; i < 100; i++)
+        {
+            if (matcher.matches(server.getReceivedLines()))
+            {
                 return;
             }
             Thread.sleep(10);
