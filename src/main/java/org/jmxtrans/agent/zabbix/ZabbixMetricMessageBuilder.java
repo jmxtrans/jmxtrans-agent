@@ -35,8 +35,8 @@ public class ZabbixMetricMessageBuilder {
     private final String hostName;
     
     /**
-     * @param configuredMetricPathPrefix
-     *            Prefix to add to the metric keys. May be null, in which case servers.your_hostname will be used.
+     * @param hostName
+     *            hostname of the zabbix server
      */
     public ZabbixMetricMessageBuilder(@Nullable String hostName) {
         this.hostName = hostName;
@@ -50,7 +50,7 @@ public class ZabbixMetricMessageBuilder {
     /**
      * Builds a metric string to send to a Graphite instance.
      * 
-     * @return The metric string without trailing newline
+     * @return The metric json string without trailing newline
      */
     public String buildMessage(String metricName, Object value, long timestamp) {
         String valueToString = "null";
