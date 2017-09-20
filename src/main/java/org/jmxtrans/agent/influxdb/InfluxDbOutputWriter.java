@@ -39,6 +39,7 @@ import java.util.Map;
 
 import org.jmxtrans.agent.AbstractOutputWriter;
 import org.jmxtrans.agent.util.ConfigurationUtils;
+import org.jmxtrans.agent.util.StandardCharsets2;
 import org.jmxtrans.agent.util.io.IoRuntimeException;
 import org.jmxtrans.agent.util.io.IoUtils;
 import org.jmxtrans.agent.util.time.Clock;
@@ -103,8 +104,14 @@ public class InfluxDbOutputWriter extends AbstractOutputWriter {
         return urlStr + (urlStr.endsWith("/") ? "write" : "/write");
     }
 
+    /**
+     *
+     * @param urlStr
+     * @return url composed with the query string
+     */
     private URL parseUrlStr(String urlStr) {
         try {
+            // TODO shouldn't we check if it is "?" or "&" according to the existence of a querystring part in the configuration URL?
             return new URL(urlStr + "?" + buildQueryString());
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
@@ -139,18 +146,21 @@ public class InfluxDbOutputWriter extends AbstractOutputWriter {
     public void postCollect() throws IOException {
         if(!enabled) return;
         String body = convertMetricsToLines(batchedMetrics);
-        String queryString = buildQueryString();
         if (logger.isLoggable(getTraceLevel())) {
             logger.log(getTraceLevel(), "Sending to influx (" + url + "):\n" + body);
         }
         batchedMetrics.clear();
-        sendMetrics(queryString, body);
+        sendMetrics(body);
     }
 
-    private void sendMetrics(String queryString, String body) throws IOException {
+    private void sendMetrics(String body) throws IOException {
         HttpURLConnection conn = createAndConfigureConnection();
         try {
             sendMetrics(body, conn);
+        } catch (IOException e) {
+            throw new IOException("Exception sending metrics to '" + conn.getURL() + "': " + e.toString(), e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Exception sending metrics to '" + conn.getURL() + "': " + e.toString(), e);
         } finally {
             IoUtils.closeQuietly(conn);
         }
@@ -164,7 +174,9 @@ public class InfluxDbOutputWriter extends AbstractOutputWriter {
                     + ", response message: " + conn.getResponseMessage());
         }
         String response = readResponse(conn);
-        logger.log(getTraceLevel(), "Response from influx: " + response);
+        if (logger.isLoggable(getTraceLevel())) {
+            logger.log(getTraceLevel(), "Response from influx: " + response);
+        }
     }
 
     private HttpURLConnection createAndConfigureConnection() throws ProtocolException {
@@ -180,14 +192,14 @@ public class InfluxDbOutputWriter extends AbstractOutputWriter {
         try {
             return (HttpURLConnection) url.openConnection();
         } catch (IOException | ClassCastException e) {
-            throw new IoRuntimeException("Failed to create HttpURLConnection to " + url + " - is it a valid HTTP url?",
+            throw new IoRuntimeException("Failed to create HttpURLConnection to '" + url + "' - is it a valid HTTP url?",
                     e);
         }
     }
 
     private void writeMetrics(HttpURLConnection conn, String body)
-            throws UnsupportedEncodingException, IOException {
-        byte[] toSendBytes = body.getBytes("UTF-8");
+            throws IOException {
+        byte[] toSendBytes = body.getBytes(StandardCharsets2.UTF_8);
         conn.setRequestProperty("Content-Length", Integer.toString(toSendBytes.length));
         try (OutputStream os = conn.getOutputStream()) {
             os.write(toSendBytes);
