@@ -105,7 +105,8 @@ public class InfluxMetric {
                 return NUMBER_FORMAT.format(value);
             }
         }
-        return value.toString();
+        String s = value.toString();
+        return "\""+ s.replace("\\", "\\\\").replace("\"","\\\"") +"\"";
     }
 
     private List<String> convertTagsToStrings() {
