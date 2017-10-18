@@ -50,6 +50,9 @@ public class GraphiteMetricMessageBuilder {
      * @return The metric string without trailing newline
      */
     public String buildMessage(String metricName, Object value, long timestamp) {
+        if (value instanceof Boolean) {
+            return metricPathPrefix + metricName + " " + ((Boolean)value ? 1 : 0) + " " + timestamp;
+        }
         return metricPathPrefix + metricName + " " + value + " " + timestamp;
     }
     
