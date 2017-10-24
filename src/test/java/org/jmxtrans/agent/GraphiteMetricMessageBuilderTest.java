@@ -48,5 +48,18 @@ public class GraphiteMetricMessageBuilderTest {
         assertThat(msg, startsWith("servers."));
         assertThat(msg, endsWith(" 2 11"));
     }
+    
+    @Test
+    public void trueIsConvertedToOne() {
+        GraphiteMetricMessageBuilder builder = new GraphiteMetricMessageBuilder("foo.");
+        String msg = builder.buildMessage("bar", true, 11);
+        assertThat(msg, equalTo("foo.bar 1 11"));
+    }
 
+    @Test
+    public void falseIsConvertedToZero() {
+        GraphiteMetricMessageBuilder builder = new GraphiteMetricMessageBuilder("foo.");
+        String msg = builder.buildMessage("bar", false, 11);
+        assertThat(msg, equalTo("foo.bar 0 11"));
+    }
 }
