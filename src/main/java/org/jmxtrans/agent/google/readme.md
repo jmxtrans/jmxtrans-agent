@@ -110,11 +110,25 @@ The agent recognises the following authentication options (in the order of prefe
 
 * serviceAccount / serviceAccountKey : client_email and private_key as defined in Google Credentials JSON file
 * applicationCredentials : Google Credentials JSON file
+* Google Container Engine (GKE) default service account accessible via [Google Metadata API](https://cloud.google.com/compute/docs/storing-retrieving-metadata)
 * GOOGLE_APPLICATION_CREDENTIALS : Default Google Credentials file.
 
-Also projectId needs to be defined to specify which project the metrics should be directed to.
+**OBS! Change!**
+GKE Service account now takes preference over GOOGLE_APPLICATION_CREDENTIALS environmental variable. To enforce GOOGLE_APPLICATION_CREDENTIALS, reuse applicationCredentials configuration option.
+
+```xml
+    <outputWriter class="org.jmxtrans.agent.google.StackdriverWriter">
+
+        <applicationCredentials>${GOOGLE_APPLICATION_CREDENTIALS:}</applicationCredentials>
+
+    </outputWriter>
+```
+
+This has been done to avoid the conflict between the agent and other GCP drivers that might rely on GOOGLE_APPLICATION_CREDENTIALS.
+
+Google Project ID needs to be defined explicitly to specify which project the metrics should be written to.
 If the agent is deployed to Google Container/Compute engine Engine, and the projectId is not defined, it will be sourced
-from the Google Internal Metadata interface.
+from the [Google Metadata API](https://cloud.google.com/compute/docs/storing-retrieving-metadata).
 
 ## Special thank you.
 

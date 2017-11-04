@@ -32,6 +32,7 @@ import javax.xml.bind.DatatypeConverter;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.security.KeyFactory;
@@ -58,11 +59,12 @@ public class Connection {
 
     private static Logger logger = Logger.getLogger(Connection.class.getName());
 
+    private Boolean useGkeServiceAccount = false;
     private String token;
     private Date expiry;
 
-    private String serviceAccount=null;
-    private PrivateKey privateKey=null;
+    private String serviceAccount = null;
+    private PrivateKey privateKey = null;
 
     Connection(String serviceAccount, String serviceAccountKey, String credentialsFileLocation) {
         this.serviceAccount = serviceAccount;
@@ -73,14 +75,21 @@ public class Connection {
             this.privateKey = getPrivateKeyFromString(serviceAccountKey);
         }
 
-        if ( privateKey == null  && !isNullOrEmpty(credentialsFileLocation)) {
+        if (privateKey == null && !isNullOrEmpty(credentialsFileLocation)) {
             logger.info("Metrics Credentials File Name has been set explicitly : " + credentialsFileLocation);
             setFromFile(credentialsFileLocation);
         }
 
+        // Default GKE Service Account takes precedence over GOOGLE_APPLICATION_CREDENTIALS
+        if (privateKey == null && null != getGoogleApiTokenFromMetadataApi()) {
+            logger.info("Google Container Engine Metadata API is available. Using 'default' cluster Service Account");
+            useGkeServiceAccount = true;
+            return;
+        }
+
         String googleCredentialEnv = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
-        if ( privateKey==null && !isNullOrEmpty(googleCredentialEnv)) {
-            logger.info("No explicit Metrics connection configuration provided. Using Google defaults ");
+        if (privateKey == null && !isNullOrEmpty(googleCredentialEnv)) {
+            logger.info("No explicit Metrics connection configuration provided. Checking GOOGLE_APPLICATION_CREDENTIALS.");
             setFromFile(googleCredentialEnv);
         }
 
@@ -90,21 +99,21 @@ public class Connection {
 
     public String doGet(String urlString, String content) throws Exception {
         String token = getGoogleApiToken();
-        return httpCall(API_URL+"/"+urlString, "GET", content, token);
+        return httpCall(API_URL + "/" + urlString, "GET", content, token);
     }
 
     public String doPost(String urlString, String content) throws Exception {
         String token = getGoogleApiToken();
-        return httpCall(API_URL+"/"+urlString, "POST", content, token);
+        return httpCall(API_URL + "/" + urlString, "POST", content, token);
     }
 
-    private void setFromFile(String credentialsFileLocation){
+    private void setFromFile(String credentialsFileLocation) {
         try {
             JsonObject object = Json.parse(new InputStreamReader(new FileInputStream(credentialsFileLocation), "UTF-8")).asObject();
             this.serviceAccount = object.get("client_email").asString();
             this.privateKey = getPrivateKeyFromString(object.get("private_key").asString());
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Unable to parse '"+credentialsFileLocation+"' : "+ e.getMessage(), e);
+            logger.log(Level.SEVERE, "Unable to parse '" + credentialsFileLocation + "' : " + e.getMessage(), e);
         }
     }
 
@@ -114,16 +123,16 @@ public class Connection {
         PrivateKey privateKey = null;
         try {
             String privKeyPEM = serviceKeyPem.replace("-----BEGIN PRIVATE KEY-----", "")
-                                             .replace("-----END PRIVATE KEY-----", "")
-                                             .replace("\\r", "")
-                                             .replace("\\n", "")
-                                             .replace("\r", "")
-                                             .replace("\n", "");
+                    .replace("-----END PRIVATE KEY-----", "")
+                    .replace("\\r", "")
+                    .replace("\\n", "")
+                    .replace("\r", "")
+                    .replace("\n", "");
 
             byte[] encoded = DatatypeConverter.parseBase64Binary(privKeyPEM);
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
             privateKey = KeyFactory.getInstance("RSA")
-                                   .generatePrivate(keySpec);
+                    .generatePrivate(keySpec);
         } catch (Exception e) {
             String error = "Constructing Private Key from PEM string failed: " + e.getMessage();
             logger.log(Level.SEVERE, error, e);
@@ -132,6 +141,9 @@ public class Connection {
     }
 
     private String getGoogleApiToken() {
+        if (useGkeServiceAccount)
+            return getGoogleApiTokenFromMetadataApi();
+
         if (isNullOrEmpty(token) ||
                 expiry == null ||
                 (System.currentTimeMillis() + 30000L) > expiry.getTime())
@@ -139,7 +151,35 @@ public class Connection {
         return token;
     }
 
+    private String getGoogleApiTokenFromMetadataApi() {
+        BufferedReader in = null;
+        try {
+            URLConnection yc =
+                    new URL("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token")
+                            .openConnection();
+            yc.setRequestProperty("Metadata-Flavor", "Google");
+            in = new BufferedReader(new InputStreamReader(yc.getInputStream(), "UTF-8"));
+            JsonObject json = Json.parse(in.readLine()).asObject();
+            if (json != null && json.get("access_token") != null) {
+                return json.get("access_token").asString();
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed to source Access Token from Metadata API : "+ e.getMessage());
+        } finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (Exception e) {
+            }
+        }
+        return null;
+    }
+
     Object tokenLock = new Object();
+
     private void prepareApiToken() {
 
         synchronized (tokenLock) {
@@ -220,7 +260,7 @@ public class Connection {
             signature.update(value.getBytes(Charset.forName("UTF-8")));
             result = signature.sign();
         } catch (Exception var7) {
-            logger.log(Level.SEVERE,var7.getMessage(), var7);
+            logger.log(Level.SEVERE, var7.getMessage(), var7);
         }
         return result;
     }
@@ -243,11 +283,10 @@ public class Connection {
 
             return encoded;
         } catch (Exception var4) {
-            logger.log(Level.WARNING,"FAILED URL ENCODING " + var4.getMessage(), var4);
+            logger.log(Level.WARNING, "FAILED URL ENCODING " + var4.getMessage(), var4);
             return null;
         }
     }
-
 
     private String convertMapToContent(LinkedHashMap<String, String> postParameters) throws Exception {
         StringBuilder content = new StringBuilder("");
@@ -262,7 +301,6 @@ public class Connection {
         return content.length() > 0 ? content.toString() : null;
     }
 
-
     private String httpCall(String urlString, String method, String content, String token) throws Exception {
         StringBuilder result = new StringBuilder();
         URL url = new URL(urlString);
@@ -275,7 +313,7 @@ public class Connection {
         conn.setRequestProperty("Authorization", "Bearer " + token);
 
         conn.setRequestMethod(method.toUpperCase());
-        if (method.equalsIgnoreCase("POST")){
+        if (method.equalsIgnoreCase("POST")) {
             conn.setRequestProperty("Content-Type", "application/json");
         }
 
