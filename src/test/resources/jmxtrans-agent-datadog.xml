@@ -1,0 +1,54 @@
+<jmxtrans-agent>
+
+    <queries>
+        <!-- JVM -->
+        <query objectName="java.lang:type=Memory" attribute="HeapMemoryUsage" key="used" resultAlias="jvm.heapMemoryUsage.used"/>
+        <query objectName="java.lang:type=Memory" attribute="HeapMemoryUsage" key="committed" resultAlias="jvm.heapMemoryUsage.committed"/>
+        <query objectName="java.lang:type=Memory" attribute="NonHeapMemoryUsage" key="used" resultAlias="jvm.nonHeapMemoryUsage.used"/>
+        <query objectName="java.lang:type=Memory" attribute="NonHeapMemoryUsage" key="committed" resultAlias="jvm.nonHeapMemoryUsage.committed"/>
+        <query objectName="java.lang:type=ClassLoading" attribute="LoadedClassCount" resultAlias="jvm.loadedClasses"/>
+        <query objectName="java.lang:type=Threading" attribute="ThreadCount" resultAlias="jvm.thread"/>
+        <query objectName="java.lang:type=GarbageCollector,name=PS MarkSweep" attribute="CollectionTime" resultAlias="jvm.gc.marksweep"/>
+        <query objectName="java.lang:type=GarbageCollector,name=PS Scavenge" attribute="CollectionTime" resultAlias="jvm.gc.scavenge"/>
+        <!-- OS -->
+        <query objectName="java.lang:type=OperatingSystem" attribute="OpenFileDescriptorCount" resultAlias="jvm.os.openfiles"/>
+        <query objectName="java.lang:type=OperatingSystem" attribute="ProcessCpuLoad" resultAlias="jvm.os.processcpuload"/>
+
+        <!-- genericObjectPool -->
+        <!-- all
+        <query objectName="org.apache.commons.pool2:type=GenericObjectPool,name=pool" resultAlias="#attribute#"/>
+        -->
+        <query objectName="org.apache.commons.pool2:type=GenericObjectPool,name=pool" attribute="CreatedCount" resultAlias="jvm.pool.createdcount"/>
+        <query objectName="org.apache.commons.pool2:type=GenericObjectPool,name=pool" attribute="MeanIdleTimeMillis" resultAlias="jvm.pool.meantime"/>
+        <query objectName="org.apache.commons.pool2:type=GenericObjectPool,name=pool" attribute="NumIdle" resultAlias="jvm.pool.numidle"/>
+        <query objectName="org.apache.commons.pool2:type=GenericObjectPool,name=pool" attribute="NumActive" resultAlias="jvm.pool.numactive"/>
+        <query objectName="org.apache.commons.pool2:type=GenericObjectPool,name=pool" attribute="ReturnedCount" resultAlias="jvm.pool.returnedcount"/>
+        <!--query objectName="org.apache.commons.pool2:type=GenericObjectPool,name=pool" attribute="" resultAlias="jvm.pool."/ -->
+
+        <!-- Hibernate Stats -->
+        <!-- all
+        <query objectName="Hibernate:type=statistics" resultAlias="#attribute#"/>
+        -->
+        <query objectName="Hibernate:type=statistics" attribute="ConnectCount" resultAlias="jvm.hibernate.connectcount"/>
+        <query objectName="Hibernate:type=statistics" attribute="EntityLoadCount" resultAlias="jvm.hibernate.entityloadcount"/>
+        <query objectName="Hibernate:type=statistics" attribute="EntityUpdateCount" resultAlias="jvm.hibernate.entityupdatecount"/>
+        <query objectName="Hibernate:type=statistics" attribute="FlushCount" resultAlias="jvm.hibernate.flushcount"/>
+        <query objectName="Hibernate:type=statistics" attribute="QueryCacheHitCount" resultAlias="jvm.hibernate.querycachehitcount"/>
+        <query objectName="Hibernate:type=statistics" attribute="QueryCacheMissCount" resultAlias="jvm.hibernate.querycachemisscount"/>
+        <query objectName="Hibernate:type=statistics" attribute="PrepareStatementCount" resultAlias="jvm.hibernate.preparestatementcount"/>
+        <query objectName="Hibernate:type=statistics" attribute="QueryExecutionCount" resultAlias="jvm.hibernate.queryexecutioncount"/>
+        <query objectName="Hibernate:type=statistics" attribute="SessionOpenCount" resultAlias="jvm.hibernate.sessionopencount"/>
+        <query objectName="Hibernate:type=statistics" attribute="SessionCloseCount" resultAlias="jvm.hibernate.sessionclosecount"/>
+        <query objectName="Hibernate:type=statistics" attribute="SuccessfulTransactionCount" resultAlias="jvm.hibernate.successfulltransactioncount"/>
+        <query objectName="Hibernate:type=statistics" attribute="TransactionCount" resultAlias="jvm.hibernate.transactioncount"/>
+        <!--query objectName="Hibernate:type=statistics" attribute="" resultAlias="jvm.hibernate."/-->
+
+    </queries>
+    <outputWriter class="org.jmxtrans.agent.StatsDOutputWriter">
+        <host>dd-agent.default</host>
+        <port>8125</port>
+        <statsd>dd</statsd>
+        <tags>service:SERVICE_ID</tags>
+    </outputWriter>
+    <collectIntervalInSeconds>30</collectIntervalInSeconds>
+</jmxtrans-agent>
