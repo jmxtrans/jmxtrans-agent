@@ -71,6 +71,7 @@ public class MetricWriter {
         cumulativePeriodStart = getNow();
 
         String projectId = StringUtils2.trimToEmpty(settings.get("projectId"));
+
         if (StringUtils2.isNullOrEmpty(projectId)) {
             logger.info("Metrics Project ID is not set. Attempting to source project id from GKE.");
             projectId = getGoogleProjectId();
