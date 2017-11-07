@@ -35,6 +35,7 @@ import java.net.UnknownHostException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -44,11 +45,18 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
     public final static String SETTING_HOST = "host";
     public final static String SETTING_PORT = "port";
     public final static String SETTING_ROOT_PREFIX = "metricName";
+    public final static String SETTING_HOST_NAMME = "hostname";
     public final static String SETTING_BUFFER_SIZE = "bufferSize";
     private final static int SETTING_DEFAULT_BUFFER_SIZE = 1024;
+    public final static String SETTINGS_STATSD_TYPE = "statsd";
+    public final static String STATSD_DATADOG = "dd";
+    public final static String STATSD_SYSDIG = "sysdig";
+    public final static String SETTINGS_TAGS = "tags";
+    private List<Tag> tags;
 
     private ByteBuffer sendBuffer;
     private String metricNamePrefix;
+    private String statsType;
     /**
      * Using a {@link CachingReference} instead of a raw {@link InetSocketAddress} allows to handle a change
      */
@@ -61,7 +69,20 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
 
         final String host = ConfigurationUtils.getString(settings, SETTING_HOST);
         final Integer port = ConfigurationUtils.getInt(settings, SETTING_PORT);
-        metricNamePrefix = ConfigurationUtils.getString(settings, SETTING_ROOT_PREFIX, getHostName().replaceAll("\\.", "_"));
+        statsType = ConfigurationUtils.getString(settings, SETTINGS_STATSD_TYPE, "statsd");
+        if (statsType.equals(STATSD_DATADOG)) {
+            String tagsStr = ConfigurationUtils.getString(settings, SETTINGS_TAGS, "");
+            tags = Tag.tagsFromCommaSeparatedString(tagsStr);
+            tags.add(new Tag("#host", ConfigurationUtils.getString(settings, SETTING_HOST_NAMME, getHostName().replaceAll("\\.", "_") )));
+            metricNamePrefix = ConfigurationUtils.getString(settings, SETTING_ROOT_PREFIX, "java");
+        } else if (statsType.equals(STATSD_SYSDIG)) {
+            String tagsStr = ConfigurationUtils.getString(settings, SETTINGS_TAGS, "");
+            tags = Tag.tagsFromCommaSeparatedString(tagsStr, "=");
+            metricNamePrefix = ConfigurationUtils.getString(settings, SETTING_ROOT_PREFIX, getHostName().replaceAll("\\.", "_"));
+        }
+        else {
+            metricNamePrefix = ConfigurationUtils.getString(settings, SETTING_ROOT_PREFIX, getHostName().replaceAll("\\.", "_"));
+        }
 
         if (port == null || StringUtils2.isNullOrEmpty(host)) {
             throw new RuntimeException("Host and/or port cannot be null");
@@ -110,13 +131,49 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
     }
 
     @Override
-    public synchronized void writeQueryResult(String metricName, String metricType, Object value) throws IOException {
+    public synchronized void writeQueryResult(String metricName, String metricType, Object value) throws IOException
+    {
+        //DataDog statsd with tags (https://docs.datadoghq.com/guides/dogstatsd/),
+        // metric.name:value|type|@sample_rate|#tag1:value,tag2
+        //Sysdig metric tags (https://support.sysdig.com/hc/en-us/articles/204376099-Metrics-integrations-StatsD-)
+        // enqueued_messages#users,country=italy:10|c
+        StringBuilder sb = new StringBuilder();
         String type = "gauge".equalsIgnoreCase(metricType) || "g".equalsIgnoreCase(metricType) ? "g" : "c";
-        String stats = metricNamePrefix + "." + metricName + ":" + value + "|" + type + "\n";
-        if (logger.isLoggable(getDebugLevel())) {
-            logger.log(getDebugLevel(), "Sending msg: " + stats);
+        if (statsType.equals(STATSD_DATADOG)) {
+            sb.append(metricNamePrefix)
+                    .append(".")
+                    .append(metricName)
+                    .append(":")
+                    .append(value)
+                    .append("|")
+                    .append(type)
+                    .append("|")
+                    .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
+                    .append("\n");
+        } else if (statsType.equals(STATSD_SYSDIG)) {
+            sb.append(metricNamePrefix)
+                    .append(".")
+                    .append(metricName)
+                    .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
+                    .append(":")
+                    .append(value)
+                    .append("|")
+                    .append(type)
+                    .append("\n");
+        } else {
+            sb.append(metricNamePrefix)
+                    .append(".")
+                    .append(metricName)
+                    .append(":")
+                    .append(value)
+                    .append("|")
+                    .append(type)
+                    .append("\n");
         }
-        doSend(stats);
+        if (logger.isLoggable(getDebugLevel())) {
+            logger.log(getDebugLevel(), "Sending msg: " + sb.toString());
+        }
+        doSend(sb.toString());
     }
 
     protected synchronized boolean doSend(String stat) {
