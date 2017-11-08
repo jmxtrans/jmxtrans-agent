@@ -241,6 +241,8 @@ Out of the box output writers:
 * [StatsDOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/StatsDOutputWriter.java): output to StatD using the counter metric type. Configuration parameters:
   * `host`: StatsD listener host
   * `port`: StatsD listener port
+  * `statsd` : Optional StatsD server type, statsd, dd or sysdig
+  * `tags` : Optional StatsD tags for dd and sysdig, i.e. serviceid:SERVICE_ID,environment:dev
   * `metricName`: metric name prefix. Optional, default value is machine hostname or IP (all `.` are scaped as `_`).
   * `bufferSize`: max buffer size. Holds data to be sent. Optional, default value is 1024.
 * [InfluxDbOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/influxdb/InfluxDbOutputWriter.java): output to InfluxDb. **This writer is currently experimental** - behavior and options might change. See [InfluxDbOutputWriter Details](#influxdboutputwriter-details) for more details. Configuration parameters:
