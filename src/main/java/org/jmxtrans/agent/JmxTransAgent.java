@@ -70,7 +70,7 @@ public class JmxTransAgent {
         final int delayInSecs = Integer.parseInt(System.getProperty("jmxtrans.agent.premain.delay", "0"));
         final boolean waitForMBeanServer =
             Boolean.parseBoolean(System.getProperty("jmxtrans.agent.premain.waitForMBeanServer"));
-        final int timeout = Integer.parseInt(
+        final int timeoutInSeconds = Integer.parseInt(
             System.getProperty("jmxtrans.agent.premain.waitForMBeanServer.timeoutInSeconds", "120"));
 
         if (delayInSecs > 0) {
@@ -86,7 +86,7 @@ public class JmxTransAgent {
                     }
 
                     if (waitForMBeanServer) {
-                        if (!waitForMBeanServer(timeout)) {
+                        if (!waitForMBeanServer(timeoutInSeconds)) {
                             return;
                         }
                     }
@@ -99,7 +99,7 @@ public class JmxTransAgent {
             new Thread("jmxtrans-agent-delayed-starter-waitForMBeanServer") {
                 @Override
                 public void run() {
-                    if (!waitForMBeanServer(timeout)) {
+                    if (!waitForMBeanServer(timeoutInSeconds)) {
                         return;
                     }
 
@@ -214,16 +214,16 @@ public class JmxTransAgent {
 
     /**
      * Polls every second to see if any {@link javax.management.MBeanServer} have been created
-     * by another thread up to {@code timeoutMillis}. If interrupted or timed out, returns
+     * by another thread up to {@code timeoutInSeconds}. If interrupted or timed out, returns
      * {@code false}.
-     * @param timeoutSeconds Maximum number of seconds to wait before giving up.
-     * @return {@code true} if found an {@code MBeanServer} within {@code timeoutSeconds}.
+     * @param timeoutInSeconds Maximum number of seconds to wait before giving up.
+     * @return {@code true} if found an {@code MBeanServer} within {@code timeoutInSeconds}.
      * {@code false} otherwise.
      */
-    private static boolean waitForMBeanServer(int timeoutSeconds) {
-        long start = System.currentTimeMillis();
+    private static boolean waitForMBeanServer(int timeoutInSeconds) {
+        long startInMs = System.currentTimeMillis();
 
-        while (!isMBeanServerCreated() && secondsSince(start) < timeoutSeconds) {
+        while (!isMBeanServerCreated() && secondsSince(startInMs) < timeoutInSeconds) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -232,7 +232,7 @@ public class JmxTransAgent {
             }
         }
 
-        if (secondsSince(start) >= timeoutSeconds) {
+        if (secondsSince(startInMs) >= timeoutInSeconds) {
             logger.info("jmxagent initialization timed out waiting for MBeanServer");
             return false;
         }
@@ -244,7 +244,7 @@ public class JmxTransAgent {
         return MBeanServerFactory.findMBeanServer(null).size() > 0;
     }
 
-    private static long secondsSince(long startMillis) {
-        return (System.currentTimeMillis() - startMillis) / 1000;
+    private static long secondsSince(long startInMs) {
+        return (System.currentTimeMillis() - startInMs) / 1000;
     }
 }
