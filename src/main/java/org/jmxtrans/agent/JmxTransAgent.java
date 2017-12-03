@@ -223,7 +223,7 @@ public class JmxTransAgent {
     private static boolean waitForMBeanServer(int timeoutSeconds) {
         long start = System.currentTimeMillis();
 
-        while (!isMBeanServerCreated() && msSince(start) < (timeoutSeconds * 1000)) {
+        while (!isMBeanServerCreated() && secondsSince(start) < timeoutSeconds) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -232,7 +232,7 @@ public class JmxTransAgent {
             }
         }
 
-        if (msSince(start) >= timeoutSeconds) {
+        if (secondsSince(start) >= timeoutSeconds) {
             logger.info("jmxagent initialization timed out waiting for MBeanServer");
             return false;
         }
@@ -244,7 +244,7 @@ public class JmxTransAgent {
         return MBeanServerFactory.findMBeanServer(null).size() > 0;
     }
 
-    private static long msSince(long startMillis) {
-        return System.currentTimeMillis() - startMillis;
+    private static long secondsSince(long startMillis) {
+        return (System.currentTimeMillis() - startMillis) / 1000;
     }
 }
