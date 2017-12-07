@@ -286,6 +286,7 @@ name attribute of the object name. In addition, a tag called `myTag` with value 
 All measurements sent to InfluxDb will have only one field called `value`. Multiple fields are currently not supported.
 
 Example complete output writer configuration:
+
 ```xml
 <outputWriter class="org.jmxtrans.agent.influxdb.InfluxDbOutputWriter">
 	<url>http://localhost:8086</url>
@@ -354,12 +355,15 @@ application.activeSessions 0
 * Create directory `${ACTIVEMQ_HOME}/jmxtrans-agent/`
 * Copy `jmxtrans-agent-1.2.4.jar` under `${ACTIVEMQ_HOME}/jmxtrans-agent/`
 * Update `${ACTIVEMQ_HOME}/bin/activemq`, add in `invoke_start()` and `invoke_console()`:
-    ```
+
+```
 JMXTRANS_AGENT="-javaagent:${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-1.2.4.jar=${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-activemq.xml"
 ACTIVEMQ_OPTS="$ACTIVEMQ_OPTS $JMXTRANS_AGENT"
 ```
+
 * Copy to `${ACTIVEMQ_HOME}/jmxtrans-agent/` a config file similar to
-    ```xml
+
+```xml
 <jmxtrans-agent>
     <queries>
         <!-- OS -->
