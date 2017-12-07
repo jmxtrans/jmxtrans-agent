@@ -112,13 +112,13 @@ Use `position` to specify the value to lookup. Position is `0 based.
 * You can collect all the entries of the multi-valued data omitting `position` in the `<query />` declaration.
 * Use the [expression language](https://github.com/jmxtrans/jmxtrans-agent/wiki/Expression-Language) `#position#` in the `resultAlias` to use the multi-valued data position in the metric name. Sample:
 
-       ```xml
+```xml
  <query objectName="MyApp:type=MyMBean" attribute="MyMultiValuedAttribute" resultAlias="myMBean.myMultiValuedAttributeValue.#position#"/>
 ```
 
 * If no `resultAlias` is specified, the generated metric name is suffixed by `_#position#`. Sample:
 
-       ```
+```
 myMBean.myMultiValuedAttributeValue_0`
 ```
 
