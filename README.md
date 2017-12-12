@@ -33,17 +33,17 @@ system property](https://docs.oracle.com/javase/9/docs/api/javax/management/MBea
 in JBoss's startup sequence. If the `PlatformMBeanServer` is initialized before this is set, the
 `PlatformMBeanServer` will not use the implementation JBoss expects.
 
-To wait for the custom MBeanServer to be defined (version >= 1.2.8):
+For versions >=1.2.8, you can wait for the custom MBeanServer to be defined, set `jmxtrans.agent.premain.waitForCustomMBeanServer=true`:
 
 ```
-# delays calling premain() in jmxtrans agent until javax.management.builder.initial is set up to 2 minutes
+# delays calling premain() in jmxtrans agent until javax.management.builder.initial is set, up to 2 minutes
 java -Djmxtrans.agent.premain.waitForCustomMBeanServer=true
 ```
 
-You can optionally increase the timeout to wait if necessary (defaults to 2 minutes):
+This usually takes less than a second. If needed, you can optionally increase the timeout to wait by setting `jmxtrans.agent.premain.waitForCustomMBeanServer.timeoutInSeconds` (defaults to 2 minutes):
 
 ```
-# delays calling premain() in jmxtrans agent until javax.management.builder.initial is set up to 5 minutes
+# delays calling premain() in jmxtrans agent until javax.management.builder.initial is set, up to 5 minutes
 java -Djmxtrans.agent.premain.waitForCustomMBeanServer=true -Djmxtrans.agent.premain.waitForCustomMBeanServer.timeoutInSeconds=300
 ```
 
