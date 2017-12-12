@@ -23,7 +23,6 @@
  */
 package org.jmxtrans.agent;
 
-import com.sun.jmx.defaults.JmxProperties;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import org.jmxtrans.agent.properties.NoPropertiesSourcePropertiesLoader;
@@ -244,7 +243,7 @@ public class JmxTransAgent {
 
     /** @see javax.management.MBeanServerFactory */
     static private boolean isCustomMBeanServerConfigured() {
-        return System.getProperty(JmxProperties.JMX_INITIAL_BUILDER) != null;
+        return System.getProperty("javax.management.builder.initial") != null;
     }
 
     private static long secondsSince(long startInMs) {
