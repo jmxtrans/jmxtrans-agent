@@ -24,11 +24,6 @@ export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.2.4.jar=jmxtra
 * java agent jar path can be relative to the working dir
 * `jmxtrans-agent.xml` is the configuration file, can be classpath relative (`classpath:…`), http(s) (`http(s)://...`) or file system based (relative to the working dir)
 
-### Custom MBeanServers (version >= 1.2.8)
-
-JMX allows custom MBeanServers to be used by defining a ["javax.management.builder.initial" system property](https://docs.oracle.com/javase/9/docs/api/javax/management/MBeanServerFactory.html).
-If an MBeanServer is created before this is set,
-
 ### Delayed startup (version >= 1.2.1)
 
 For some application servers like JBoss, delaying premain is needed to start the agent, see [WFLY-3054](https://issues.jboss.org/browse/WFLY-3054)
