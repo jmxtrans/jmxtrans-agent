@@ -28,7 +28,7 @@ export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.2.4.jar=jmxtra
 
 For some application servers like JBoss, delaying premain is needed to start the agent, see [WFLY-3054](https://issues.jboss.org/browse/WFLY-3054)
 This has been confirmed to be needed with JBoss 5.x, 6.x, 7.x and Wildfly 8.x. This is because a
-custom MBeanServer is used by programmatically setting the ["javax.management.builder.initial"
+custom `MBeanServer` is used by programmatically setting the ["javax.management.builder.initial"
 system property](https://docs.oracle.com/javase/9/docs/api/javax/management/MBeanServerFactory.html)
 in JBoss's startup sequence. If the `PlatformMBeanServer` is initialized before this is set, the
 `PlatformMBeanServer` will not use the implementation JBoss expects.
