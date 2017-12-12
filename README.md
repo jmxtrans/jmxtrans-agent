@@ -24,12 +24,35 @@ export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.2.4.jar=jmxtra
 * java agent jar path can be relative to the working dir
 * `jmxtrans-agent.xml` is the configuration file, can be classpath relative (`classpath:…`), http(s) (`http(s)://...`) or file system based (relative to the working dir)
 
+### Custom MBeanServers (version >= 1.2.8)
+
+JMX allows custom MBeanServers to be used by defining a ["javax.management.builder.initial" system property](https://docs.oracle.com/javase/9/docs/api/javax/management/MBeanServerFactory.html).
+If an MBeanServer is created before this is set,
+
 ### Delayed startup (version >= 1.2.1)
 
 For some application servers like JBoss, delaying premain is needed to start the agent, see [WFLY-3054](https://issues.jboss.org/browse/WFLY-3054)
-This has been confirmed to be needed with JBoss 5.x, 6.x, 7.x and Wildfly 8.x
+This has been confirmed to be needed with JBoss 5.x, 6.x, 7.x and Wildfly 8.x. This is because a
+custom MBeanServer is used by programmatically setting the ["javax.management.builder.initial"
+system property](https://docs.oracle.com/javase/9/docs/api/javax/management/MBeanServerFactory.html)
+in JBoss's startup sequence. If the `PlatformMBeanServer` is initialized before this is set, the
+`PlatformMBeanServer` will not use the implementation JBoss expects.
 
-To add a delay set `jmxtrans.agent.premain.delay` (value in seconds):
+To wait for the custom MBeanServer to be defined (version >= 1.2.8):
+
+```
+# delays calling premain() in jmxtrans agent until javax.management.builder.initial is set up to 2 minutes
+java -Djmxtrans.agent.premain.waitForCustomMBeanServer=true
+```
+
+You can optionally increase the timeout to wait if necessary (defaults to 2 minutes):
+
+```
+# delays calling premain() in jmxtrans agent until javax.management.builder.initial is set up to 5 minutes
+java -Djmxtrans.agent.premain.waitForCustomMBeanServer=true -Djmxtrans.agent.premain.waitForCustomMBeanServer.timeoutInSeconds=300
+```
+
+For versions <1.2.8, you have to add a flat delay. To add a flat delay set `jmxtrans.agent.premain.delay` (value in seconds):
 
 ```
 # delays calling premain() in jmxtrans agent for 30 seconds

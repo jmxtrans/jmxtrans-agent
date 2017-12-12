@@ -23,6 +23,7 @@
  */
 package org.jmxtrans.agent;
 
+import com.sun.jmx.defaults.JmxProperties;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import org.jmxtrans.agent.properties.NoPropertiesSourcePropertiesLoader;
@@ -34,7 +35,6 @@ import org.jmxtrans.agent.util.io.ResourceFactory;
 import org.jmxtrans.agent.util.logging.Logger;
 
 import javax.annotation.Nonnull;
-import javax.management.MBeanServerFactory;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 
@@ -68,10 +68,10 @@ public class JmxTransAgent {
 
     public static void premain(final String configFile, Instrumentation inst) {
         final int delayInSecs = Integer.parseInt(System.getProperty("jmxtrans.agent.premain.delay", "0"));
-        final boolean waitForMBeanServer =
-            Boolean.parseBoolean(System.getProperty("jmxtrans.agent.premain.waitForMBeanServer"));
+        final boolean waitForCustomMBeanServer =
+            Boolean.parseBoolean(System.getProperty("jmxtrans.agent.premain.waitForCustomMBeanServer"));
         final int timeoutInSeconds = Integer.parseInt(
-            System.getProperty("jmxtrans.agent.premain.waitForMBeanServer.timeoutInSeconds", "120"));
+            System.getProperty("jmxtrans.agent.premain.waitForCustomMBeanServer.timeoutInSeconds", "120"));
 
         if (delayInSecs > 0) {
             logger.info("jmxtrans agent initialization delayed by " + delayInSecs + " seconds");
@@ -85,8 +85,10 @@ public class JmxTransAgent {
                         return;
                     }
 
-                    if (waitForMBeanServer) {
-                        if (!waitForMBeanServer(timeoutInSeconds)) {
+                    if (waitForCustomMBeanServer) {
+                        logger.info("jmxtrans agent initialization delayed waiting for MBeanServer");
+
+                        if (!waitForCustomMBeanServer(timeoutInSeconds)) {
                             return;
                         }
                     }
@@ -94,12 +96,12 @@ public class JmxTransAgent {
                     initializeAgent(configFile);
                 }
             }.start();
-        } else if (waitForMBeanServer) {
-            logger.info("jmxtrans agent initialization delayed waiting for MBeanServer");
-            new Thread("jmxtrans-agent-delayed-starter-waitForMBeanServer") {
+        } else if (waitForCustomMBeanServer) {
+            logger.info("jmxtrans agent initialization delayed waiting for custom MBeanServer");
+            new Thread("jmxtrans-agent-delayed-starter-waitForCustomMBeanServer") {
                 @Override
                 public void run() {
-                    if (!waitForMBeanServer(timeoutInSeconds)) {
+                    if (!waitForCustomMBeanServer(timeoutInSeconds)) {
                         return;
                     }
 
@@ -220,10 +222,10 @@ public class JmxTransAgent {
      * @return {@code true} if found an {@code MBeanServer} within {@code timeoutInSeconds}.
      * {@code false} otherwise.
      */
-    private static boolean waitForMBeanServer(int timeoutInSeconds) {
+    private static boolean waitForCustomMBeanServer(int timeoutInSeconds) {
         long startInMs = System.currentTimeMillis();
 
-        while (!isMBeanServerCreated() && secondsSince(startInMs) < timeoutInSeconds) {
+        while (!isCustomMBeanServerConfigured() && secondsSince(startInMs) < timeoutInSeconds) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -233,15 +235,16 @@ public class JmxTransAgent {
         }
 
         if (secondsSince(startInMs) >= timeoutInSeconds) {
-            logger.info("jmxagent initialization timed out waiting for MBeanServer");
+            logger.info("jmxagent initialization timed out waiting for custom MBeanServer");
             return false;
         }
 
         return true;
     }
 
-    static private boolean isMBeanServerCreated() {
-        return MBeanServerFactory.findMBeanServer(null).size() > 0;
+    /** @see javax.management.MBeanServerFactory */
+    static private boolean isCustomMBeanServerConfigured() {
+        return System.getProperty(JmxProperties.JMX_INITIAL_BUILDER) != null;
     }
 
     private static long secondsSince(long startInMs) {
