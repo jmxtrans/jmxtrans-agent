@@ -27,9 +27,27 @@ export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.2.4.jar=jmxtra
 ### Delayed startup (version >= 1.2.1)
 
 For some application servers like JBoss, delaying premain is needed to start the agent, see [WFLY-3054](https://issues.jboss.org/browse/WFLY-3054)
-This has been confirmed to be needed with JBoss 5.x, 6.x, 7.x and Wildfly 8.x
+This has been confirmed to be needed with JBoss 5.x, 6.x, 7.x and Wildfly 8.x. This is because a
+custom `MBeanServer` is used by programmatically setting the ["javax.management.builder.initial"
+system property](https://docs.oracle.com/javase/9/docs/api/javax/management/MBeanServerFactory.html)
+in JBoss's startup sequence. If the `PlatformMBeanServer` is initialized before this is set, the
+`PlatformMBeanServer` will not use the implementation JBoss expects.
 
-To add a delay set `jmxtrans.agent.premain.delay` (value in seconds):
+For versions >=1.2.8, you can wait for the custom MBeanServer to be defined, set `jmxtrans.agent.premain.waitForCustomMBeanServer=true`:
+
+```
+# delays calling premain() in jmxtrans agent until javax.management.builder.initial is set, up to 2 minutes
+java -Djmxtrans.agent.premain.waitForCustomMBeanServer=true
+```
+
+This usually takes less than a second. If needed, you can optionally increase the timeout to wait by setting `jmxtrans.agent.premain.waitForCustomMBeanServer.timeoutInSeconds` (defaults to 2 minutes):
+
+```
+# delays calling premain() in jmxtrans agent until javax.management.builder.initial is set, up to 5 minutes
+java -Djmxtrans.agent.premain.waitForCustomMBeanServer=true -Djmxtrans.agent.premain.waitForCustomMBeanServer.timeoutInSeconds=300
+```
+
+For versions <1.2.8, you have to add a flat delay. To add a flat delay set `jmxtrans.agent.premain.delay` (value in seconds):
 
 ```
 # delays calling premain() in jmxtrans agent for 30 seconds
