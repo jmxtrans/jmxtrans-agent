@@ -148,4 +148,13 @@ public class JmxTransExporterConfiguration {
         getOutputWriter().preDestroy();
     }
 
+    public JmxTransExporterConfiguration withDiscoveryQuery(@Nonnull String objectName,
+        @Nonnull List<String> attributes, @Nullable String key, @Nullable Integer position, @Nullable String type,
+        @Nullable String resultAlias, @Nullable Integer collectInterval) {
+        Query query = new DiscoveryQuery(objectName, attributes, key, position, type, resultAlias, this.resultNameStrategy,
+            collectInterval);
+        queries.add(query);
+        return this;
+    }
+
 }

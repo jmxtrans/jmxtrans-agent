@@ -1,6 +1,11 @@
 # Jmxtrans Agent
 
-[![Build Status](https://travis-ci.org/jmxtrans/jmxtrans-agent.svg?branch=master)](https://travis-ci.org/jmxtrans/jmxtrans-agent)
+[![Travis](https://img.shields.io/travis/jmxtrans/jmxtrans-agent.svg)]()
+[![GitHub issues](https://img.shields.io/github/issues/jmxtrans/jmxtrans-agent.svg)](https://github.com/jmxtrans/jmxtrans-agent/issues)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jmxtrans/jmxtrans-agent/master/LICENSE)
+[![GitHub forks](https://img.shields.io/github/forks/jmxtrans/jmxtrans-agent.svg)](https://github.com/jmxtrans/jmxtrans-agent/network)
+[![GitHub stars](https://img.shields.io/github/stars/jmxtrans/jmxtrans-agent.svg)](https://github.com/jmxtrans/jmxtrans-agent/stargazers)
+
 
 ## What is jmxtrans-agent ?
 
@@ -22,9 +27,27 @@ export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.2.4.jar=jmxtra
 ### Delayed startup (version >= 1.2.1)
 
 For some application servers like JBoss, delaying premain is needed to start the agent, see [WFLY-3054](https://issues.jboss.org/browse/WFLY-3054)
-This has been confirmed to be needed with JBoss 5.x, 6.x, 7.x and Wildfly 8.x
+This has been confirmed to be needed with JBoss 5.x, 6.x, 7.x and Wildfly 8.x. This is because a
+custom `MBeanServer` is used by programmatically setting the ["javax.management.builder.initial"
+system property](https://docs.oracle.com/javase/9/docs/api/javax/management/MBeanServerFactory.html)
+in JBoss's startup sequence. If the `PlatformMBeanServer` is initialized before this is set, the
+`PlatformMBeanServer` will not use the implementation JBoss expects.
 
-To add a delay set `jmxtrans.agent.premain.delay` (value in seconds):
+For versions >=1.2.8, you can wait for the custom MBeanServer to be defined, set `jmxtrans.agent.premain.waitForCustomMBeanServer=true`:
+
+```
+# delays calling premain() in jmxtrans agent until javax.management.builder.initial is set, up to 2 minutes
+java -Djmxtrans.agent.premain.waitForCustomMBeanServer=true
+```
+
+This usually takes less than a second. If needed, you can optionally increase the timeout to wait by setting `jmxtrans.agent.premain.waitForCustomMBeanServer.timeoutInSeconds` (defaults to 2 minutes):
+
+```
+# delays calling premain() in jmxtrans agent until javax.management.builder.initial is set, up to 5 minutes
+java -Djmxtrans.agent.premain.waitForCustomMBeanServer=true -Djmxtrans.agent.premain.waitForCustomMBeanServer.timeoutInSeconds=300
+```
+
+For versions <1.2.8, you have to add a flat delay. To add a flat delay set `jmxtrans.agent.premain.delay` (value in seconds):
 
 ```
 # delays calling premain() in jmxtrans agent for 30 seconds
@@ -46,6 +69,12 @@ Example - collect the `ThreadCount` attribute from the Threading MBean:
 <query objectName="java.lang:type=Threading" attribute="ThreadCount"
    resultAlias="jvm.thread.count"/>
 ```
+
+Example - collect the `SystemLoadAverage` gauge attribute from the OperatingSystem MBean:
+
+<query objectName="java.lang:type=OperatingSystem" attributes="SystemLoadAverage" type="gauge" resultAlias="#attribute#"/>
+
+(i) Note that the `type` attribute is customizable. Output writers such as the [LibratoWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/jmxtrans-agent-1.2.4/src/main/java/org/jmxtrans/agent/LibratoWriter.java), [StatsDOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/jmxtrans-agent-1.2.4/src/main/java/org/jmxtrans/agent/StatsDOutputWriter.java) and [PerMinuteSummarizerOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/jmxtrans-agent-1.2.4/src/main/java/org/jmxtrans/agent/PerMinuteSummarizerOutputWriter.java) are aware of the `type`s `counter` and `gauge` and assume that non defined `type`means `counter`.
 
 Example - collect `ThreadCount` and `TotalStartedThreadCount` from the Threading MBean:
 
@@ -101,13 +130,13 @@ Use `position` to specify the value to lookup. Position is `0 based.
 * You can collect all the entries of the multi-valued data omitting `position` in the `<query />` declaration.
 * Use the [expression language](https://github.com/jmxtrans/jmxtrans-agent/wiki/Expression-Language) `#position#` in the `resultAlias` to use the multi-valued data position in the metric name. Sample:
 
-       ```xml
+```xml
  <query objectName="MyApp:type=MyMBean" attribute="MyMultiValuedAttribute" resultAlias="myMBean.myMultiValuedAttributeValue.#position#"/>
 ```
 
 * If no `resultAlias` is specified, the generated metric name is suffixed by `_#position#`. Sample:
 
-       ```
+```
 myMBean.myMultiValuedAttributeValue_0`
 ```
 
@@ -223,12 +252,15 @@ Out of the box output writers:
 * [ConsoleOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/ConsoleOutputWriter.java): output metric values to `stdout`
 * [SummarizingConsoleOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/SummarizingConsoleOutputWriter.java): Similar to the `ConsoleOutputWriter` but displays "per minute" values for counters of type `counter`
 * [RollingFileOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/RollingFileOutputWriter.java)
-  * `fileName`: name of the file in which the collected metrics are stored. Optional, default value `jmxtrans-agent.data` (in JVM working dir, for example `$TOMCAT_HOME/bin`)
+  * `fileName`: Name of the file in which the collected metrics are stored. Optional, default value `jmxtrans-agent.data` (in JVM working dir, for example `$TOMCAT_HOME/bin`)
   * `maxFileSize`: Maximum file size in MB before file is rolled. Optional, default is `10`
-  * `maxBackupIndex`: Maximum number of files. Optional, default is `5
+  * `maxBackupIndex`: Maximum number of backup files. Optional, default is `5
+  * `singleLine`: true or false value that determines if all values are printed on a single line. Optional, default is false 
 * [StatsDOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/StatsDOutputWriter.java): output to StatD using the counter metric type. Configuration parameters:
   * `host`: StatsD listener host
   * `port`: StatsD listener port
+  * `statsd` : Optional StatsD server type, statsd, dd or sysdig
+  * `tags` : Optional StatsD tags for dd and sysdig, i.e. serviceid:SERVICE_ID,environment:dev
   * `metricName`: metric name prefix. Optional, default value is machine hostname or IP (all `.` are scaped as `_`).
   * `bufferSize`: max buffer size. Holds data to be sent. Optional, default value is 1024.
 * [InfluxDbOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/influxdb/InfluxDbOutputWriter.java): output to InfluxDb. **This writer is currently experimental** - behavior and options might change. See [InfluxDbOutputWriter Details](#influxdboutputwriter-details) for more details. Configuration parameters:
@@ -272,6 +304,7 @@ name attribute of the object name. In addition, a tag called `myTag` with value 
 All measurements sent to InfluxDb will have only one field called `value`. Multiple fields are currently not supported.
 
 Example complete output writer configuration:
+
 ```xml
 <outputWriter class="org.jmxtrans.agent.influxdb.InfluxDbOutputWriter">
 	<url>http://localhost:8086</url>
@@ -340,12 +373,15 @@ application.activeSessions 0
 * Create directory `${ACTIVEMQ_HOME}/jmxtrans-agent/`
 * Copy `jmxtrans-agent-1.2.4.jar` under `${ACTIVEMQ_HOME}/jmxtrans-agent/`
 * Update `${ACTIVEMQ_HOME}/bin/activemq`, add in `invoke_start()` and `invoke_console()`:
-    ```
+
+```
 JMXTRANS_AGENT="-javaagent:${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-1.2.4.jar=${ACTIVEMQ_HOME}/jmxtrans-agent/jmxtrans-agent-activemq.xml"
 ACTIVEMQ_OPTS="$ACTIVEMQ_OPTS $JMXTRANS_AGENT"
 ```
+
 * Copy to `${ACTIVEMQ_HOME}/jmxtrans-agent/` a config file similar to
-    ```xml
+
+```xml
 <jmxtrans-agent>
     <queries>
         <!-- OS -->

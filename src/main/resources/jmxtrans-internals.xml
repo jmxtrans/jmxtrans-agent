@@ -1,0 +1,16 @@
+<jmxtrans-agent>
+  <queries>
+      <query objectName="org.jmxtrans.embedded:name=*,type=EmbeddedJmxTrans" attribute="CollectedMetricsCount"
+          resultAlias="jmxtrans.%name%.CollectedMetricsCount"/>
+      <query objectName="org.jmxtrans.embedded:name=*,type=EmbeddedJmxTrans" attribute="CollectionCount"
+          resultAlias="jmxtrans.%name%.CollectionCount"/>
+      <query objectName="org.jmxtrans.embedded:name=*,type=EmbeddedJmxTrans" attribute="CollectionDurationInNanos"
+          resultAlias="jmxtrans.%name%.CollectionDurationInNanos"/>
+      <query objectName="org.jmxtrans.embedded:name=*,type=EmbeddedJmxTrans" attribute="ExportCount"
+          resultAlias="jmxtrans.%name%.ExportCount"/>
+      <query objectName="org.jmxtrans.embedded:name=*,type=EmbeddedJmxTrans" attribute="ExportDurationInNanos"
+          resultAlias="jmxtrans.%name%.ExportDurationInNanos"/>
+      <query objectName="org.jmxtrans.embedded:name=*,type=EmbeddedJmxTrans" attribute="ExportedMetricsCount"
+          resultAlias="jmxtrans.%name%.ExportedMetricsCount"/>
+  </queries>
+</jmxtrans-agent>

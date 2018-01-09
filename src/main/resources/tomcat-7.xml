@@ -1,0 +1,48 @@
+<jmxtrans-agent>
+  <queries>
+      <query objectName="Catalina:type=ThreadPool,name=&quot;http-nio-*&quot;" attribute="currentThreadCount"
+          resultAlias="tomcat.thread-pool.http-nio.currentThreadCount"/>
+      <query objectName="Catalina:type=ThreadPool,name=&quot;http-nio-*&quot;" attribute="currentThreadsBusy"
+          resultAlias="tomcat.thread-pool.http-nio.currentThreadsBusy"/>
+      <query objectName="Catalina:type=ThreadPool,name=&quot;ajp-nio-*&quot;" attribute="currentThreadCount"
+          resultAlias="tomcat.thread-pool.ajp-nio.currentThreadCount"/>
+      <query objectName="Catalina:type=ThreadPool,name=&quot;ajp-nio-*&quot;" attribute="currentThreadsBusy"
+          resultAlias="tomcat.thread-pool.ajp-nio.currentThreadsBusy"/>
+      <query objectName="Catalina:type=Manager,context=*,host=*" attribute="activeSessions"
+          resultAlias="tomcat.manager.%host%.%context%.activeSessions"/>
+      <query objectName="Catalina:type=GlobalRequestProcessor,name=&quot;http-nio-*&quot;" attribute="bytesReceived"
+          resultAlias="tomcat.global-request-processor.http-nio.bytesReceived"/>
+      <query objectName="Catalina:type=GlobalRequestProcessor,name=&quot;http-nio-*&quot;" attribute="bytesSent"
+          resultAlias="tomcat.global-request-processor.http-nio.bytesSent"/>
+      <query objectName="Catalina:type=GlobalRequestProcessor,name=&quot;http-nio-*&quot;" attribute="errorCount"
+          resultAlias="tomcat.global-request-processor.http-nio.errorCount"/>
+      <query objectName="Catalina:type=GlobalRequestProcessor,name=&quot;http-nio-*&quot;" attribute="processingTime"
+          resultAlias="tomcat.global-request-processor.http-nio.processingTime"/>
+      <query objectName="Catalina:type=GlobalRequestProcessor,name=&quot;http-nio-*&quot;" attribute="requestCount"
+          resultAlias="tomcat.global-request-processor.http-nio.requestCount"/>
+      <query objectName="Catalina:type=GlobalRequestProcessor,name=&quot;ajp-nio-*&quot;" attribute="bytesReceived"
+          resultAlias="tomcat.global-request-processor.ajp-nio.bytesReceived"/>
+      <query objectName="Catalina:type=GlobalRequestProcessor,name=&quot;ajp-nio-*&quot;" attribute="bytesSent"
+          resultAlias="tomcat.global-request-processor.ajp-nio.bytesSent"/>
+      <query objectName="Catalina:type=GlobalRequestProcessor,name=&quot;ajp-nio-*&quot;" attribute="errorCount"
+          resultAlias="tomcat.global-request-processor.ajp-nio.errorCount"/>
+      <query objectName="Catalina:type=GlobalRequestProcessor,name=&quot;ajp-nio-*&quot;" attribute="processingTime"
+          resultAlias="tomcat.global-request-processor.ajp-nio.processingTime"/>
+      <query objectName="Catalina:type=GlobalRequestProcessor,name=&quot;ajp-nio-*&quot;" attribute="requestCount"
+          resultAlias="tomcat.global-request-processor.ajp-nio.requestCount"/>
+      <query objectName="Catalina:type=DataSource,context=*,host=*,class=javax.sql.DataSource,name=*" attribute="numActive"
+          resultAlias="tomcat.data-source.%host%.%context%.%name%.numActive"/>
+      <query objectName="Catalina:type=DataSource,context=*,host=*,class=javax.sql.DataSource,name=*" attribute="numIdle"
+          resultAlias="tomcat.data-source.%host%.%context%.%name%.numIdle"/>
+      <query objectName="Catalina:type=DataSource,class=javax.sql.DataSource,name=*" attribute="numActive"
+          resultAlias="tomcat.data-source.%name%.numActive"/>
+      <query objectName="Catalina:type=DataSource,class=javax.sql.DataSource,name=*" attribute="numIdle"
+          resultAlias="tomcat.data-source.%name%.numIdle"/>
+      <query objectName="Catalina:j2eeType=Servlet,name=*,WebModule=*,J2EEApplication=none,J2EEServer=none" attribute="errorCount"
+          resultAlias="tomcat.servlet.%WebModule%.%name%.errorCount"/>
+      <query objectName="Catalina:j2eeType=Servlet,name=*,WebModule=*,J2EEApplication=none,J2EEServer=none" attribute="processingTime"
+          resultAlias="tomcat.servlet.%WebModule%.%name%.processingTime"/>
+      <query objectName="Catalina:j2eeType=Servlet,name=*,WebModule=*,J2EEApplication=none,J2EEServer=none" attribute="requestCount"
+          resultAlias="tomcat.servlet.%WebModule%.%name%.requestCount"/>
+  </queries>
+</jmxtrans-agent>

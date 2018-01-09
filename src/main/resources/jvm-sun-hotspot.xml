@@ -1,0 +1,36 @@
+<jmxtrans-agent>
+  <queries>
+      <query objectName="java.lang:type=Memory" attribute="HeapMemoryUsage"
+          key="committed"
+          resultAlias="jvm.memory.HeapMemoryUsage.committed"/>
+      <query objectName="java.lang:type=Memory" attribute="HeapMemoryUsage"
+          key="used"
+          resultAlias="jvm.memory.HeapMemoryUsage.used"/>
+      <query objectName="java.lang:type=Memory" attribute="NonHeapMemoryUsage"
+          key="committed"
+          resultAlias="jvm.memory.NonHeapMemoryUsage.committed"/>
+      <query objectName="java.lang:type=Memory" attribute="NonHeapMemoryUsage"
+          key="used"
+          resultAlias="jvm.memory.NonHeapMemoryUsage.used"/>
+      <query objectName="java.lang:type=Runtime" attribute="Uptime"
+          resultAlias="jvm.runtime.Uptime"/>
+      <query objectName="java.lang:type=GarbageCollector,name=*" attribute="CollectionCount"
+          resultAlias="jvm.gc.%name%.CollectionCount"/>
+      <query objectName="java.lang:type=GarbageCollector,name=*" attribute="CollectionTime"
+          resultAlias="jvm.gc.%name%.CollectionTime"/>
+      <query objectName="java.lang:type=Threading" attribute="ThreadCount"
+          resultAlias="jvm.thread.ThreadCount"/>
+      <query objectName="java.lang:type=OperatingSystem" attribute="CommittedVirtualMemorySize"
+          resultAlias="jvm.os.CommittedVirtualMemorySize"/>
+      <query objectName="java.lang:type=OperatingSystem" attribute="FreePhysicalMemorySize"
+          resultAlias="jvm.os.FreePhysicalMemorySize"/>
+      <query objectName="java.lang:type=OperatingSystem" attribute="FreeSwapSpaceSize"
+          resultAlias="jvm.os.FreeSwapSpaceSize"/>
+      <query objectName="java.lang:type=OperatingSystem" attribute="OpenFileDescriptorCount"
+          resultAlias="jvm.os.OpenFileDescriptorCount"/>
+      <query objectName="java.lang:type=OperatingSystem" attribute="ProcessCpuTime"
+          resultAlias="jvm.os.ProcessCpuTime"/>
+      <query objectName="java.lang:type=OperatingSystem" attribute="SystemLoadAverage"
+          resultAlias="jvm.os.SystemLoadAverage"/>
+  </queries>
+</jmxtrans-agent>

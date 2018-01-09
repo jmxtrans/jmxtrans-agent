@@ -67,6 +67,11 @@ public class JmxTransAgent {
 
     public static void premain(final String configFile, Instrumentation inst) {
         final int delayInSecs = Integer.parseInt(System.getProperty("jmxtrans.agent.premain.delay", "0"));
+        final boolean waitForCustomMBeanServer =
+            Boolean.parseBoolean(System.getProperty("jmxtrans.agent.premain.waitForCustomMBeanServer"));
+        final int timeoutInSeconds = Integer.parseInt(
+            System.getProperty("jmxtrans.agent.premain.waitForCustomMBeanServer.timeoutInSeconds", "120"));
+
         if (delayInSecs > 0) {
             logger.info("jmxtrans agent initialization delayed by " + delayInSecs + " seconds");
             new Thread("jmxtrans-agent-delayed-starter-" + delayInSecs + "secs") {
@@ -78,6 +83,27 @@ public class JmxTransAgent {
                         Thread.interrupted();
                         return;
                     }
+
+                    if (waitForCustomMBeanServer) {
+                        logger.info("jmxtrans agent initialization delayed waiting for MBeanServer");
+
+                        if (!waitForCustomMBeanServer(timeoutInSeconds)) {
+                            return;
+                        }
+                    }
+
+                    initializeAgent(configFile);
+                }
+            }.start();
+        } else if (waitForCustomMBeanServer) {
+            logger.info("jmxtrans agent initialization delayed waiting for custom MBeanServer");
+            new Thread("jmxtrans-agent-delayed-starter-waitForCustomMBeanServer") {
+                @Override
+                public void run() {
+                    if (!waitForCustomMBeanServer(timeoutInSeconds)) {
+                        return;
+                    }
+
                     initializeAgent(configFile);
                 }
             }.start();
@@ -87,7 +113,7 @@ public class JmxTransAgent {
     }
 
     public static void main(String[] args) {
-        System.out.println(getVersionInfo());
+        Logger.out.println(getVersionInfo());
     }
 
     /**
@@ -153,10 +179,10 @@ public class JmxTransAgent {
                 while (JmxTransAgent.DIAGNOSTIC) {
 
                     String prefix = new Timestamp(System.currentTimeMillis()) + " [jmxtrans-agent] ";
-                    System.out.println(prefix + "JMXTRANS-AGENT DIAGNOSTIC INFO");
+                    Logger.out.println(prefix + "JMXTRANS-AGENT DIAGNOSTIC INFO");
 
                     // CONTEXT
-                    System.out.println(prefix + "Logger level: " + Logger.level);
+                    Logger.out.println(prefix + "Logger level: " + Logger.level);
 
                     // MBEANS
                     Set<ObjectInstance> objectInstances = ManagementFactory.getPlatformMBeanServer().queryMBeans(null, null);
@@ -165,12 +191,12 @@ public class JmxTransAgent {
                         objectNames.add(objectInstance.getObjectName());
                     }
                     Collections.sort(objectNames);
-                    System.out.println(prefix + "ManagementFactory.getPlatformMBeanServer().queryMBeans(null, null)");
+                    Logger.out.println(prefix + "ManagementFactory.getPlatformMBeanServer().queryMBeans(null, null)");
                     for (ObjectName objectName : objectNames) {
-                        System.out.println(prefix + "\t" + objectName);
+                        Logger.out.println(prefix + "\t" + objectName);
                     }
 
-                    System.out.println(prefix + "ENF OF JMXTRANS-AGENT DIAGNOSING INFO");
+                    Logger.out.println(prefix + "ENF OF JMXTRANS-AGENT DIAGNOSING INFO");
                     try {
                         Thread.sleep(TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS));
                     } catch (InterruptedException e) {
@@ -185,5 +211,42 @@ public class JmxTransAgent {
         thread.setName("jmxtrans-agent-diagnostic");
         thread.setDaemon(true);
         thread.start();
+    }
+
+    /**
+     * Polls every second to see if any {@link javax.management.MBeanServer} have been created
+     * by another thread up to {@code timeoutInSeconds}. If interrupted or timed out, returns
+     * {@code false}.
+     * @param timeoutInSeconds Maximum number of seconds to wait before giving up.
+     * @return {@code true} if found an {@code MBeanServer} within {@code timeoutInSeconds}.
+     * {@code false} otherwise.
+     */
+    private static boolean waitForCustomMBeanServer(int timeoutInSeconds) {
+        long startInMs = System.currentTimeMillis();
+
+        while (!isCustomMBeanServerConfigured() && secondsSince(startInMs) < timeoutInSeconds) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.interrupted();
+                return false;
+            }
+        }
+
+        if (secondsSince(startInMs) >= timeoutInSeconds) {
+            logger.info("jmxagent initialization timed out waiting for custom MBeanServer");
+            return false;
+        }
+
+        return true;
+    }
+
+    /** @see javax.management.MBeanServerFactory */
+    static private boolean isCustomMBeanServerConfigured() {
+        return System.getProperty("javax.management.builder.initial") != null;
+    }
+
+    private static long secondsSince(long startInMs) {
+        return (System.currentTimeMillis() - startInMs) / 1000;
     }
 }

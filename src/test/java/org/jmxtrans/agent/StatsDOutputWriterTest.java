@@ -42,7 +42,7 @@ public class StatsDOutputWriterTest {
         Map<String, String> settings = new HashMap<>();
         settings.put(StatsDOutputWriter.SETTING_ROOT_PREFIX, "foo.bar");
         // No real connect is done. Config is here to please the postConstruct.
-        settings.put(StatsDOutputWriter.SETTING_HOST, "statsd.example.com");
+        settings.put(StatsDOutputWriter.SETTING_HOST, "localhost");
         settings.put(StatsDOutputWriter.SETTING_PORT, "8125");
 
         writer.postConstruct(settings);
@@ -61,6 +61,76 @@ public class StatsDOutputWriterTest {
 
     }
 
+    @Test
+    public void test_write_counter_metric_dd() throws IOException {
+        Map<String, String> settings = new HashMap<>();
+        settings.put(StatsDOutputWriter.SETTING_ROOT_PREFIX, "foo.bar");
+        // No real connect is done. Config is here to please the postConstruct.
+        settings.put(StatsDOutputWriter.SETTING_HOST, "localhost");
+        settings.put(StatsDOutputWriter.SETTING_PORT, "8125");
+        settings.put(StatsDOutputWriter.SETTING_HOST_NAMME, "bar");
+        settings.put(StatsDOutputWriter.SETTINGS_STATSD_TYPE, "dd");
+        settings.put(StatsDOutputWriter.SETTINGS_TAGS, "tag1:ok,tag2:woff");
+
+        writer.postConstruct(settings);
+        writer.writeQueryResult("my-metric", "gauge", 12);
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.my-metric:12|g|#tag1:ok,#tag2:woff,#host:bar\n"));
+        writer.writeQueryResult("my-metric", "g", 13);
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.my-metric:13|g|#tag1:ok,#tag2:woff,#host:bar\n"));
+
+        writer.writeQueryResult("the.answer", "counter", 42);
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.the.answer:42|c|#tag1:ok,#tag2:woff,#host:bar\n"));
+        writer.writeQueryResult("the.answer", "c", 43);
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.the.answer:43|c|#tag1:ok,#tag2:woff,#host:bar\n"));
+
+        writer.writeQueryResult("the.answer", "lala", 44);
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.the.answer:44|c|#tag1:ok,#tag2:woff,#host:bar\n"));
+
+    }
+
+    @Test
+    public void test_write_counter_metric_sysdig() throws IOException {
+        Map<String, String> settings = new HashMap<>();
+        settings.put(StatsDOutputWriter.SETTING_ROOT_PREFIX, "foo.bar");
+        // No real connect is done. Config is here to please the postConstruct.
+        settings.put(StatsDOutputWriter.SETTING_HOST, "localhost");
+        settings.put(StatsDOutputWriter.SETTING_PORT, "8125");
+        settings.put(StatsDOutputWriter.SETTINGS_STATSD_TYPE, "sysdig");
+        settings.put(StatsDOutputWriter.SETTINGS_TAGS, "tag1=ok,tag2=woff");
+
+        writer.postConstruct(settings);
+        writer.writeQueryResult("my-metric", "gauge", 12);
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.my-metric#tag1=ok,#tag2=woff:12|g\n"));
+        writer.writeQueryResult("my-metric", "g", 13);
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.my-metric#tag1=ok,#tag2=woff:13|g\n"));
+
+        writer.writeQueryResult("the.answer", "counter", 42);
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.the.answer#tag1=ok,#tag2=woff:42|c\n"));
+        writer.writeQueryResult("the.answer", "c", 43);
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.the.answer#tag1=ok,#tag2=woff:43|c\n"));
+
+        writer.writeQueryResult("the.answer", "lala", 44);
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.the.answer#tag1=ok,#tag2=woff:44|c\n"));
+
+    }
+
+    /**
+     * https://github.com/jmxtrans/jmxtrans-agent/issues/98
+     */
+    @Test
+    public void test_BufferOverflowException() throws IOException {
+        StatsDOutputWriter writer = new StatsDOutputWriter();
+        Map<String, String> config = new HashMap<>();
+        config.put(StatsDOutputWriter.SETTING_HOST, "host-does-not-exist.local");
+        config.put(StatsDOutputWriter.SETTING_PORT, "8125");
+        config.put(StatsDOutputWriter.SETTING_ROOT_PREFIX, "");
+
+        writer.postConstruct(config);
+
+        for (int i = 0; i < 100; i++) {
+            writer.writeQueryResult("the.answer", "counter", i);
+        }
+    }
     public class StatsDOutputWriterMock extends StatsDOutputWriter {
         public String receivedStat;
 
@@ -70,6 +140,7 @@ public class StatsDOutputWriterTest {
             return true;
         }
     }
+
 
 }
 
