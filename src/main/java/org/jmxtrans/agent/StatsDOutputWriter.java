@@ -73,7 +73,7 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
         if (statsType.equals(STATSD_DATADOG)) {
             String tagsStr = ConfigurationUtils.getString(settings, SETTINGS_TAGS, "");
             tags = Tag.tagsFromCommaSeparatedString(tagsStr);
-            tags.add(new Tag("#host", ConfigurationUtils.getString(settings, SETTING_HOST_NAMME, getHostName().replaceAll("\\.", "_") )));
+            tags.add(new Tag("host", ConfigurationUtils.getString(settings, SETTING_HOST_NAMME, getHostName().replaceAll("\\.", "_") )));
             metricNamePrefix = ConfigurationUtils.getString(settings, SETTING_ROOT_PREFIX, "java");
         } else if (statsType.equals(STATSD_SYSDIG)) {
             String tagsStr = ConfigurationUtils.getString(settings, SETTINGS_TAGS, "");
@@ -147,13 +147,14 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
                     .append(value)
                     .append("|")
                     .append(type)
-                    .append("|")
+                    .append("|#")
                     .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
                     .append("\n");
         } else if (statsType.equals(STATSD_SYSDIG)) {
             sb.append(metricNamePrefix)
                     .append(".")
                     .append(metricName)
+                    .append("#")
                     .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
                     .append(":")
                     .append(value)
