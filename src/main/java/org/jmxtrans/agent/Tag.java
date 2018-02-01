@@ -90,7 +90,7 @@ public class Tag {
             throw new RuntimeException(
                     "Error when parsing tags from substring " + part + ", must be on format <name>:<value>,...");
         }
-        Tag tag = new Tag("#"+nameAndValue[0].trim(), getValueProperties(nameAndValue[1].trim()));
+        Tag tag = new Tag(nameAndValue[0].trim(), getValueProperties(nameAndValue[1].trim()));
         return tag;
     }
 
@@ -100,7 +100,7 @@ public class Tag {
             throw new RuntimeException(
                     "Error when parsing influx from substring " + part + ", must be on format <name"+separator+"<value>,...");
         }
-        Tag tag = new Tag("#"+nameAndValue[0].trim(),  getValueProperties(nameAndValue[1].trim()), separator);
+        Tag tag = new Tag(nameAndValue[0].trim(),  getValueProperties(nameAndValue[1].trim()), separator);
         return tag;
     }
 
