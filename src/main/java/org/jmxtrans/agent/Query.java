@@ -82,6 +82,9 @@ public class Query implements Collector {
     @Nullable
     private Integer collectInterval;
 
+    @Nullable
+    private List<Tag> tags;
+
     /**
      * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
      */
@@ -133,7 +136,12 @@ public class Query implements Collector {
     private static boolean nullOrEmtpy(String attribute) {
         return attribute == null || attribute.isEmpty();
     }
-    
+
+    public Query(@Nonnull String objectName, @Nonnull List<String> attributes, @Nullable String key, @Nullable Integer position,
+                 @Nullable String type, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy, @Nullable Integer collectInterval) {
+        this(objectName, attributes, key, position, type, resultAlias, resultNameStrategy, null, null);
+    }
+
     /**
      * Creates a query that accepts a list of attributes to collect. If the list is empty, all attributes will be collected.
      * @param collectInterval 
@@ -141,7 +149,7 @@ public class Query implements Collector {
      * @see #Query(String, String, String, Integer, String, String, ResultNameStrategy)
      */
     public Query(@Nonnull String objectName, @Nonnull List<String> attributes, @Nullable String key, @Nullable Integer position,
-            @Nullable String type, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy, @Nullable Integer collectInterval) {
+            @Nullable String type, @Nullable String resultAlias, @Nonnull ResultNameStrategy resultNameStrategy, @Nullable Integer collectInterval, @Nullable String tags) {
         try {
             this.objectName = new ObjectName(Preconditions2.checkNotNull(objectName));
         } catch (MalformedObjectNameException e) {
@@ -154,6 +162,7 @@ public class Query implements Collector {
         this.type = type;
         this.resultNameStrategy = Preconditions2.checkNotNull(resultNameStrategy, "resultNameStrategy");
         this.collectInterval = collectInterval;
+        this.tags = Tag.tagsFromCommaSeparatedString(tags);
     }
 
 

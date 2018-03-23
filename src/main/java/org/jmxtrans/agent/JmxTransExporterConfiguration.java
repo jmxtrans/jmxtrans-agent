@@ -73,7 +73,12 @@ public class JmxTransExporterConfiguration {
 
     public JmxTransExporterConfiguration withQuery(@Nonnull String objectName, @Nonnull List<String> attributes, @Nullable String key,
                                       @Nullable Integer position, @Nullable String type, @Nullable String resultAlias, @Nullable Integer collectInterval) {
-        Query query = new Query(objectName, attributes, key, position, type, resultAlias, this.resultNameStrategy, collectInterval);
+        return withQuery(objectName, attributes, null, null, null, resultAlias, collectInterval, null);
+    }
+
+    public JmxTransExporterConfiguration withQuery(@Nonnull String objectName, @Nonnull List<String> attributes, @Nullable String key,
+                                      @Nullable Integer position, @Nullable String type, @Nullable String resultAlias, @Nullable Integer collectInterval, @Nullable String tags) {
+        Query query = new Query(objectName, attributes, key, position, type, resultAlias, this.resultNameStrategy, collectInterval, tags);
         queries.add(query);
         return this;
     }
