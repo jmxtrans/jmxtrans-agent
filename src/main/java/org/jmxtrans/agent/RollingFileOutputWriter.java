@@ -150,7 +150,7 @@ public class RollingFileOutputWriter extends AbstractOutputWriter {
             getTemporaryFileWriter().close();
             if (logger.isLoggable(getDebugLevel()))
                 logger.log(getDebugLevel(), "Overwrite " + file.getAbsolutePath() + " by " + temporaryFile.getAbsolutePath());
-            IoUtils.appendToFile(temporaryFile, file, maxFileSize, maxBackupIndex);
+            IoUtils.appendToFile(temporaryFile, file, maxFileSize, maxBackupIndex, !singleLine);
         } finally {
             temporaryFileWriter = null;
         }
