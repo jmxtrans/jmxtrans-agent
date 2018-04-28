@@ -278,7 +278,7 @@ public class IoUtils {
      * @param destination
      * @throws java.io.IOException
      */
-    private static void doCopySmallFile(File source, File destination, boolean append) throws IOException {
+    private static void doCopySmallFile(File source, File destination, boolean append, boolean prependNewLine) throws IOException {
         if (destination.exists() && destination.isDirectory()) {
             throw new IOException("Can not copy file, destination is a directory: " + destination.getAbsolutePath());
         } else if (!destination.exists()) {
@@ -293,7 +293,7 @@ public class IoUtils {
         long initialSize = destination.length();
         try {
             fos = new FileOutputStream(destination, append);
-            if (append) {
+            if (prependNewLine) {
                 fos.write(("\n").getBytes(StandardCharsets.UTF_8));
             }
             fos.write(Files.readAllBytes(Paths.get(source.getAbsolutePath())));
@@ -314,14 +314,14 @@ public class IoUtils {
 
     }
 
-    public static void appendToFile(File source, File destination, long maxFileSize, int maxBackupIndex) throws IOException {
+    public static void appendToFile(File source, File destination, long maxFileSize, int maxBackupIndex, boolean prependNewLine) throws IOException {
         boolean destinationExists = validateDestinationFile(source, destination, maxFileSize, maxBackupIndex);
         if (destinationExists) {
-            doCopySmallFile(source, destination, true);
+            doCopySmallFile(source, destination, true, prependNewLine);
         } else {
             boolean renamed = source.renameTo(destination);
             if (!renamed) {
-                doCopySmallFile(source, destination, false);
+                doCopySmallFile(source, destination, false, false);
             }
         }
     }
@@ -349,7 +349,7 @@ public class IoUtils {
             if (!f.exists()) continue;
 
             File fNext = new File(destination + "." + (i + 1));
-            doCopySmallFile(f, fNext, false);
+            doCopySmallFile(f, fNext, false, false);
         }
 
         boolean deleted = destination.delete();
