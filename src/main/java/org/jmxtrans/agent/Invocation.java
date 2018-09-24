@@ -76,7 +76,7 @@ public class Invocation implements Collector {
         for (ObjectName on : objectNames) {
             try {
                 Object result = mbeanServer.invoke(on, operationName, params, signature);
-                outputWriter.writeInvocationResult(resultAlias, result);
+                outputWriter.writeQueryResult(resultAlias, type, result);
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Exception invoking " + on + "#" + operationName + "(" + Arrays.toString(params) + ")", e);
             }
