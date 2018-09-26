@@ -46,7 +46,7 @@ public class ConsoleOutputWriter extends AbstractOutputWriter implements OutputW
 
     @Override
     public void writeQueryResult(@Nonnull String name, @Nullable String type, @Nullable Object value) {
-        System.out.println(metricPathPrefix + name + " " + value + " " + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+        System.out.println(metricPathPrefix + name + " " + value + " " + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS) + " " + type);
     }
 
     @Override

@@ -46,6 +46,8 @@ public class Invocation implements Collector {
     protected final String operationName;
     @Nullable
     protected final String resultAlias;
+    @Nullable
+    protected final String type;
     @Nonnull
     protected final Object[] params;
     @Nonnull
@@ -55,7 +57,7 @@ public class Invocation implements Collector {
     private Integer collectInterval;
 
     public Invocation(@Nullable String objectName, @Nonnull String operationName, @Nonnull Object[] params, @Nonnull String[] signature, @Nullable String resultAlias,
-            @Nullable Integer collectInterval) {
+            @Nullable Integer collectInterval, @Nullable String type) {
         try {
             this.objectName = objectName == null ? null : new ObjectName(objectName);
         } catch (MalformedObjectNameException e) {
@@ -66,6 +68,7 @@ public class Invocation implements Collector {
         this.signature = Preconditions2.checkNotNull(signature, "signature");
         this.resultAlias = resultAlias;
         this.collectInterval = collectInterval;
+        this.type = (type == null || type.isEmpty()) ? "counter" : type;
     }
 
     private void invoke(MBeanServer mbeanServer, OutputWriter outputWriter) {
@@ -73,7 +76,7 @@ public class Invocation implements Collector {
         for (ObjectName on : objectNames) {
             try {
                 Object result = mbeanServer.invoke(on, operationName, params, signature);
-                outputWriter.writeInvocationResult(resultAlias, result);
+                outputWriter.writeQueryResult(resultAlias, type, result);
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Exception invoking " + on + "#" + operationName + "(" + Arrays.toString(params) + ")", e);
             }
@@ -86,6 +89,7 @@ public class Invocation implements Collector {
                 "objectName=" + objectName +
                 ", operationName='" + operationName + '\'' +
                 ", resultAlias='" + resultAlias + '\'' +
+                ", type='" + type + '\'' +
                 ", params=" + Arrays.toString(params) +
                 ", signature=" + Arrays.toString(signature) +
                 '}';

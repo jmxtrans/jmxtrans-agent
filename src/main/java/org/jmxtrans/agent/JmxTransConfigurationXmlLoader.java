@@ -244,9 +244,10 @@ public class JmxTransConfigurationXmlLoader implements JmxTransConfigurationLoad
             String objectName = invocationElement.getAttribute("objectName");
             String operation = invocationElement.getAttribute("operation");
             String resultAlias = invocationElement.getAttribute("resultAlias");
+            String type = invocationElement.getAttribute("type");
             Integer collectInterval = intAttributeOrNull(invocationElement, COLLECT_INTERVAL_NAME);
 
-            configuration.withInvocation(objectName, operation, resultAlias, collectInterval);
+            configuration.withInvocation(objectName, operation, resultAlias, collectInterval, type);
         }
     }
 

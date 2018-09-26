@@ -77,8 +77,8 @@ public class JmxTransExporterConfiguration {
         queries.add(query);
         return this;
     }
-    public JmxTransExporterConfiguration withInvocation(@Nonnull String objectName, @Nonnull String operation, @Nullable String resultAlias, @Nullable Integer collectInterval) {
-        invocations.add(new Invocation(objectName, operation, new Object[0], new String[0], resultAlias, collectInterval));
+    public JmxTransExporterConfiguration withInvocation(@Nonnull String objectName, @Nonnull String operation, @Nullable String resultAlias, @Nullable Integer collectInterval, @Nullable String type) {
+        invocations.add(new Invocation(objectName, operation, new Object[0], new String[0], resultAlias, collectInterval, type));
         return this;
     }
     public JmxTransExporterConfiguration withOutputWriter(OutputWriter outputWriter) {
