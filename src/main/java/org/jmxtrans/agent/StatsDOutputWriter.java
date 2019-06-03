@@ -45,7 +45,6 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
     public final static String SETTING_HOST = "host";
     public final static String SETTING_PORT = "port";
     public final static String SETTING_ROOT_PREFIX = "metricName";
-    public final static String SETTING_HOST_NAMME = "hostname";
     public final static String SETTING_BUFFER_SIZE = "bufferSize";
     private final static int SETTING_DEFAULT_BUFFER_SIZE = 1024;
     public final static String SETTINGS_STATSD_TYPE = "statsd";
@@ -73,7 +72,6 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
         if (statsType.equals(STATSD_DATADOG)) {
             String tagsStr = ConfigurationUtils.getString(settings, SETTINGS_TAGS, "");
             tags = Tag.tagsFromCommaSeparatedString(tagsStr);
-            tags.add(new Tag("host", ConfigurationUtils.getString(settings, SETTING_HOST_NAMME, getHostName().replaceAll("\\.", "_") )));
             metricNamePrefix = ConfigurationUtils.getString(settings, SETTING_ROOT_PREFIX, "java");
         } else if (statsType.equals(STATSD_SYSDIG)) {
             String tagsStr = ConfigurationUtils.getString(settings, SETTINGS_TAGS, "");
