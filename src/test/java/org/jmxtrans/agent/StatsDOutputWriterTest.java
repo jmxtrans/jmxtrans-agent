@@ -68,23 +68,22 @@ public class StatsDOutputWriterTest {
         // No real connect is done. Config is here to please the postConstruct.
         settings.put(StatsDOutputWriter.SETTING_HOST, "localhost");
         settings.put(StatsDOutputWriter.SETTING_PORT, "8125");
-        settings.put(StatsDOutputWriter.SETTING_HOST_NAMME, "bar");
         settings.put(StatsDOutputWriter.SETTINGS_STATSD_TYPE, "dd");
         settings.put(StatsDOutputWriter.SETTINGS_TAGS, "tag1:ok,tag2:woff");
 
         writer.postConstruct(settings);
         writer.writeQueryResult("my-metric", "gauge", 12);
-        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.my-metric:12|g|#tag1:ok,tag2:woff,host:bar\n"));
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.my-metric:12|g|#tag1:ok,tag2:woff\n"));
         writer.writeQueryResult("my-metric", "g", 13);
-        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.my-metric:13|g|#tag1:ok,tag2:woff,host:bar\n"));
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.my-metric:13|g|#tag1:ok,tag2:woff\n"));
 
         writer.writeQueryResult("the.answer", "counter", 42);
-        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.the.answer:42|c|#tag1:ok,tag2:woff,host:bar\n"));
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.the.answer:42|c|#tag1:ok,tag2:woff\n"));
         writer.writeQueryResult("the.answer", "c", 43);
-        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.the.answer:43|c|#tag1:ok,tag2:woff,host:bar\n"));
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.the.answer:43|c|#tag1:ok,tag2:woff\n"));
 
         writer.writeQueryResult("the.answer", "lala", 44);
-        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.the.answer:44|c|#tag1:ok,tag2:woff,host:bar\n"));
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.the.answer:44|c|#tag1:ok,tag2:woff\n"));
 
     }
 
