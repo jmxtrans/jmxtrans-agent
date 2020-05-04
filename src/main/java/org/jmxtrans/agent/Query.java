@@ -219,11 +219,23 @@ public class Query implements Collector {
                 } else {
                     value = compositeData.get(key);
                 }
+            } else if (attributeValue instanceof Map) {
+                Map<String, Object> mapData = (Map<String, Object>) attributeValue;
+                if (key == null) {
+                    // Get for all keys
+                    for (String key : mapData.keySet()) {
+                        value = mapData.get(key);
+                        processAttributeValue(outputWriter, objectName, attribute, key, value);
+                    }
+                    return;
+                } else {
+                    value = mapData.get(key);
+                }
             } else {
                 if (key == null) {
                     value = attributeValue;
                 } else {
-                    logger.warning("Ignore NON compositeData for specified key for '" + objectName +
+                    logger.warning("Ignore NON compositeData/Map for specified key for '" + objectName +
                             "'#" + attribute + "#" + key + ": " + attributeValue);
                     return;
                 }
