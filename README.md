@@ -104,16 +104,16 @@ See `javax.management.MBeanServer.getAttribute(objectName, attribute)`.
 ```
 
 
-### MBean Composite Data attribute
+### MBean Composite Data attribute (CompositeData or Map)
 
-Use `key` to specify the key of the CompositeData. See `javax.management.openmbean.CompositeData#get(key)`.
+Use `key` to specify the key of the CompositeData or Map. See `javax.management.openmbean.CompositeData#get(key)`.
 
 ```xml
  <query objectName="java.lang:type=Memory" attribute="HeapMemoryUsage" key="used"
     resultAlias="jvm.heapMemoryUsage.used"/>
 ```
 
-* You can collect all the keys of the composite data omitting `key` in the `<query />` declaration.
+* You can collect all the keys of the composite data or map omitting `key` in the `<query />` declaration.
 * Use the [expression language](https://github.com/jmxtrans/jmxtrans-agent/wiki/Expression-Language) `#key#` (or its synonym `#compositeDataKey#`) in the `resultAlias` to use the composite data key in the metric name. Sample:
 
 ```xml
