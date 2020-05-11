@@ -275,6 +275,9 @@ Out of the box output writers:
   * `retentionPolicy`: retention policy to use - optional
   * `connectTimeoutMillis`: connect timeout for the HTTP connection to influx - optional, defaults to 3000
   * `readTimeoutMillis`: read timeout for the HTTP connection to influx - optional, defaults to 5000
+* [CloudWatchOutputWriter](https://github.com/jmxtrans/jmxtrans-agent/blob/master/src/main/java/org/jmxtrans/agent/CloudWatchOutputWriter.java): Output to AWS CloudWatch Metrics. Credentials and region are loaded using the default region and credential providers (https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/cloudwatch/CloudWatchClient.html#create--). Configuration parameters:
+  * `namespace`: Cloudwatch namespace. Default is "JMX".  e.g. `JMX/Production`. - optional
+  * `dimensions`: additional dimensions to use for all metrics. Use `n1:v1,n2:v2` format, e.g. `<dimensions>host:#hostname#</dimensions>` - optional
 
 
 Output writers configuration support an [expression language](https://github.com/jmxtrans/jmxtrans-agent/wiki/Expression-Language) based on property placeholders with the `{prop-name[:default-value]}` syntax (e.g. "`${graphite.port:2003}`").
@@ -363,6 +366,13 @@ tomcat.bytesSent 0
 tomcat.bytesReceived 0
 tomcat.bytesReceived 0
 application.activeSessions 0
+```
+
+# Building
+
+```
+mvn compile
+mvn package
 ```
 
 
