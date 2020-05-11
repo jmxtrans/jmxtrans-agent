@@ -223,8 +223,9 @@ public class Query implements Collector {
                 Map<String, Object> mapData = (Map<String, Object>) attributeValue;
                 if (key == null) {
                     // Get for all keys
-                    for (String key : mapData.keySet()) {
-                        value = mapData.get(key);
+                    for (Map.Entry<String, Object> entry : mapData.entrySet()) {
+                        String key = entry.getKey();
+                        value = entry.getValue();
                         processAttributeValue(outputWriter, objectName, attribute, key, value);
                     }
                     return;
