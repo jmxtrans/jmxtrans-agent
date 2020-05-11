@@ -18,7 +18,7 @@ Download the [latest release](https://github.com/jmxtrans/jmxtrans-agent/release
 Sample `setenv.sh` for Apache Tomcat
 
 ```
-export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.2.4.jar=jmxtrans-agent.xml"
+export JAVA_OPTS="$JAVA_OPTS -javaagent:/path/to/jmxtrans-agent-1.2.10.jar=jmxtrans-agent.xml"
 ```
 
 * java agent jar path can be relative to the working dir
