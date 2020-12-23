@@ -131,6 +131,14 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
     @Override
     public synchronized void writeQueryResult(String metricName, String metricType, Object value) throws IOException
     {
+        // statsd expects a number value for the metric.
+        //
+        // skip if value's string representation equals to "NaN", which is a meaningless value to statsd.
+        // passing the NaN value down will trigger error in downstream parsing applications.
+        if (String.valueOf(value).equals("NaN")) {
+            return;
+        }
+
         //DataDog statsd with tags (https://docs.datadoghq.com/guides/dogstatsd/),
         // metric.name:value|type|@sample_rate|#tag1:value,tag2
         //Sysdig metric tags (https://support.sysdig.com/hc/en-us/articles/204376099-Metrics-integrations-StatsD-)

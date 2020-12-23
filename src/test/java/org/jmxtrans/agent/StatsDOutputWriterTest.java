@@ -113,6 +113,19 @@ public class StatsDOutputWriterTest {
 
     }
 
+    @Test
+    public void test_skip_counter_with_NaN_value() throws IOException {
+        Map<String, String> settings = new HashMap<>();
+        settings.put(StatsDOutputWriter.SETTING_ROOT_PREFIX, "foo.bar");
+        // No real connect is done. Config is here to please the postConstruct.
+        settings.put(StatsDOutputWriter.SETTING_HOST, "localhost");
+        settings.put(StatsDOutputWriter.SETTING_PORT, "8125");
+
+        writer.postConstruct(settings);
+        writer.writeQueryResult("my-metric", "gauge", "NaN");
+        Assert.assertNull(writer.receivedStat);
+    }
+
     /**
      * https://github.com/jmxtrans/jmxtrans-agent/issues/98
      */
