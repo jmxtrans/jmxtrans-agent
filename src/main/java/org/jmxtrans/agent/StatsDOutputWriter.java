@@ -133,9 +133,9 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
     {
         // statsd expects a number value for the metric.
         //
-        // skip if value's string representation equals to "NaN", which is a meaningless value to statsd.
+        // skip if value's string representation equals to "NaN" or "INF", which is a meaningless value to statsd.
         // passing the NaN value down will trigger error in downstream parsing applications.
-        if (String.valueOf(value).equals("NaN")) {
+        if (String.valueOf(value).equals("NaN") || String.valueOf(value).equals("INF")) {
             return;
         }
 

@@ -124,6 +124,9 @@ public class StatsDOutputWriterTest {
         writer.postConstruct(settings);
         writer.writeQueryResult("my-metric", "gauge", "NaN");
         Assert.assertNull(writer.receivedStat);
+
+        writer.writeQueryResult("my-metric", "gauge", "INF");
+        Assert.assertNull(writer.receivedStat);
     }
 
     /**
