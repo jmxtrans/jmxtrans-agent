@@ -135,7 +135,8 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
         //
         // skip if value's string representation equals to "NaN" or "INF", which are meaningless values to statsd.
         // passing the invalid values down will trigger error in downstream parsing applications.
-        if (String.valueOf(value).equals("NaN") || String.valueOf(value).equals("INF")) {
+        String strValue = String.valueOf(value);
+        if (strValue.equals("NaN") || strValue.equals("INF")) {
             return;
         }
 
@@ -150,7 +151,7 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
                     .append(".")
                     .append(metricName)
                     .append(":")
-                    .append(value)
+                    .append(strValue)
                     .append("|")
                     .append(type)
                     .append("|#")
@@ -163,7 +164,7 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
                     .append("#")
                     .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
                     .append(":")
-                    .append(value)
+                    .append(strValue)
                     .append("|")
                     .append(type)
                     .append("\n");
@@ -172,7 +173,7 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
                     .append(".")
                     .append(metricName)
                     .append(":")
-                    .append(value)
+                    .append(strValue)
                     .append("|")
                     .append(type)
                     .append("\n");
