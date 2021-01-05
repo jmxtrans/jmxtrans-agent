@@ -131,6 +131,15 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
     @Override
     public synchronized void writeQueryResult(String metricName, String metricType, Object value) throws IOException
     {
+        // statsd expects a number value for the metric.
+        //
+        // skip if value's string representation equals to "NaN" or "INF", which are meaningless values to statsd.
+        // passing the invalid values down will trigger error in downstream parsing applications.
+        String strValue = String.valueOf(value);
+        if (strValue.equals("NaN") || strValue.equals("INF")) {
+            return;
+        }
+
         //DataDog statsd with tags (https://docs.datadoghq.com/guides/dogstatsd/),
         // metric.name:value|type|@sample_rate|#tag1:value,tag2
         //Sysdig metric tags (https://support.sysdig.com/hc/en-us/articles/204376099-Metrics-integrations-StatsD-)
@@ -142,7 +151,7 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
                     .append(".")
                     .append(metricName)
                     .append(":")
-                    .append(value)
+                    .append(strValue)
                     .append("|")
                     .append(type)
                     .append("|#")
@@ -155,7 +164,7 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
                     .append("#")
                     .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
                     .append(":")
-                    .append(value)
+                    .append(strValue)
                     .append("|")
                     .append(type)
                     .append("\n");
@@ -164,7 +173,7 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
                     .append(".")
                     .append(metricName)
                     .append(":")
-                    .append(value)
+                    .append(strValue)
                     .append("|")
                     .append(type)
                     .append("\n");
