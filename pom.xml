@@ -59,6 +59,14 @@
       <version>3.0.0</version>
       <optional>true</optional>
     </dependency>
+    <!-- needed for org.jmxtrans.agent.DynamicallyAgentAttacher if not using oracle JDK -->
+    <dependency>
+       <groupId>io.earcam.wrapped</groupId>
+       <artifactId>com.sun.tools.attach</artifactId>
+       <version>1.8.0_jdk8u162-b12</version>
+       <scope>provided</scope>
+       <optional>true</optional>
+     </dependency>
     <dependency>
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
@@ -89,7 +97,6 @@
       <version>2.5.1</version>
       <scope>test</scope>
     </dependency>
-
   </dependencies>
   <build>
     <plugins>
