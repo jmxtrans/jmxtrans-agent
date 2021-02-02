@@ -220,11 +220,12 @@ public class Query implements Collector {
                     value = compositeData.get(key);
                 }
             } else if (attributeValue instanceof Map) {
-                Map<String, Object> mapData = (Map<String, Object>) attributeValue;
+                //The attribute key could be other types, e.g. Double/int
+                Map<Object, Object> mapData = (Map<Object, Object>) attributeValue;
                 if (key == null) {
                     // Get for all keys
-                    for (Map.Entry<String, Object> entry : mapData.entrySet()) {
-                        String key = entry.getKey();
+                    for (Map.Entry<Object, Object> entry : mapData.entrySet()) {
+                        String key = entry.getKey().toString();
                         value = entry.getValue();
                         processAttributeValue(outputWriter, objectName, attribute, key, value);
                     }

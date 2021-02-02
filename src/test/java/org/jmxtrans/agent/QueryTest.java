@@ -23,6 +23,7 @@
  */
 package org.jmxtrans.agent;
 
+import java.util.Map.Entry;
 import org.junit.*;
 
 import javax.annotation.Nonnull;
@@ -131,6 +132,34 @@ public class QueryTest {
     }
 
     @Test
+    public void string_map_attribute_return_simple_result() throws Exception {
+        Query query = new Query("test:type=Mock,name=mock", "StringMap", null, null, null,
+            "StringMap_#key#", resultNameStrategy);
+        query.collectAndExport(mbeanServer, mockOutputWriter);
+
+        for (Entry<String, Double> e: mock.getStringMap().entrySet()) {
+            String name = "StringMap_" + e.getKey();
+            Object actual = mockOutputWriter.resultsByName.get(name);
+            assertThat("Result '" + name + "' is missing", actual, notNullValue());
+            assertThat("Result '" + name + "' type is invalid", actual, instanceOf(Number.class));
+        }
+    }
+
+    @Test
+    public void double_map_attribute_return_simple_result() throws Exception {
+        Query query = new Query("test:type=Mock,name=mock", "DoubleMap", null, null, null,
+            "DoubleMap_#key#", resultNameStrategy);
+        query.collectAndExport(mbeanServer, mockOutputWriter);
+
+        for (Entry<Double, Double> e: mock.getDoubleMap().entrySet()) {
+            String name = "DoubleMap_" + e.getKey().toString();
+            Object actual = mockOutputWriter.resultsByName.get(name);
+            assertThat("Result '" + name + "' is missing", actual, notNullValue());
+            assertThat("Result '" + name + "' type is invalid", actual, instanceOf(Number.class));
+        }
+    }
+
+    @Test
     public void indexed_int_array_attribute_return_simple_result() throws Exception {
         Query query = new Query("test:type=Mock,name=mock", "IntArray", null, 1, null, "IntArray", resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
@@ -189,7 +218,8 @@ public class QueryTest {
         Query query = new Query("test:type=Mock,name=mock", null, null, resultNameStrategy);
         query.collectAndExport(mbeanServer, mockOutputWriter);
         Integer actualSize = mockOutputWriter.resultsByName.size();
-        assert (actualSize == 24);
+        int expectedSize = 24 + mock.getStringMap().size() + mock.getDoubleMap().size();
+        assert actualSize == expectedSize;
     }
 
     @Test
@@ -225,7 +255,7 @@ public class QueryTest {
         @Override
         public void writeQueryResult(@Nonnull String name, @Nullable String type, @Nullable Object value) throws IOException {
             if (failOnDuplicateResult && resultsByName.containsKey(name)) {
-                fail("Result '" + name + "' already written");
+                fail("Result '" + name + "' with value '" + value.toString() + "' already written,");
             }
             resultsByName.put(name, value);
         }

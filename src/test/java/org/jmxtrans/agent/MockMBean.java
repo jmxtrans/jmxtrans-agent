@@ -23,6 +23,7 @@
  */
 package org.jmxtrans.agent;
 
+import java.util.Map;
 import javax.management.openmbean.CompositeData;
 import java.util.List;
 
@@ -50,4 +51,8 @@ public interface MockMBean {
     public Integer[] getIntegerArray();
 
     public List<Integer> getIntegerList();
+
+    public Map<String, Double> getStringMap();
+
+    public Map<Double, Double> getDoubleMap();
 }
