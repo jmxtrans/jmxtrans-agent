@@ -23,6 +23,8 @@
  */
 package org.jmxtrans.agent;
 
+import java.util.HashMap;
+import java.util.Map;
 import javax.management.openmbean.*;
 import java.util.Arrays;
 import java.util.List;
@@ -88,5 +90,22 @@ public class Mock implements MockMBean {
     @Override
     public List<Integer> getIntegerList() {
         return Arrays.asList(0, 1, 2, 3, 4, 5);
+    }
+
+    @Override
+    public Map<String, Double> getStringMap() {
+        Map<String, Double> results = new HashMap<>();
+        results.put("foo", 0.01);
+        results.put("bar", 1.0);
+        return results;
+    }
+
+    @Override
+    public Map<Double, Double> getDoubleMap() {
+        Map<Double, Double> results = new HashMap<>();
+        results.put(0.01, 1.0);
+        results.put(0.02, 2.0);
+        results.put(0.03, 3.0);
+        return results;
     }
 }
