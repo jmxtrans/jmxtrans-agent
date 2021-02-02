@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.List;
@@ -51,23 +50,18 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
     public final static String STATSD_DATADOG = "dd";
     public final static String STATSD_SYSDIG = "sysdig";
     public final static String SETTINGS_TAGS = "tags";
-    private List<Tag> tags;
+    protected List<Tag> tags;
 
     private ByteBuffer sendBuffer;
-    private String metricNamePrefix;
-    private String statsType;
+    protected String metricNamePrefix;
+    protected String statsType;
     /**
      * Using a {@link CachingReference} instead of a raw {@link InetSocketAddress} allows to handle a change
      */
     private CachingReference<InetSocketAddress> addressReference;
     private DatagramChannel channel;
 
-    @Override
-    public synchronized void postConstruct(Map<String, String> settings) {
-        super.postConstruct(settings);
-
-        final String host = ConfigurationUtils.getString(settings, SETTING_HOST);
-        final Integer port = ConfigurationUtils.getInt(settings, SETTING_PORT);
+    protected synchronized void parseTagsAndMetricsNamePrefix(Map<String, String> settings) {
         statsType = ConfigurationUtils.getString(settings, SETTINGS_STATSD_TYPE, "statsd");
         if (statsType.equals(STATSD_DATADOG)) {
             String tagsStr = ConfigurationUtils.getString(settings, SETTINGS_TAGS, "");
@@ -77,10 +71,18 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
             String tagsStr = ConfigurationUtils.getString(settings, SETTINGS_TAGS, "");
             tags = Tag.tagsFromCommaSeparatedString(tagsStr, "=");
             metricNamePrefix = ConfigurationUtils.getString(settings, SETTING_ROOT_PREFIX, getHostName().replaceAll("\\.", "_"));
-        }
-        else {
+        } else {
             metricNamePrefix = ConfigurationUtils.getString(settings, SETTING_ROOT_PREFIX, getHostName().replaceAll("\\.", "_"));
         }
+    }
+
+    @Override
+    public synchronized void postConstruct(Map<String, String> settings) {
+        super.postConstruct(settings);
+
+        final String host = ConfigurationUtils.getString(settings, SETTING_HOST);
+        final Integer port = ConfigurationUtils.getInt(settings, SETTING_PORT);
+        this.parseTagsAndMetricsNamePrefix(settings);
 
         if (port == null || StringUtils2.isNullOrEmpty(host)) {
             throw new RuntimeException("Host and/or port cannot be null");
@@ -128,6 +130,49 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
         writeQueryResult(invocationName, null, value);
     }
 
+    protected synchronized String buildMetricsString(String metricName, String metricType,
+        String strValue) {
+        //DataDog statsd with tags (https://docs.datadoghq.com/guides/dogstatsd/),
+        // metric.name:value|type|@sample_rate|#tag1:value,tag2
+        //Sysdig metric tags (https://support.sysdig.com/hc/en-us/articles/204376099-Metrics-integrations-StatsD-)
+        // enqueued_messages#users,country=italy:10|c
+        StringBuilder sb = new StringBuilder();
+        String type = "gauge".equalsIgnoreCase(metricType) || "g".equalsIgnoreCase(metricType) ? "g" : "c";
+        if (statsType.equals(STATSD_DATADOG)) {
+            sb.append(metricNamePrefix)
+                .append(".")
+                .append(metricName)
+                .append(":")
+                .append(strValue)
+                .append("|")
+                .append(type)
+                .append("|#")
+                .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
+                .append("\n");
+        } else if (statsType.equals(STATSD_SYSDIG)) {
+            sb.append(metricNamePrefix)
+                .append(".")
+                .append(metricName)
+                .append("#")
+                .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
+                .append(":")
+                .append(strValue)
+                .append("|")
+                .append(type)
+                .append("\n");
+        } else {
+            sb.append(metricNamePrefix)
+                .append(".")
+                .append(metricName)
+                .append(":")
+                .append(strValue)
+                .append("|")
+                .append(type)
+                .append("\n");
+        }
+        return sb.toString();
+    }
+
     @Override
     public synchronized void writeQueryResult(String metricName, String metricType, Object value) throws IOException
     {
@@ -139,49 +184,12 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
         if (strValue.equals("NaN") || strValue.equals("INF")) {
             return;
         }
+        String outputMessage = this.buildMetricsString(metricName, metricType, strValue);
 
-        //DataDog statsd with tags (https://docs.datadoghq.com/guides/dogstatsd/),
-        // metric.name:value|type|@sample_rate|#tag1:value,tag2
-        //Sysdig metric tags (https://support.sysdig.com/hc/en-us/articles/204376099-Metrics-integrations-StatsD-)
-        // enqueued_messages#users,country=italy:10|c
-        StringBuilder sb = new StringBuilder();
-        String type = "gauge".equalsIgnoreCase(metricType) || "g".equalsIgnoreCase(metricType) ? "g" : "c";
-        if (statsType.equals(STATSD_DATADOG)) {
-            sb.append(metricNamePrefix)
-                    .append(".")
-                    .append(metricName)
-                    .append(":")
-                    .append(strValue)
-                    .append("|")
-                    .append(type)
-                    .append("|#")
-                    .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
-                    .append("\n");
-        } else if (statsType.equals(STATSD_SYSDIG)) {
-            sb.append(metricNamePrefix)
-                    .append(".")
-                    .append(metricName)
-                    .append("#")
-                    .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
-                    .append(":")
-                    .append(strValue)
-                    .append("|")
-                    .append(type)
-                    .append("\n");
-        } else {
-            sb.append(metricNamePrefix)
-                    .append(".")
-                    .append(metricName)
-                    .append(":")
-                    .append(strValue)
-                    .append("|")
-                    .append(type)
-                    .append("\n");
-        }
         if (logger.isLoggable(getDebugLevel())) {
-            logger.log(getDebugLevel(), "Sending msg: " + sb.toString());
+            logger.log(getDebugLevel(), "Sending msg: " + outputMessage);
         }
-        doSend(sb.toString());
+        doSend(outputMessage);
     }
 
     protected synchronized boolean doSend(String stat) {
