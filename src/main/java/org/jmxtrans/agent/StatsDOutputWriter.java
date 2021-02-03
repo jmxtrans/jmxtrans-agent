@@ -71,7 +71,8 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
             String tagsStr = ConfigurationUtils.getString(settings, SETTINGS_TAGS, "");
             tags = Tag.tagsFromCommaSeparatedString(tagsStr, "=");
             metricNamePrefix = ConfigurationUtils.getString(settings, SETTING_ROOT_PREFIX, getHostName().replaceAll("\\.", "_"));
-        } else {
+        }
+        else {
             metricNamePrefix = ConfigurationUtils.getString(settings, SETTING_ROOT_PREFIX, getHostName().replaceAll("\\.", "_"));
         }
     }
