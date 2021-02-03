@@ -23,8 +23,9 @@
  */
 package org.jmxtrans.agent;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.hamcrest.Matcher;
+import org.jmxtrans.agent.graphite.GraphiteOutputWriterCommonSettings;
 import org.jmxtrans.agent.testutils.FixedTimeClock;
 import org.jmxtrans.agent.util.time.Clock;
 import org.junit.After;
@@ -57,7 +59,7 @@ public class GraphiteUdpOutputWriterTest {
     @Rule
     public UdpServer udpServer = new UdpServer();
 
-    private Clock clock = new FixedTimeClock(33000);
+    private final Clock clock = new FixedTimeClock(33000);
 
     private GraphiteUdpOutputWriter writer;
 
@@ -84,11 +86,40 @@ public class GraphiteUdpOutputWriterTest {
     }
 
     @Test
+    public void handlesBoolean() throws Exception {
+        writer.writeQueryResult("metric", "type", true);
+        assertEventuallyReceived(udpServer, contains("foo.metric 1 33\n"));
+    }
+
+    @Test
+    public void handlesFalseBoolean() throws Exception {
+        writer.writeQueryResult("metric", "type", false);
+        assertEventuallyReceived(udpServer, contains("foo.metric 0 33\n"));
+    }
+
+    @Test
     public void oneInvocationResult() throws Exception {
         writer.writeInvocationResult("invoke", 123);
         assertEventuallyReceived(udpServer, contains("foo.invoke 123 33\n"));
     }
 
+    @Test
+	public void filterNonNumericValues() throws Exception {
+        Map<String, String> testSettings = testSettings();
+        testSettings.put(GraphiteOutputWriterCommonSettings.SETTING_FILTER_NON_FLOAT, "true");
+		writer.postConstruct(testSettings);
+        writer.setClock(clock);
+
+        writer.writeQueryResult("metric", "type", 1);
+        writer.writeQueryResult("metric", "type", null);
+        writer.writeQueryResult("metric.2", "type", "non string");
+        writer.writeQueryResult("metric.2", "type", "2");
+        writer.writeQueryResult("metric.3", "type", true);
+        writer.writeQueryResult("metric.3", "type", "");
+               assertEventuallyReceived(udpServer,
+                containsInAnyOrder("foo.metric 1 33\n", "foo.metric.2 2 33\n", "foo.metric.3 1 33\n"));        
+	}
+    
     @After
     public void destroyWriter() {
         writer.preDestroy();
@@ -119,7 +150,7 @@ public class GraphiteUdpOutputWriterTest {
 
     private static class UdpServer implements TestRule {
 
-        private List<String> receivedMessages = new ArrayList<>();
+        private final List<String> receivedMessages = new ArrayList<>();
         private DatagramChannel channel;
 
         public void openChannel() throws Exception {

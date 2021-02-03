@@ -23,7 +23,8 @@
  */
 package org.jmxtrans.agent;
 
-import static org.jmxtrans.agent.graphite.GraphiteOutputWriterCommonSettings.*;
+import static org.jmxtrans.agent.graphite.GraphiteOutputWriterCommonSettings.getConfiguredMetricPrefixOrNull;
+import static org.jmxtrans.agent.graphite.GraphiteOutputWriterCommonSettings.getHostAndPort;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -36,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import org.jmxtrans.agent.graphite.GraphiteMetricMessageBuilder;
+import org.jmxtrans.agent.graphite.GraphiteOutputWriterCommonSettings;
 import org.jmxtrans.agent.util.net.HostAndPort;
 import org.jmxtrans.agent.util.time.Clock;
 import org.jmxtrans.agent.util.time.SystemCurrentTimeMillisClock;
@@ -52,6 +54,7 @@ public class GraphiteUdpOutputWriter extends AbstractOutputWriter {
     private UdpMessageSender messageSender;
     private Clock clock;
     private GraphiteMetricMessageBuilder messageBuilder;
+    private boolean filterNonFloatValues = false;
 
     @Override
     public void postConstruct(Map<String, String> settings) {
@@ -62,6 +65,7 @@ public class GraphiteUdpOutputWriter extends AbstractOutputWriter {
         clock = new SystemCurrentTimeMillisClock();
         logger.log(getInfoLevel(), "GraphiteUdpOutputWriter is configured with " + graphiteServerHostAndPort
                 + ", metricPathPrefix=" + messageBuilder.getPrefix());
+        filterNonFloatValues = GraphiteOutputWriterCommonSettings.filterNonFloatValues(settings);
     }
 
     @Override
@@ -69,8 +73,14 @@ public class GraphiteUdpOutputWriter extends AbstractOutputWriter {
         writeQueryResult(invocationName, null, value);
     }
 
-    @Override
+	@Override
     public void writeQueryResult(String metricName, String metricType, Object value) throws IOException {
+    	if (filterNonFloatValues && !messageBuilder.isFloat(value)) {
+            if (logger.isLoggable(getTraceLevel())) {
+                logger.log(getTraceLevel(), "Filter non float value '" + value + "'");
+            }
+    		return;
+    	}
         String msg = messageBuilder.buildMessage(metricName, value, TimeUnit.SECONDS.convert(clock.getCurrentTimeMillis(), TimeUnit.MILLISECONDS));
         logMessageIfTraceLoggable(msg);
         tryWriteMsg(msg + "\n");

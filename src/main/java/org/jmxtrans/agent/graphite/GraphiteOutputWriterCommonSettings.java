@@ -23,7 +23,9 @@
  */
 package org.jmxtrans.agent.graphite;
 
-import static org.jmxtrans.agent.util.ConfigurationUtils.*;
+import static org.jmxtrans.agent.util.ConfigurationUtils.getBoolean;
+import static org.jmxtrans.agent.util.ConfigurationUtils.getInt;
+import static org.jmxtrans.agent.util.ConfigurationUtils.getString;
 
 import java.util.Map;
 
@@ -38,6 +40,7 @@ public class GraphiteOutputWriterCommonSettings {
     public static final String SETTING_PORT = "port";
     public static final int SETTING_PORT_DEFAULT_VALUE = 2003;
     public static final String SETTING_NAME_PREFIX = "namePrefix";
+    public static final String SETTING_FILTER_NON_FLOAT = "filterNonFloatValues";
     
     private GraphiteOutputWriterCommonSettings(){}
     
@@ -48,5 +51,9 @@ public class GraphiteOutputWriterCommonSettings {
     
     public static String getConfiguredMetricPrefixOrNull(Map<String, String> settings) {
         return getString(settings, SETTING_NAME_PREFIX, null);
+    }
+    
+    public static boolean filterNonFloatValues(Map<String,String> settings) {
+        return getBoolean(settings, "filterNonFloatValues", false);
     }
 }

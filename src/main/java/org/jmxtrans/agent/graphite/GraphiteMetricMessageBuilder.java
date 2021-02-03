@@ -50,13 +50,17 @@ public class GraphiteMetricMessageBuilder {
      * @return The metric string without trailing newline
      */
     public String buildMessage(String metricName, Object value, long timestamp) {
-        if (value instanceof Boolean) {
-            return metricPathPrefix + metricName + " " + ((Boolean)value ? 1 : 0) + " " + timestamp;
-        }
-        return metricPathPrefix + metricName + " " + value + " " + timestamp;
+        return metricPathPrefix + metricName + " " + convertToString(value) + " " + timestamp;
     }
     
-    /**
+    private String convertToString(Object value) {
+    	if (value instanceof Boolean) {
+            return (Boolean)value ? "1" : "0";
+        }
+    	return String.valueOf(value);
+	}
+
+	/**
      * {@link java.net.InetAddress#getLocalHost()} may not be known at JVM startup when the process is launched as a Linux service.
      */
     private static String buildMetricPathPrefix(String configuredMetricPathPrefix) {
@@ -75,5 +79,15 @@ public class GraphiteMetricMessageBuilder {
     public String getPrefix() {
         return metricPathPrefix;
     }
-        
+
+    /**
+     * Checks if the given value can be sent as a float value to graphite.
+     * Note that Booleans are converted to 1/0 and will pass this check  
+     * 
+     * @param value value to check
+     * @return true if the string representation of value is parseable as a float
+     */
+    public boolean isFloat(Object value) {
+    	return convertToString(value).matches("[-+]?[0-9]*\\.?[0-9]+");
+    }
 }

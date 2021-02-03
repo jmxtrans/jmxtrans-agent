@@ -23,24 +23,33 @@
  */
 package org.jmxtrans.agent;
 
-import static org.jmxtrans.agent.graphite.GraphiteOutputWriterCommonSettings.*;
-import static org.jmxtrans.agent.util.ConfigurationUtils.*;
+import static org.jmxtrans.agent.graphite.GraphiteOutputWriterCommonSettings.SETTING_HOST;
+import static org.jmxtrans.agent.graphite.GraphiteOutputWriterCommonSettings.SETTING_PORT;
+import static org.jmxtrans.agent.graphite.GraphiteOutputWriterCommonSettings.SETTING_PORT_DEFAULT_VALUE;
+import static org.jmxtrans.agent.graphite.GraphiteOutputWriterCommonSettings.filterNonFloatValues;
+import static org.jmxtrans.agent.graphite.GraphiteOutputWriterCommonSettings.getConfiguredMetricPrefixOrNull;
+import static org.jmxtrans.agent.util.ConfigurationUtils.getInt;
+import static org.jmxtrans.agent.util.ConfigurationUtils.getString;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.*;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.jmxtrans.agent.graphite.GraphiteMetricMessageBuilder;
 import org.jmxtrans.agent.util.io.IoUtils;
 import org.jmxtrans.agent.util.net.HostAndPort;
+import org.jmxtrans.agent.util.time.Clock;
+import org.jmxtrans.agent.util.time.SystemCurrentTimeMillisClock;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
@@ -56,6 +65,8 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
     private Writer writer;
     private int socketConnectTimeoutInMillis = SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS_DEFAULT_VALUE;
     private GraphiteMetricMessageBuilder messageBuilder;
+	private boolean filterNonFloatValues;
+	private Clock clock;
 
     @Override
     public void postConstruct(Map<String, String> settings) {
@@ -68,9 +79,11 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
         socketConnectTimeoutInMillis = getInt(settings,
                 SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS,
                 SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS_DEFAULT_VALUE);
+        clock = new SystemCurrentTimeMillisClock();
 
         logger.log(getInfoLevel(), "GraphitePlainTextTcpOutputWriter is configured with " + graphiteServerHostAndPort + ", metricPathPrefix=" + messageBuilder.getPrefix() +
                 ", socketConnectTimeoutInMillis=" + socketConnectTimeoutInMillis);
+        filterNonFloatValues = filterNonFloatValues(settings);
     }
 
     @Override
@@ -80,7 +93,13 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
 
     @Override
     public void writeQueryResult(@Nonnull String metricName, @Nullable String type, @Nullable Object value) throws IOException {
-        String msg = messageBuilder.buildMessage(metricName, value, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+    	if (filterNonFloatValues && !messageBuilder.isFloat(value)) {
+            if (logger.isLoggable(getTraceLevel())) {
+                logger.log(getTraceLevel(), "Filter non float value '" + value + "'");
+            }
+    		return;
+    	}
+        String msg = messageBuilder.buildMessage(metricName, value, TimeUnit.SECONDS.convert(clock.getCurrentTimeMillis(), TimeUnit.MILLISECONDS));
         try {
             ensureGraphiteConnection();
             if (logger.isLoggable(getTraceLevel())) {
@@ -94,6 +113,10 @@ public class GraphitePlainTextTcpOutputWriter extends AbstractOutputWriter imple
         }
     }
 
+    protected void setClock(Clock clock) {
+    	this.clock = clock;
+    }
+    
     private void releaseGraphiteConnection() {
         IoUtils.closeQuietly(writer);
         IoUtils.closeQuietly(socket);

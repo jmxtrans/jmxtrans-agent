@@ -24,15 +24,17 @@
 
 package org.jmxtrans.agent;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.hamcrest.Matcher;
 import org.jmxtrans.agent.graphite.GraphiteOutputWriterCommonSettings;
+import org.jmxtrans.agent.testutils.FixedTimeClock;
+import org.jmxtrans.agent.util.time.Clock;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -44,29 +46,56 @@ public class GraphitePlainTextTcpOutputWriterTest {
 	@Rule
 	public TcpLineServer tcpLineServer = new TcpLineServer();
 
+	private final Clock clock = new FixedTimeClock(33000);
+
 	@Test
 	public void reconnectsAfterServerClosesConnection() throws Exception {
 		GraphitePlainTextTcpOutputWriter graphiteWriter = new GraphitePlainTextTcpOutputWriter();
 		Map<String, String> config = new HashMap<>();
 		config.put(GraphiteOutputWriterCommonSettings.SETTING_HOST, "127.0.0.1");
 		config.put(GraphiteOutputWriterCommonSettings.SETTING_PORT, "" + tcpLineServer.getPort());
+		config.put(GraphiteOutputWriterCommonSettings.SETTING_NAME_PREFIX, "bar.");
 		graphiteWriter.postConstruct(config);
+		graphiteWriter.setClock(clock);
 		// Write one metric to see it is received
 		writeTestMetric(graphiteWriter);
-		assertEventuallyReceived(tcpLineServer, hasSize(1));
+		assertEventuallyReceived(tcpLineServer, containsInAnyOrder("bar.foo 1 33"));
 		// Disconnect the Graphite writer
 		tcpLineServer.disconnectAllClients();
 		waitForErrorToBeDetectedByGraphiteWriter(graphiteWriter);
-		writeTestMetric(graphiteWriter);
 		// Write one metric and verify that it is received
 		writeTestMetric(graphiteWriter);
-		assertEventuallyReceived(tcpLineServer, hasSize(greaterThan(1)));
+		writeTestMetric(graphiteWriter);
+		assertEventuallyReceived(tcpLineServer, containsInAnyOrder("bar.foo 1 33", "bar.foo 2 33", "bar.foo 3 33"));
+	}
+
+	@Test
+	public void filterNonNumericValues() throws Exception {
+		GraphitePlainTextTcpOutputWriter writer = new GraphitePlainTextTcpOutputWriter();
+		Map<String, String> config = new HashMap<>();
+		config.put(GraphiteOutputWriterCommonSettings.SETTING_HOST, "127.0.0.1");
+		config.put(GraphiteOutputWriterCommonSettings.SETTING_PORT, "" + tcpLineServer.getPort());
+		config.put(GraphiteOutputWriterCommonSettings.SETTING_NAME_PREFIX, "bar.");
+		config.put(GraphiteOutputWriterCommonSettings.SETTING_FILTER_NON_FLOAT, "true");
+		writer.postConstruct(config);
+		writer.setClock(clock);
+
+		writer.writeQueryResult("metric", "type", 1);
+		writer.writeQueryResult("metric", "type", null);
+		writer.writeQueryResult("metric.2", "type", "non string");
+		writer.writeQueryResult("metric.2", "type", "2");
+		writer.writeQueryResult("metric.3", "type", "");
+		writer.writeQueryResult("metric.3", "type", true);
+		writer.postCollect();
+		assertEventuallyReceived(tcpLineServer,
+				containsInAnyOrder("bar.metric 1 33", "bar.metric.2 2 33", "bar.metric.3 1 33"));
+		tcpLineServer.disconnectAllClients();
 	}
 
 	private void waitForErrorToBeDetectedByGraphiteWriter(GraphitePlainTextTcpOutputWriter writer) {
 		for (int i = 0; i < 10; i++) {
 			try {
-				writer.writeQueryResult("foo", null, 1);
+				writer.writeQueryResult("foo", null, 4711 + i);
 				writer.postCollect();
 				Thread.sleep(20);
 			} catch (Exception e) {
@@ -76,16 +105,18 @@ public class GraphitePlainTextTcpOutputWriterTest {
 		fail("No error ocurred after closing server!");
 	}
 
+	private int counter;
+
 	private void writeTestMetric(GraphitePlainTextTcpOutputWriter writer) {
 		try {
-			writer.writeQueryResult("foo", null, 1);
+			writer.writeQueryResult("foo", null, ++counter);
 			writer.postCollect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public void assertEventuallyReceived(TcpLineServer server, Matcher<Collection<? extends Object>> matcher)
+	public void assertEventuallyReceived(TcpLineServer server, Matcher<Iterable<? extends String>> matcher)
 			throws Exception {
 		for (int i = 0; i < 100; i++) {
 			if (matcher.matches(server.getReceivedLines())) {

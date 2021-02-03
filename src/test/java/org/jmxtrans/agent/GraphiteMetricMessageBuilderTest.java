@@ -23,8 +23,12 @@
  */
 package org.jmxtrans.agent;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.startsWith;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import org.jmxtrans.agent.graphite.GraphiteMetricMessageBuilder;
 import org.junit.Test;
@@ -62,4 +66,18 @@ public class GraphiteMetricMessageBuilderTest {
         String msg = builder.buildMessage("bar", false, 11);
         assertThat(msg, equalTo("foo.bar 0 11"));
     }
+
+    @Test
+	public void checksFloatValues() throws Exception {
+        GraphiteMetricMessageBuilder builder = new GraphiteMetricMessageBuilder("foo.");
+        assertTrue(builder.isFloat("1.23"));
+        assertTrue(builder.isFloat("1"));
+        assertTrue(builder.isFloat("-1.23"));
+        assertTrue(builder.isFloat("0"));
+        assertTrue(builder.isFloat(false));
+        assertTrue(builder.isFloat(true));
+        assertFalse(builder.isFloat(""));
+        assertFalse(builder.isFloat(null));
+        assertFalse(builder.isFloat("qwerty"));
+	}
 }
