@@ -140,35 +140,35 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
         String type = "gauge".equalsIgnoreCase(metricType) || "g".equalsIgnoreCase(metricType) ? "g" : "c";
         if (statsType.equals(STATSD_DATADOG)) {
             sb.append(metricNamePrefix)
-                .append(".")
-                .append(metricName)
-                .append(":")
-                .append(strValue)
-                .append("|")
-                .append(type)
-                .append("|#")
-                .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
-                .append("\n");
+                    .append(".")
+                    .append(metricName)
+                    .append(":")
+                    .append(strValue)
+                    .append("|")
+                    .append(type)
+                    .append("|#")
+                    .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
+                    .append("\n");
         } else if (statsType.equals(STATSD_SYSDIG)) {
             sb.append(metricNamePrefix)
-                .append(".")
-                .append(metricName)
-                .append("#")
-                .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
-                .append(":")
-                .append(strValue)
-                .append("|")
-                .append(type)
-                .append("\n");
+                    .append(".")
+                    .append(metricName)
+                    .append("#")
+                    .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
+                    .append(":")
+                    .append(strValue)
+                    .append("|")
+                    .append(type)
+                    .append("\n");
         } else {
             sb.append(metricNamePrefix)
-                .append(".")
-                .append(metricName)
-                .append(":")
-                .append(strValue)
-                .append("|")
-                .append(type)
-                .append("\n");
+                    .append(".")
+                    .append(metricName)
+                    .append(":")
+                    .append(strValue)
+                    .append("|")
+                    .append(type)
+                    .append("\n");
         }
         return sb.toString();
     }
