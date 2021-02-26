@@ -23,6 +23,7 @@
  */
 package org.jmxtrans.agent;
 
+import java.nio.Buffer;
 import org.jmxtrans.agent.util.CachingReference;
 import org.jmxtrans.agent.util.ConfigurationUtils;
 import org.jmxtrans.agent.util.StringUtils2;
@@ -228,7 +229,7 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
             } // empty buffer
 
             // send and reset the buffer
-            sendBuffer.flip();
+            ((Buffer)sendBuffer).flip();
             final int nbSentBytes = channel.send(sendBuffer, address);
             sendBuffer.limit(sendBuffer.capacity());
             sendBuffer.rewind();
