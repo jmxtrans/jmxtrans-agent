@@ -31,14 +31,14 @@
   <groupId>org.jmxtrans.agent</groupId>
   <artifactId>jmxtrans-agent</artifactId>
   <packaging>jar</packaging>
-  <version>1.2.11-rc-5-SNAPSHOT</version>
+  <version>1.2.11</version>
   <name>JMX metrics exporter agent</name>
   <url>https://github.com/jmxtrans/jmxtrans-agent</url>
   <scm>
     <connection>scm:git:git@github.com:jmxtrans/jmxtrans-agent.git</connection>
     <developerConnection>scm:git:git@github.com:jmxtrans/jmxtrans-agent.git</developerConnection>
     <url>https://github.com/jmxtrans/jmxtrans-agent</url>
-    <tag>HEAD</tag>
+    <tag>jmxtrans-agent-1.2.11</tag>
   </scm>
   <dependencies>
     <dependency>
