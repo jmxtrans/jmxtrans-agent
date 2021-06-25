@@ -87,7 +87,11 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
         int position = 0;
         while (position < expression.length()) {
             char c = expression.charAt(position);
-            if (c == '#') {
+            char p = ' ';
+            if (position >= 1){
+                p = expression.charAt(position-1);
+            }
+            if (c == '#' && p != '\\') {
                 int beginningSeparatorPosition = position;
                 int endingSeparatorPosition = expression.indexOf('#', beginningSeparatorPosition + 1);
                 if (endingSeparatorPosition == -1) {

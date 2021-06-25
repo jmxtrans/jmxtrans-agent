@@ -120,4 +120,11 @@ public class ExpressionLanguageEngineTest {
         String actual = engine.resolveExpression("#canonical_hostname#");
         assertThat(actual, is("server1.mycompany.com"));
     }
+
+    @Test
+    public void test_escape_hashtag() throws Exception {
+        ExpressionLanguageEngineImpl engine = new ExpressionLanguageEngineImpl();
+        String actual = engine.resolveExpression("\\#tag=value");
+        assertThat(actual, is("\\#tag=value"));
+    }
 }
