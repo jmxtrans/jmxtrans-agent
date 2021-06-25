@@ -133,6 +133,10 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
         int pos = 0;
         while (pos < expression.length()) {
             char c = expression.charAt(pos);
+            char p = ' ';
+            if (pos >= 1){
+                p = expression.charAt(pos-1);
+            }
             if (c == '%') {
                 int beginningSeparatorPosition = pos;
                 int endingSeparatorPosition = expression.indexOf('%', beginningSeparatorPosition + 1);
@@ -146,11 +150,11 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
                 }
                 StringUtils2.appendEscapedNonAlphaNumericChars(value, result);
                 pos = endingSeparatorPosition + 1;
-            } else if (c == '#') {
+            } else if (c == '#'  && p != '\\') {
                 int beginningSeparatorPosition = pos;
                 int endingSeparatorPosition = expression.indexOf('#', beginningSeparatorPosition + 1);
                 if (endingSeparatorPosition == -1) {
-                    throw new IllegalStateException("Invalid expression '" + expression + "', no ending '#' after beginning '#' at position " + beginningSeparatorPosition);
+                    throw new IllegalStateException("Invalid expression '" + expression + "', no ending '#' after beginning '#' at position " + beginningSeparatorPosition + "previous char: " + p);
                 }
                 String functionName = expression.substring(beginningSeparatorPosition + 1, endingSeparatorPosition);
                 Function function = functionsByName.get(functionName);

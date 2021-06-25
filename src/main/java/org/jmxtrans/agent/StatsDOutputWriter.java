@@ -37,6 +37,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -139,17 +141,31 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
         //Sysdig metric tags (https://support.sysdig.com/hc/en-us/articles/204376099-Metrics-integrations-StatsD-)
         // enqueued_messages#users,country=italy:10|c
         StringBuilder sb = new StringBuilder();
+
         String type = "gauge".equalsIgnoreCase(metricType) || "g".equalsIgnoreCase(metricType) ? "g" : "c";
+        String completeTags;
+        String ddmetricName;
         if (statsType.equals(STATSD_DATADOG)) {
+            if (metricName.contains("#")){
+                String[] splitStr = metricName.split("#");
+                List<String> metricTags = Arrays.asList(splitStr[1].split(","));
+                String customTags = StringUtils2.join(metricTags, ",");
+                String convertedTags = StringUtils2.join(Tag.convertTagsToStrings(tags), ",");
+                completeTags = customTags + "," + convertedTags;
+                ddmetricName = splitStr[0].replace("\\", "");
+            } else {
+                completeTags = StringUtils2.join(Tag.convertTagsToStrings(tags), ",");
+                ddmetricName = metricName;
+            }
             sb.append(metricNamePrefix)
                     .append(".")
-                    .append(metricName)
+                    .append(ddmetricName)
                     .append(":")
                     .append(strValue)
                     .append("|")
                     .append(type)
                     .append("|#")
-                    .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
+                    .append(completeTags)
                     .append("\n");
         } else if (statsType.equals(STATSD_SYSDIG)) {
             sb.append(metricNamePrefix)
