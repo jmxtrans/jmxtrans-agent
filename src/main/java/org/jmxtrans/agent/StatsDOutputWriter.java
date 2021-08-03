@@ -35,10 +35,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
-import java.util.List;
-import java.util.Map;
-import java.util.Arrays;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -146,6 +143,17 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
         String completeTags;
         String ddmetricName;
         if (statsType.equals(STATSD_DATADOG)) {
+            if (metricName.contains("kafka.connect.task-metrics.status") || metricName.contains("kafka.connect.connector-metrics.status")) {
+                String status_code;
+                switch (strValue.toLowerCase()) {
+                    case "running": status_code = "0"; break;
+                    case "unassigned": status_code = "1"; break;
+                    case "paused": status_code = "2"; break;
+                    case "failed": status_code = "3"; break;
+                    default: status_code = "4"; logger.warning(String.format("StatsDOutputWriter defaulted unexpected status %s to status code 4", strValue));
+                }
+                strValue = status_code;
+            }
             if (metricName.contains("#")){
                 String[] splitStr = metricName.split("#");
                 List<String> metricTags = Arrays.asList(splitStr[1].split(","));
