@@ -154,6 +154,20 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
                 }
                 strValue = status_code;
             }
+            if (metricName.contains("kafka.streams.client.state")) {
+                // see https://github.com/apache/kafka/blob/trunk/streams/src/main/java/org/apache/kafka/streams/KafkaStreams.java#L180
+                String state;
+                switch (strValue.toLowerCase()) {
+                    case "created": state = "0"; break;
+                    case "rebalancing": state = "1"; break;
+                    case "running": state = "2"; break;
+                    case "pending_shutdown": state = "3"; break;
+                    case "not_running": state = "4"; break;
+                    case "error": state = "5"; break;
+                    default: state = "6"; logger.warning(String.format("StatsDOutputWriter defaulted unexpected state %s to status code 6", strValue));
+                }
+                strValue = state;
+            }
             if (metricName.contains("#")){
                 String[] splitStr = metricName.split("#");
                 List<String> metricTags = Arrays.asList(splitStr[1].split(","));
