@@ -146,9 +146,9 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
             if (metricName.contains("kafka.connect.task-metrics.status") || metricName.contains("kafka.connect.connector-metrics.status")) {
                 String status_code;
                 switch (strValue.toLowerCase()) {
-                    case "running": status_code = "0"; break;
-                    case "unassigned": status_code = "1"; break;
-                    case "paused": status_code = "2"; break;
+                    case "paused": status_code = "0"; break;
+                    case "running": status_code = "1"; break;
+                    case "unassigned": status_code = "2"; break;
                     case "failed": status_code = "3"; break;
                     default: status_code = "4"; logger.warning(String.format("StatsDOutputWriter defaulted unexpected status %s to status code 4", strValue));
                 }
