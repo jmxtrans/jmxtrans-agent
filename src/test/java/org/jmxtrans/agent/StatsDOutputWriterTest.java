@@ -88,6 +88,20 @@ public class StatsDOutputWriterTest {
     }
 
     @Test
+    public void test_write_counter_metric_dd_without_tags() throws IOException {
+        Map<String, String> settings = new HashMap<>();
+        settings.put(StatsDOutputWriter.SETTING_ROOT_PREFIX, "foo.bar");
+        // No real connect is done. Config is here to please the postConstruct.
+        settings.put(StatsDOutputWriter.SETTING_HOST, "localhost");
+        settings.put(StatsDOutputWriter.SETTING_PORT, "8125");
+        settings.put(StatsDOutputWriter.SETTINGS_STATSD_TYPE, "dd");
+
+        writer.postConstruct(settings);
+        writer.writeQueryResult("my-metric", "gauge", 12);
+        Assert.assertThat(writer.receivedStat, equalTo("foo.bar.my-metric:12|g\n"));
+    }
+
+    @Test
     public void test_write_counter_metric_sysdig() throws IOException {
         Map<String, String> settings = new HashMap<>();
         settings.put(StatsDOutputWriter.SETTING_ROOT_PREFIX, "foo.bar");
