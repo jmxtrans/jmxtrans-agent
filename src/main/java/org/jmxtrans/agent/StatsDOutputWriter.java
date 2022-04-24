@@ -147,10 +147,12 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
                     .append(":")
                     .append(strValue)
                     .append("|")
-                    .append(type)
-                    .append("|#")
-                    .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
-                    .append("\n");
+                    .append(type);
+            if (!tags.isEmpty()) {
+                sb.append("|#");
+                sb.append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","));
+            }
+            sb.append("\n");
         } else if (statsType.equals(STATSD_SYSDIG)) {
             sb.append(metricNamePrefix)
                     .append(".")
