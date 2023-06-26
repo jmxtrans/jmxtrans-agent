@@ -6,3 +6,4 @@ target
 .settings/
 **/.envrc
 *.log
+jmxtrans-agent.iml

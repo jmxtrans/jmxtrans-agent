@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010-2013 the original author or authors
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -8,10 +8,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -19,7 +19,7 @@
  * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  */
 package org.jmxtrans.agent;
 
@@ -87,7 +87,11 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
         int position = 0;
         while (position < expression.length()) {
             char c = expression.charAt(position);
-            if (c == '#') {
+            char p = ' ';
+            if (position >= 1){
+                p = expression.charAt(position-1);
+            }
+            if (c == '#' && p != '\\') {
                 int beginningSeparatorPosition = position;
                 int endingSeparatorPosition = expression.indexOf('#', beginningSeparatorPosition + 1);
                 if (endingSeparatorPosition == -1) {
@@ -129,6 +133,10 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
         int pos = 0;
         while (pos < expression.length()) {
             char c = expression.charAt(pos);
+            char p = ' ';
+            if (pos >= 1){
+                p = expression.charAt(pos-1);
+            }
             if (c == '%') {
                 int beginningSeparatorPosition = pos;
                 int endingSeparatorPosition = expression.indexOf('%', beginningSeparatorPosition + 1);
@@ -142,11 +150,11 @@ public class ExpressionLanguageEngineImpl implements ExpressionLanguageEngine {
                 }
                 StringUtils2.appendEscapedNonAlphaNumericChars(value, result);
                 pos = endingSeparatorPosition + 1;
-            } else if (c == '#') {
+            } else if (c == '#'  && p != '\\') {
                 int beginningSeparatorPosition = pos;
                 int endingSeparatorPosition = expression.indexOf('#', beginningSeparatorPosition + 1);
                 if (endingSeparatorPosition == -1) {
-                    throw new IllegalStateException("Invalid expression '" + expression + "', no ending '#' after beginning '#' at position " + beginningSeparatorPosition);
+                    throw new IllegalStateException("Invalid expression '" + expression + "', no ending '#' after beginning '#' at position " + beginningSeparatorPosition + "previous char: " + p);
                 }
                 String functionName = expression.substring(beginningSeparatorPosition + 1, endingSeparatorPosition);
                 Function function = functionsByName.get(functionName);
