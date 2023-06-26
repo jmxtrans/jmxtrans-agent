@@ -35,8 +35,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -133,23 +132,62 @@ public class StatsDOutputWriter extends AbstractOutputWriter implements OutputWr
     }
 
     protected synchronized String buildMetricsString(String metricName, String metricType,
-        String strValue) {
+                                                     String strValue) {
         //DataDog statsd with tags (https://docs.datadoghq.com/guides/dogstatsd/),
         // metric.name:value|type|@sample_rate|#tag1:value,tag2
         //Sysdig metric tags (https://support.sysdig.com/hc/en-us/articles/204376099-Metrics-integrations-StatsD-)
         // enqueued_messages#users,country=italy:10|c
         StringBuilder sb = new StringBuilder();
+
         String type = "gauge".equalsIgnoreCase(metricType) || "g".equalsIgnoreCase(metricType) ? "g" : "c";
+        String completeTags;
+        String ddmetricName;
         if (statsType.equals(STATSD_DATADOG)) {
+            if (metricName.contains("task-metrics.status") || metricName.contains("connector-metrics.status")) {
+                String status_code;
+                switch (strValue.toLowerCase()) {
+                    case "paused": status_code = "0"; break;
+                    case "unassigned": status_code = "1"; break;
+                    case "running": status_code = "2"; break;
+                    case "failed": status_code = "3"; break;
+                    default: status_code = "4"; logger.warning(String.format("StatsDOutputWriter defaulted unexpected status %s to status code 4", strValue));
+                }
+                strValue = status_code;
+            }
+            if (metricName.contains("kafka.streams.client.state")) {
+                // see https://github.com/apache/kafka/blob/trunk/streams/src/main/java/org/apache/kafka/streams/KafkaStreams.java#L180
+                String state;
+                switch (strValue.toLowerCase()) {
+                    case "created": state = "0"; break;
+                    case "rebalancing": state = "1"; break;
+                    case "running": state = "2"; break;
+                    case "pending_shutdown": state = "3"; break;
+                    case "not_running": state = "4"; break;
+                    case "error": state = "5"; break;
+                    default: state = "6"; logger.warning(String.format("StatsDOutputWriter defaulted unexpected state %s to status code 6", strValue));
+                }
+                strValue = state;
+            }
+            if (metricName.contains("#")){
+                String[] splitStr = metricName.split("#");
+                List<String> metricTags = Arrays.asList(splitStr[1].split(","));
+                String customTags = StringUtils2.join(metricTags, ",");
+                String convertedTags = StringUtils2.join(Tag.convertTagsToStrings(tags), ",");
+                completeTags = customTags + "," + convertedTags;
+                ddmetricName = splitStr[0].replace("\\", "");
+            } else {
+                completeTags = StringUtils2.join(Tag.convertTagsToStrings(tags), ",");
+                ddmetricName = metricName;
+            }
             sb.append(metricNamePrefix)
                     .append(".")
-                    .append(metricName)
+                    .append(ddmetricName)
                     .append(":")
                     .append(strValue)
                     .append("|")
                     .append(type)
                     .append("|#")
-                    .append(StringUtils2.join(Tag.convertTagsToStrings(tags), ","))
+                    .append(completeTags)
                     .append("\n");
         } else if (statsType.equals(STATSD_SYSDIG)) {
             sb.append(metricNamePrefix)
