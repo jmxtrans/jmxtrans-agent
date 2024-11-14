@@ -9,7 +9,7 @@
 
 ## What is jmxtrans-agent ?
 
-jmxtrans-agent is a version of [jmxtrans](http://jmxtrans.org/) intended to be used as a java agent. JmxTrans Agent has zero dependencies to ease integration.
+jmxtrans-agent is a version of [jmxtrans](https://github.com/jmxtrans/jmxtrans) intended to be used as a java agent. JmxTrans Agent has zero dependencies to ease integration.
 
 ## Java Agent Declaration
 
